@@ -32,6 +32,54 @@ button, textarea { font: inherit; }
 
 a { color: inherit; }
 
+.chess-notation {
+  position: relative;
+  z-index: 1;
+  display: inline;
+  padding: 0;
+  border: 0;
+  border-bottom: 1.5px dashed currentColor;
+  border-radius: 0;
+  background: transparent;
+  color: inherit;
+  cursor: help;
+  font: inherit;
+  font-weight: 700;
+  line-height: inherit;
+  text-decoration: none;
+}
+.chess-notation:hover,
+.chess-notation:focus-visible,
+.chess-notation.open {
+  color: var(--forest);
+  outline: none;
+}
+.notation-tooltip-popover {
+  position: fixed;
+  z-index: 10000;
+  width: max-content;
+  max-width: min(270px, calc(100vw - 20px));
+  padding: 9px 11px;
+  border-radius: 9px;
+  background: #14283f;
+  box-shadow: 0 8px 20px rgba(7, 20, 36, .25);
+  color: #fff;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(4px);
+  transition: opacity .16s ease, transform .16s ease;
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.5;
+  text-align: left;
+  white-space: normal;
+}
+.notation-tooltip-popover.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
 .site-header {
   border-bottom: 1px solid var(--line);
   background: rgba(245, 240, 230, 0.92);

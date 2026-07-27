@@ -3,6 +3,132 @@ const PIECE_NAMES = {
   k: "黑王", q: "黑后", r: "黑车", b: "黑象", n: "黑马", p: "黑兵"
 };
 
+const NOTATION_GLOSSARY = {
+  "Re8#": "白车走到 e8。R 是车（Rook），# 表示将死。",
+  "Rg8#": "白车走到 g8。R 是车（Rook），# 表示将死。",
+  "Ne7+": "白马跳到 e7。N 是马（Knight），+ 表示将军。",
+  "Nxc8": "白马吃掉 c8 的棋子。N 是马，x 表示吃子。",
+  "Nxd4": "白马吃到 d4。N 是马，x 表示吃子。",
+  "Bc4": "白象走到 c4。B 是象（Bishop）。",
+  "...exd4": "黑方的 e 线兵吃到 d4；省略号表示这是黑方着法，x 表示吃子。",
+  "exd4": "e 线兵吃到 d4；x 表示吃子。",
+  "Re8": "白车走到 e8。R 是车（Rook）。",
+  "Rg8": "白车走到 g8。R 是车（Rook）。"
+};
+
+const NOTATION_PATTERN = new RegExp(
+  Object.keys(NOTATION_GLOSSARY)
+    .sort((a, b) => b.length - a.length)
+    .map(term => term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))
+    .join("|"),
+  "g"
+);
+
+function enhanceNotation(container) {
+  if (!container) return;
+  const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT);
+  const textNodes = [];
+  while (walker.nextNode()) {
+    const node = walker.currentNode;
+    if (
+      node.nodeValue.trim()
+      && !node.parentElement.closest("button, textarea, script, style, .chess-notation")
+      && NOTATION_PATTERN.test(node.nodeValue)
+    ) textNodes.push(node);
+    NOTATION_PATTERN.lastIndex = 0;
+  }
+
+  textNodes.forEach(node => {
+    const fragment = document.createDocumentFragment();
+    let cursor = 0;
+    node.nodeValue.replace(NOTATION_PATTERN, (term, offset) => {
+      fragment.append(node.nodeValue.slice(cursor, offset));
+      const notation = document.createElement("button");
+      notation.type = "button";
+      notation.className = "chess-notation";
+      notation.textContent = term;
+      notation.dataset.explanation = NOTATION_GLOSSARY[term];
+      notation.setAttribute("aria-label", `${term}，点击查看棋谱解释`);
+      notation.setAttribute("aria-expanded", "false");
+      notation.setAttribute("aria-describedby", "notation-tooltip");
+      notation.addEventListener("mouseenter", () => showNotationTooltip(notation));
+      notation.addEventListener("mouseleave", () => {
+        if (!notation.classList.contains("open")) hideNotationTooltip();
+      });
+      notation.addEventListener("focus", () => showNotationTooltip(notation));
+      notation.addEventListener("blur", () => {
+        if (!notation.classList.contains("open")) hideNotationTooltip();
+      });
+      fragment.append(notation);
+      cursor = offset + term.length;
+      return term;
+    });
+    fragment.append(node.nodeValue.slice(cursor));
+    node.replaceWith(fragment);
+    NOTATION_PATTERN.lastIndex = 0;
+  });
+}
+
+function notationTooltipElement() {
+  let tooltip = document.querySelector("#notation-tooltip");
+  if (tooltip) return tooltip;
+  tooltip = document.createElement("div");
+  tooltip.id = "notation-tooltip";
+  tooltip.className = "notation-tooltip-popover";
+  tooltip.setAttribute("role", "tooltip");
+  document.body.appendChild(tooltip);
+  return tooltip;
+}
+
+function showNotationTooltip(notation) {
+  const tooltip = notationTooltipElement();
+  tooltip.textContent = notation.dataset.explanation;
+  tooltip.classList.add("show");
+  const anchor = notation.getBoundingClientRect();
+  const tip = tooltip.getBoundingClientRect();
+  const left = Math.max(10, Math.min(
+    window.innerWidth - tip.width - 10,
+    anchor.left + anchor.width / 2 - tip.width / 2
+  ));
+  let top = anchor.top - tip.height - 10;
+  if (top < 10) top = anchor.bottom + 10;
+  tooltip.style.left = `${left}px`;
+  tooltip.style.top = `${top}px`;
+}
+
+function hideNotationTooltip() {
+  document.querySelector("#notation-tooltip")?.classList.remove("show");
+}
+
+function closeNotationTooltips(except = null) {
+  document.querySelectorAll(".chess-notation.open").forEach(notation => {
+    if (notation === except) return;
+    notation.classList.remove("open");
+    notation.setAttribute("aria-expanded", "false");
+  });
+  if (!except) hideNotationTooltip();
+}
+
+document.addEventListener("click", event => {
+  const notation = event.target.closest?.(".chess-notation");
+  if (!notation) {
+    closeNotationTooltips();
+    return;
+  }
+  const willOpen = !notation.classList.contains("open");
+  closeNotationTooltips(notation);
+  notation.classList.toggle("open", willOpen);
+  notation.setAttribute("aria-expanded", String(willOpen));
+  if (willOpen) showNotationTooltip(notation);
+  else hideNotationTooltip();
+});
+
+document.addEventListener("keydown", event => {
+  if (event.key === "Escape") closeNotationTooltips();
+});
+window.addEventListener("scroll", () => closeNotationTooltips(), { passive: true });
+window.addEventListener("resize", () => closeNotationTooltips());
+
 // Each source PNG uses a different amount of transparent canvas. These values
 // describe the visible artwork inside its 512 × 512 source image so every
 // piece can be optically centered and normalized to the same visual footprint.
@@ -434,6 +560,7 @@ function setupChallenge(root) {
     status.className = "status" + (kind ? " " + kind : "");
     statusLabel.textContent = label;
     statusText.textContent = text;
+    enhanceNotation(statusText);
   }
 
   function showBoardCelebration(threatState) {
@@ -684,6 +811,7 @@ function setupChallenge(root) {
       }
     }
     answer.innerHTML = `<strong>棋局教练：</strong>${response}`;
+    enhanceNotation(answer);
     answer.classList.add("show");
   }
 
@@ -695,3 +823,4 @@ function setupChallenge(root) {
 }
 
 document.querySelectorAll("[data-puzzle]").forEach(setupChallenge);
+enhanceNotation(document.querySelector("main"));
