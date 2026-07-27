@@ -48,7 +48,7 @@ const PUZZLES = {
       { white: 100, draw: 0, black: 0 },
       { white: 100, draw: 0, black: 0 }
     ],
-    success: "Re8#。黑王被自己的三枚兵关在第八横线，车一落到 e8，三个逃生格都不存在了。",
+    success: "白车走到 e8，并将死。棋谱记作 Re8#：R 代表车，e8 是落点，# 代表将死。黑王被自己的三枚兵关住，三个逃生格都不存在了。",
     defaultAnswer: "车走到 e8 后沿第八横线将军。黑王不能向前，因为 f7、g7、h7 都被自己的兵占着；也没有棋子能挡在车和王之间。因此这不是普通将军，而是立即将杀。",
     errors: {
       e1e7: "Re7 看起来很积极，但它没有将军。黑方获得一整步，可以给王腾出逃生格。后排杀王讲究的是立即封口。",
@@ -58,7 +58,11 @@ const PUZZLES = {
     quick: {
       "为什么结束": "因为 Re8 已经是将杀：王无处可走、无法吃车，也没有棋子能挡住这次贴着横线的攻击。规则上棋局立刻结束。",
       "为什么不能": "关键不只是把车放活跃，而是不给黑方任何喘息。非将军着通常允许黑方走 ...h6 或 ...g6，为王制造逃生格。"
-    }
+    },
+    suggestions: [
+      { label: "为什么这就结束了？", key: "为什么结束" },
+      { label: "为什么不能走别处？", key: "为什么不能" }
+    ]
   },
   arabian: {
     fen: "7k/7p/5N2/8/8/8/8/6RK w - - 0 1",
@@ -68,14 +72,18 @@ const PUZZLES = {
       { white: 100, draw: 0, black: 0 },
       { white: 100, draw: 0, black: 0 }
     ],
-    success: "Rg8#。车负责将军，f6 的马守住 g8 和 h7 周边的关键格。两枚棋子配合得像一把锁。",
+    success: "白车走到 g8，并将死。棋谱记作 Rg8#：R 代表车，# 代表将死。f6 的马守住关键格，两枚棋子配合得像一把锁。",
     defaultAnswer: "车到 g8 直接攻击 h8 的王。黑王不能吃掉车，因为 f6 的马会保护 g8；h7 又被自己的兵堵住，所以没有合法逃路。",
     errors: {},
     genericError: "先别急着移动马。马已经在保护一个非常关键的格子；想想车能不能借用这层保护，贴近黑王将军。",
     quick: {
       "马": "马在这里不是主攻手，而是保镖。它保护 g8，让黑王不能吃掉前来将军的白车。",
       "为什么结束": "Rg8 后黑王处于将军，既不能逃、不能吃车，也无法挡棋，所以立即结束。"
-    }
+    },
+    suggestions: [
+      { label: "这匹马做了什么？", key: "马" },
+      { label: "为什么这就结束了？", key: "为什么结束" }
+    ]
   },
   fork: {
     fen: "2q3k1/8/8/5N2/8/8/8/6K1 w - - 0 1",
@@ -85,14 +93,18 @@ const PUZZLES = {
       { white: 94, draw: 5, black: 1 },
       { white: 99, draw: 1, black: 0 }
     ],
-    success: "Ne7+！马在 e7 将军，同时攻击 c8 的黑后。黑方必须先应对将军，白方下一步就能吃后。",
+    success: "白马跳到 e7，将军！棋谱记作 Ne7+：N 代表马，+ 代表将军。白马同时攻击 c8 的黑后，黑方必须先救王。",
     defaultAnswer: "马到 e7 后同时攻击 g8 的王和 c8 的后。因为将军具有最高优先级，黑方必须先救王，无法同时保住后。",
     errors: {},
     genericError: "双重攻击要找的不是离目标最近的格子，而是一个能同时覆盖两个目标的格子。数一数马从哪里能同时跳到 g8 与 c8。",
     quick: {
       "为什么是e7": "从 e7 出发，马恰好同时控制 g8 和 c8。一个目标是王，一个目标是后；将军迫使黑方先处理王。",
       "黑后": "黑后此刻还没被吃，但它已经无法被兼顾。黑方应对完将军后，白马下一步就能 Nxc8。"
-    }
+    },
+    suggestions: [
+      { label: "为什么一定是 e7？", key: "为什么是e7" },
+      { label: "黑后为什么跑不掉？", key: "黑后" }
+    ]
   },
   philidor: {
     fen: "rnbqkbnr/ppp2ppp/3p4/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 0 3",
@@ -116,7 +128,11 @@ const PUZZLES = {
     quick: {
       "为什么不能bc4": "Bc4 并不坏，它会进入常见的意大利式结构。本题只把它判为偏离目标，因为我们正在练习 d4 的即时中心反击。",
       "为什么用马": "Nxd4 让马从 f3 来到更中心的格子，同时收回兵。若用后吃，后容易过早暴露并被对方子力追赶。"
-    }
+    },
+    suggestions: [
+      { label: "为什么不能先走 Bc4？", key: "为什么不能bc4" },
+      { label: "为什么要用马收回？", key: "为什么用马" }
+    ]
   }
 };
 
@@ -285,6 +301,22 @@ function setupChallenge(root) {
   const askBtn = root.querySelector("[data-ask]");
   const askInput = root.querySelector("textarea");
   const answer = root.querySelector(".ai-answer");
+  const askRow = root.querySelector(".ask-row");
+  const quickQuestions = document.createElement("div");
+  quickQuestions.className = "quick-questions";
+  quickQuestions.setAttribute("aria-label", "常见问题快捷选项");
+  (puzzle.suggestions || []).forEach(suggestion => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "quick-question";
+    button.textContent = suggestion.label;
+    button.addEventListener("click", () => {
+      askInput.value = suggestion.label;
+      showCoachAnswer(suggestion.label, suggestion.key);
+    });
+    quickQuestions.appendChild(button);
+  });
+  askRow.before(quickQuestions);
   const boardWrap = boardEl.parentElement;
   const positionPanel = document.createElement("section");
   positionPanel.className = "position-panel";
@@ -588,15 +620,20 @@ function setupChallenge(root) {
 
   resetBtn.addEventListener("click", reset);
 
-  askBtn.addEventListener("click", () => {
-    const question = askInput.value.trim();
+  function showCoachAnswer(question, preferredKey = "") {
     const compact = question.toLowerCase().replace(/[？?，,。\s]/g, "");
-    let response = puzzle.defaultAnswer;
-    for (const [key, value] of Object.entries(puzzle.quick)) {
-      if (compact.includes(key)) { response = value; break; }
+    let response = puzzle.quick[preferredKey] || puzzle.defaultAnswer;
+    if (!preferredKey) {
+      for (const [key, value] of Object.entries(puzzle.quick)) {
+        if (compact.includes(key)) { response = value; break; }
+      }
     }
     answer.innerHTML = `<strong>棋局教练：</strong>${response}`;
     answer.classList.add("show");
+  }
+
+  askBtn.addEventListener("click", () => {
+    showCoachAnswer(askInput.value.trim());
   });
 
   reset();

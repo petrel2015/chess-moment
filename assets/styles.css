@@ -400,6 +400,11 @@ h1 {
 .btn:hover { background: rgba(23,61,43,.08); }
 .btn-primary { border-color: var(--forest); background: var(--forest); color: #fff; }
 .btn-primary:hover { background: #245239; }
+.ask-row .btn-primary {
+  min-width: 88px;
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
 
 .ask-box {
   margin-top: auto;
@@ -413,9 +418,31 @@ h1 {
   font-size: 13px;
   font-weight: 700;
 }
+.quick-questions {
+  margin: 0 0 9px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.quick-question {
+  min-height: 30px;
+  padding: 5px 10px;
+  border: 1px solid rgba(23, 61, 43, .24);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .42);
+  color: var(--forest);
+  cursor: pointer;
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  font-size: 11px;
+  white-space: nowrap;
+}
+.quick-question:hover { background: rgba(23, 61, 43, .08); }
+
 .ask-row { display: flex; gap: 8px; }
 .ask-row textarea {
   width: 100%;
+  min-width: 0;
+  flex: 1 1 auto;
   min-height: 48px;
   max-height: 110px;
   resize: vertical;
