@@ -427,6 +427,8 @@ function setupChallenge(root) {
   let selected = null;
   let step = 0;
   let lastMove = null;
+  let moveFeedback = null;
+  let moveFeedbackTimer = null;
   let dragState = null;
   let suppressClick = false;
   let nativeDragFrom = null;
@@ -515,6 +517,9 @@ function setupChallenge(root) {
           if (board[squareName]) square.classList.add("capture");
         }
         if (lastMove && lastMove.includes(squareName)) square.classList.add("last-move");
+        if (moveFeedback?.square === squareName) {
+          square.classList.add("move-feedback", `move-feedback-${moveFeedback.kind}`);
+        }
 
         if (board[squareName]) {
           const piece = document.createElement("img");
@@ -524,6 +529,12 @@ function setupChallenge(root) {
           piece.draggable = false;
           normalizePieceArtwork(piece, board[squareName]);
           square.appendChild(piece);
+        }
+        if (moveFeedback?.square === squareName) {
+          const feedbackRing = document.createElement("span");
+          feedbackRing.className = "move-feedback-ring";
+          feedbackRing.setAttribute("aria-hidden", "true");
+          square.appendChild(feedbackRing);
         }
         if (fileIndex === 0) {
           const label = document.createElement("span");
@@ -561,6 +572,25 @@ function setupChallenge(root) {
     statusLabel.textContent = label;
     statusText.textContent = text;
     enhanceNotation(statusText);
+  }
+
+  function markMoveFeedback(square, kind, duration = 1050) {
+    const feedback = { square, kind };
+    moveFeedback = feedback;
+    window.clearTimeout(moveFeedbackTimer);
+    moveFeedbackTimer = window.setTimeout(() => {
+      if (moveFeedback !== feedback) return;
+      moveFeedback = null;
+      const feedbackSquare = boardEl.querySelector(`[data-square="${square}"]`);
+      feedbackSquare?.classList.remove("move-feedback", `move-feedback-${kind}`);
+      feedbackSquare?.querySelector(".move-feedback-ring")?.remove();
+    }, duration);
+  }
+
+  function clearMoveFeedback() {
+    moveFeedback = null;
+    window.clearTimeout(moveFeedbackTimer);
+    moveFeedbackTimer = null;
   }
 
   function showBoardCelebration(threatState) {
@@ -735,27 +765,32 @@ function setupChallenge(root) {
         setStatus("error", "先选白棋", "点击你想移动的白色棋子，再点击目标格。");
         return;
       }
+      clearMoveFeedback();
       selected = squareName;
       render();
       return;
     }
 
     if (piece && piece === piece.toUpperCase()) {
+      clearMoveFeedback();
       selected = squareName;
       render();
       return;
     }
 
     if (!legalTargets(board, selected).includes(squareName)) {
+      markMoveFeedback(selected, "wrong");
       setStatus("error", "这里不能走", `${PIECE_NAMES[board[selected]]}不能走到 ${squareName}。请选择棋盘上标出的合法目标格。`);
       render();
       return;
     }
 
-    const move = selected + squareName;
+    const fromSquare = selected;
+    const move = fromSquare + squareName;
     const current = puzzle.steps[step];
     selected = null;
     if (move !== current.move) {
+      markMoveFeedback(fromSquare, "wrong");
       const message = puzzle.errors[move] || puzzle.genericError;
       setStatus("error", "想法还差一步", message);
       render();
@@ -765,15 +800,17 @@ function setupChallenge(root) {
     applyMove(board, move);
     lastMove = move;
     step += 1;
+    markMoveFeedback(squareName, "correct", current.opponent ? 680 : 1150);
 
     if (current.opponent) {
       setStatus("", "方向正确", current.note || "对手正在回应……");
       render();
       window.setTimeout(() => {
+        clearMoveFeedback();
         applyMove(board, current.opponent);
         lastMove = current.opponent;
         render();
-      }, 480);
+      }, 700);
     } else if (step >= puzzle.steps.length) {
       setStatus("success", "挑战完成", puzzle.success);
       render();
@@ -789,6 +826,7 @@ function setupChallenge(root) {
     selected = null;
     step = 0;
     lastMove = null;
+    clearMoveFeedback();
     answer.classList.remove("show");
     setStatus("", "轮到你了", puzzle.goal);
     render();
