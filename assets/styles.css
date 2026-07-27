@@ -103,6 +103,15 @@ a { color: inherit; }
   font-weight: 700;
   letter-spacing: 0.08em;
 }
+.brand span {
+  margin-left: 5px;
+  color: var(--muted);
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
 
 .issue-mark {
   color: var(--muted);
