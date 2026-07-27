@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="每天两次，三分钟读懂一个国际象棋局面。">
+  <title>棋间三分钟｜今天的后排将杀</title>
+  <link rel="stylesheet" href="assets/styles.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="header-inner">
+      <a class="brand" href="index.html">棋间三分钟</a>
+      <span class="issue-mark">早九点 · 晚六点 · 每期完整讲解</span>
+    </div>
+  </header>
+
+  <main class="page">
+    <article>
+      <header class="article-header">
+        <p class="eyebrow">7月20日 · 早报残局</p>
+        <h1>王的身后，<br>没有退路</h1>
+        <p class="dek">黑王看似有三枚兵贴身保护，却恰好被它们关在了最后一排。白方只需要一步。</p>
+        <div class="meta">难度 1/5　·　预计 3 分钟　·　主题：后排将杀</div>
+      </header>
+
+      <section class="story">
+        <p class="dropcap">保护有时会变成囚笼。黑王面前的三枚兵像一堵整齐的城墙：挡住了白棋，也挡住了国王自己。残局里最危险的结构，常常正是那个看起来最安全的结构。</p>
+        <aside class="culture-note">
+          <strong>棋盘上的“走廊”</strong>
+          英文里，这类杀法叫 back-rank mate。中文棋友也常把它形容为“底线杀王”或“走廊杀王”：王被自己的兵挤在一条狭长走廊里，远处一辆车横着冲来，整场战斗就在一道横线上结束。
+        </aside>
+        <p>现在轮到白方。先不要计算很多步，只问一个问题：哪一步能直接攻击黑王，并且让它一个格子也走不了？</p>
+      </section>
+
+      <section class="challenge" data-puzzle="corridor">
+        <div class="challenge-head">
+          <p class="challenge-kicker">今日挑战</p>
+          <h2>白方走，一步将杀</h2>
+          <p>点击棋子，再点击目标格。走错会告诉你为什么。</p>
+        </div>
+        <div class="challenge-body">
+          <div class="board-wrap"><div class="board" role="grid" aria-label="国际象棋互动棋盘"></div></div>
+          <div class="coach">
+            <div class="progress" aria-label="进度"><span></span></div>
+            <div class="status" aria-live="polite"><span class="status-label"></span><p></p></div>
+            <div class="coach-actions">
+              <button class="btn" type="button" data-hint>给一点提示</button>
+              <button class="btn" type="button" data-reset>重新挑战</button>
+            </div>
+            <div class="ask-box">
+              <label for="ask-corridor">有哪里没想通？</label>
+              <div class="ask-row">
+                <textarea id="ask-corridor" placeholder="例如：为什么到这里就结束了？"></textarea>
+                <button class="btn btn-primary" type="button" data-ask>问教练</button>
+              </div>
+              <div class="ai-answer" aria-live="polite"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="lesson">
+        <h2>复盘：先看王有没有一扇窗</h2>
+        <ol class="lesson-steps">
+          <li><strong>Re8#</strong> 沿着第八横线将军，黑王与白车之间没有棋子可以阻挡。</li>
+          <li>f7、g7、h7 都被黑方自己的兵占据，黑王无法向前逃。</li>
+          <li>这也解释了为什么高手有时会提前走 …h6 或 …g6：不是为了进攻，而是给王留一个逃生格。</li>
+        </ol>
+        <div class="principle">带走一句：攻击底线之前，先数对方王的逃生格；保护王的兵，也可能是关住王的门。</div>
+      </section>
+    </article>
+
+    <section class="archive">
+      <div class="archive-head"><h2>往期推送</h2><span class="meta">每一篇都可直接挑战</span></div>
+      <div class="archive-grid">
+        <a class="archive-card" href="arabian-mate.html"><time>7月19日 · 晚报</time><h3>车与马的一把古老锁</h3><p>不用后，也能把王封得严严实实。</p><span class="tag">残局 · 一步将杀 →</span></a>
+        <a class="archive-card" href="philidor-center.html"><time>7月19日 · 早报</time><h3>会写歌的棋手，和一个中心兵</h3><p>面对菲利多尔防御，为什么要及时走 d4？</p><span class="tag">开局 · 两步挑战 →</span></a>
+        <a class="archive-card" href="knight-fork.html"><time>7月18日 · 晚报</time><h3>马为什么总从意外处出现</h3><p>找到一个格子，同时碰到王和后。</p><span class="tag">战术 · 双重攻击 →</span></a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">棋间三分钟 · 把每一个“为什么”留在棋盘上解决</footer>
+  <script src="assets/app.js"></script>
+</body>
+</html>
