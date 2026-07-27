@@ -272,6 +272,10 @@ function setupChallenge(root) {
   let selected = null;
   let step = 0;
   let lastMove = null;
+  let dragState = null;
+  let suppressClick = false;
+  let nativeDragFrom = null;
+  let nativeDropHandled = false;
   const boardEl = root.querySelector(".board");
   const status = root.querySelector(".status");
   const statusLabel = status.querySelector(".status-label");
@@ -328,6 +332,11 @@ function setupChallenge(root) {
         square.type = "button";
         square.className = "square" + ((fileIndex + rank) % 2 ? " dark" : "");
         square.dataset.square = squareName;
+        square.draggable = Boolean(
+          board[squareName]
+          && pieceColor(board[squareName]) === "w"
+          && step < puzzle.steps.length
+        );
         square.setAttribute("aria-label", squareName + (board[squareName] ? " " + PIECE_NAMES[board[squareName]] : " 空格"));
         if (selected === squareName) square.classList.add("selected");
         if (availableTargets.includes(squareName)) {
@@ -357,7 +366,19 @@ function setupChallenge(root) {
           label.textContent = file;
           square.appendChild(label);
         }
-        square.addEventListener("click", () => choose(squareName));
+        square.addEventListener("pointerdown", event => startDrag(event, squareName));
+        square.addEventListener("mousedown", event => {
+          if (!dragState) startDrag(event, squareName);
+        });
+        square.addEventListener("dragstart", event => startNativeDrag(event, squareName));
+        square.addEventListener("dragover", event => {
+          if (nativeDragFrom) event.preventDefault();
+        });
+        square.addEventListener("drop", event => dropNativePiece(event, squareName));
+        square.addEventListener("dragend", finishNativeDrag);
+        square.addEventListener("click", () => {
+          if (!suppressClick) choose(squareName);
+        });
         boardEl.appendChild(square);
       }
     }
@@ -369,6 +390,129 @@ function setupChallenge(root) {
     statusLabel.textContent = label;
     statusText.textContent = text;
   }
+
+  function startDrag(event, squareName) {
+    if (step >= puzzle.steps.length || event.button > 0) return;
+    const piece = board[squareName];
+    if (!piece || pieceColor(piece) !== "w") return;
+    const pieceImage = event.currentTarget.querySelector(".piece");
+    dragState = {
+      pointerId: event.pointerId ?? "mouse",
+      from: squareName,
+      startX: event.clientX,
+      startY: event.clientY,
+      active: false,
+      pieceImage: pieceImage?.cloneNode(true),
+      ghost: null
+    };
+  }
+
+  function showNativeDragTargets(from) {
+    const targets = legalTargets(board, from);
+    boardEl.querySelectorAll(".square").forEach(square => {
+      const squareName = square.dataset.square;
+      square.classList.toggle("selected", squareName === from);
+      square.classList.toggle("target", targets.includes(squareName));
+      square.classList.toggle("capture", targets.includes(squareName) && Boolean(board[squareName]));
+    });
+  }
+
+  function startNativeDrag(event, squareName) {
+    const piece = board[squareName];
+    if (step >= puzzle.steps.length || !piece || pieceColor(piece) !== "w") {
+      event.preventDefault();
+      return;
+    }
+    nativeDragFrom = squareName;
+    nativeDropHandled = false;
+    selected = squareName;
+    event.dataTransfer.effectAllowed = "move";
+    event.dataTransfer.setData("application/board-square", squareName);
+    showNativeDragTargets(squareName);
+    document.body.classList.add("is-dragging-piece");
+  }
+
+  function dropNativePiece(event, targetSquare) {
+    if (!nativeDragFrom) return;
+    event.preventDefault();
+    nativeDropHandled = true;
+    suppressClick = true;
+    window.setTimeout(() => { suppressClick = false; }, 0);
+    choose(targetSquare);
+  }
+
+  function finishNativeDrag() {
+    if (!nativeDragFrom) return;
+    nativeDragFrom = null;
+    document.body.classList.remove("is-dragging-piece");
+    if (!nativeDropHandled) {
+      selected = null;
+      render();
+    }
+    nativeDropHandled = false;
+  }
+
+  function positionDragGhost(event) {
+    if (!dragState?.ghost) return;
+    dragState.ghost.style.transform = `translate(${event.clientX}px, ${event.clientY}px) translate(-50%, -50%)`;
+  }
+
+  function moveDrag(event) {
+    if (!dragState || (event.pointerId != null && event.pointerId !== dragState.pointerId)) return;
+    const distance = Math.hypot(event.clientX - dragState.startX, event.clientY - dragState.startY);
+    if (!dragState.active && distance < 7) return;
+
+    event.preventDefault();
+    if (!dragState.active) {
+      dragState.active = true;
+      selected = dragState.from;
+      const ghost = document.createElement("div");
+      const squareSize = boardEl.getBoundingClientRect().width / 8;
+      ghost.className = "drag-ghost";
+      ghost.style.width = `${squareSize}px`;
+      ghost.style.height = `${squareSize}px`;
+      if (dragState.pieceImage) ghost.appendChild(dragState.pieceImage);
+      document.body.appendChild(ghost);
+      dragState.ghost = ghost;
+      document.body.classList.add("is-dragging-piece");
+      render();
+    }
+    positionDragGhost(event);
+  }
+
+  function finishDrag(event, cancelled = false) {
+    if (!dragState || (event.pointerId != null && event.pointerId !== dragState.pointerId)) return;
+    const finishedDrag = dragState;
+    dragState = null;
+    finishedDrag.ghost?.remove();
+    document.body.classList.remove("is-dragging-piece");
+
+    if (!finishedDrag.active) return;
+    event.preventDefault();
+    suppressClick = true;
+    window.setTimeout(() => { suppressClick = false; }, 0);
+
+    if (cancelled) {
+      selected = null;
+      render();
+      return;
+    }
+
+    const target = document.elementFromPoint(event.clientX, event.clientY)?.closest(".square");
+    const targetSquare = target?.dataset.square;
+    if (!targetSquare || targetSquare === finishedDrag.from) {
+      selected = null;
+      render();
+      return;
+    }
+    choose(targetSquare);
+  }
+
+  document.addEventListener("pointermove", moveDrag, { passive: false });
+  document.addEventListener("pointerup", event => finishDrag(event));
+  document.addEventListener("pointercancel", event => finishDrag(event, true));
+  document.addEventListener("mousemove", moveDrag, { passive: false });
+  document.addEventListener("mouseup", event => finishDrag(event));
 
   function choose(squareName) {
     if (step >= puzzle.steps.length) return;

@@ -268,10 +268,13 @@ h1 {
   border: 0;
   border-radius: 0;
   background: var(--light-square);
-  cursor: pointer;
+  cursor: grab;
   line-height: 1;
+  touch-action: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
+.square:active { cursor: grabbing; }
 .square.dark { background: var(--dark-square); }
 .square.selected { box-shadow: inset 0 0 0 5px #2ad8df; }
 .square.target::after {
@@ -304,6 +307,26 @@ h1 {
   pointer-events: none;
   user-select: none;
   filter: drop-shadow(0 2px 2px rgba(7, 20, 36, .22));
+}
+
+.drag-ghost {
+  position: fixed;
+  z-index: 9999;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  will-change: transform;
+}
+
+.drag-ghost .piece {
+  filter: drop-shadow(0 7px 5px rgba(7, 20, 36, .32));
+  transform: scale(1.08);
+}
+
+.is-dragging-piece,
+.is-dragging-piece * {
+  cursor: grabbing !important;
+  user-select: none;
 }
 
 .rank, .file {
