@@ -259,6 +259,19 @@ function legalTargets(board, from) {
   });
 }
 
+function kingThreatState(board, color) {
+  const king = color === "w" ? "K" : "k";
+  const kingSquare = Object.keys(board).find(square => board[square] === king);
+  if (!kingSquare) return "none";
+  const enemyColor = color === "w" ? "b" : "w";
+  if (!isSquareAttacked(board, kingSquare, enemyColor)) return "none";
+
+  const canEscape = Object.keys(board).some(square => {
+    return pieceColor(board[square]) === color && legalTargets(board, square).length > 0;
+  });
+  return canEscape ? "check" : "checkmate";
+}
+
 const MATERIAL_VALUES = { q: 9, r: 5, b: 3, n: 3, p: 1, k: 0 };
 const MATERIAL_LABELS = { q: "后", r: "车", b: "象", n: "马", p: "兵", k: "王" };
 const MATERIAL_ORDER = ["q", "r", "b", "n", "p", "k"];
@@ -421,6 +434,47 @@ function setupChallenge(root) {
     status.className = "status" + (kind ? " " + kind : "");
     statusLabel.textContent = label;
     statusText.textContent = text;
+  }
+
+  function showBoardCelebration(threatState) {
+    const celebration = document.createElement("div");
+    celebration.className = `board-celebration ${threatState === "checkmate" ? "mate" : ""}`;
+    celebration.innerHTML = `
+      <span class="celebration-check" aria-hidden="true">✓</span>
+      <strong>挑战完成</strong>
+      <small>${threatState === "checkmate" ? "将死！黑王无路可逃" : threatState === "check" ? "将军！黑王必须回应" : "思路正确，漂亮完成"}</small>
+    `;
+    boardEl.appendChild(celebration);
+    window.setTimeout(() => celebration.classList.add("leaving"), 2100);
+    window.setTimeout(() => celebration.remove(), 2550);
+  }
+
+  function animateThreatenedKing(threatState) {
+    const kingSquare = Object.keys(board).find(square => board[square] === "k");
+    const kingImage = kingSquare
+      ? boardEl.querySelector(`[data-square="${kingSquare}"] .piece`)
+      : null;
+    if (!kingImage || threatState === "none") return;
+
+    const kingCell = kingImage.closest(".square");
+    kingCell.classList.add(threatState === "checkmate" ? "king-mated" : "king-checked");
+
+    if (threatState === "checkmate") {
+      kingImage.classList.add("king-shattered");
+      ["north-west", "north-east", "south-west", "south-east"].forEach(direction => {
+        const fragment = kingImage.cloneNode(true);
+        fragment.classList.remove("king-shattered");
+        fragment.classList.add("king-fragment", `fragment-${direction}`);
+        fragment.setAttribute("aria-hidden", "true");
+        kingCell.appendChild(fragment);
+      });
+    }
+  }
+
+  function playCompletionFeedback() {
+    const threatState = kingThreatState(board, "b");
+    animateThreatenedKing(threatState);
+    showBoardCelebration(threatState);
   }
 
   function startDrag(event, squareName) {
@@ -596,6 +650,7 @@ function setupChallenge(root) {
     } else if (step >= puzzle.steps.length) {
       setStatus("success", "挑战完成", puzzle.success);
       render();
+      window.setTimeout(playCompletionFeedback, 80);
     } else {
       setStatus("", "继续", current.note || puzzle.goal);
       render();

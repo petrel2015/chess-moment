@@ -247,6 +247,7 @@ h1 {
 }
 
 .board {
+  position: relative;
   width: 100%;
   max-width: 520px;
   margin: 0 auto;
@@ -294,6 +295,129 @@ h1 {
 .square.target .piece { position: absolute; }
 .square.last-move { background-image: linear-gradient(rgba(236, 190, 65, .42), rgba(236, 190, 65, .42)); }
 .square:focus-visible { z-index: 2; outline: 3px solid #1677c8; outline-offset: -3px; }
+
+.king-checked {
+  z-index: 3;
+  animation: check-cell-pulse .72s ease-in-out 2;
+}
+.king-checked .piece {
+  animation: king-tremble .12s linear 8;
+}
+.king-checked::before,
+.king-mated::before {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  inset: 8%;
+  border: 3px solid rgba(196, 51, 43, .86);
+  border-radius: 50%;
+  animation: danger-ring .72s ease-out 2;
+}
+
+.king-mated {
+  z-index: 4;
+  overflow: visible;
+}
+.king-shattered {
+  animation: king-original-vanish .22s .12s ease-out forwards;
+}
+.king-fragment {
+  z-index: 5;
+  animation-duration: .78s;
+  animation-delay: .08s;
+  animation-fill-mode: forwards;
+  animation-timing-function: cubic-bezier(.18, .72, .27, 1);
+}
+.fragment-north-west {
+  clip-path: polygon(0 0, 55% 0, 48% 52%, 0 44%);
+  animation-name: shatter-north-west;
+}
+.fragment-north-east {
+  clip-path: polygon(55% 0, 100% 0, 100% 48%, 48% 52%);
+  animation-name: shatter-north-east;
+}
+.fragment-south-west {
+  clip-path: polygon(0 44%, 48% 52%, 56% 100%, 0 100%);
+  animation-name: shatter-south-west;
+}
+.fragment-south-east {
+  clip-path: polygon(48% 52%, 100% 48%, 100% 100%, 56% 100%);
+  animation-name: shatter-south-east;
+}
+
+.board-celebration {
+  position: absolute;
+  z-index: 20;
+  top: 50%;
+  left: 50%;
+  width: min(82%, 330px);
+  padding: 17px 16px 15px;
+  border: 2px solid #dcebdc;
+  border-radius: 16px;
+  background: rgba(24, 82, 51, .96);
+  box-shadow: 0 15px 35px rgba(4, 24, 15, .35);
+  color: #fff;
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  text-align: center;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  animation: celebration-pop .42s cubic-bezier(.2, 1.4, .4, 1);
+}
+.board-celebration.mate { background: rgba(20, 46, 77, .97); }
+.board-celebration.leaving {
+  opacity: 0;
+  transform: translate(-50%, -58%) scale(.96);
+  transition: opacity .4s ease, transform .4s ease;
+}
+.celebration-check {
+  width: 34px;
+  height: 34px;
+  margin: 0 auto 7px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: #dcf06c;
+  color: #173d2b;
+  font-size: 22px;
+  font-weight: 900;
+}
+.board-celebration strong,
+.board-celebration small { display: block; }
+.board-celebration strong { font-size: 20px; }
+.board-celebration small { margin-top: 3px; color: rgba(255,255,255,.82); font-size: 11px; }
+
+@keyframes king-tremble {
+  0%, 100% { transform: translateX(0) rotate(0); }
+  25% { transform: translateX(-3px) rotate(-2deg); }
+  75% { transform: translateX(3px) rotate(2deg); }
+}
+@keyframes check-cell-pulse {
+  0%, 100% { background-color: transparent; }
+  50% { background-color: rgba(196, 51, 43, .42); }
+}
+@keyframes danger-ring {
+  from { opacity: .95; transform: scale(.72); }
+  to { opacity: 0; transform: scale(1.22); }
+}
+@keyframes king-original-vanish {
+  to { opacity: 0; transform: scale(.76); }
+}
+@keyframes shatter-north-west {
+  to { opacity: 0; transform: translate(-19px, -24px) rotate(-25deg) scale(.74); }
+}
+@keyframes shatter-north-east {
+  to { opacity: 0; transform: translate(20px, -22px) rotate(28deg) scale(.72); }
+}
+@keyframes shatter-south-west {
+  to { opacity: 0; transform: translate(-22px, 25px) rotate(22deg) scale(.7); }
+}
+@keyframes shatter-south-east {
+  to { opacity: 0; transform: translate(22px, 26px) rotate(-27deg) scale(.72); }
+}
+@keyframes celebration-pop {
+  from { opacity: 0; transform: translate(-50%, -45%) scale(.68); }
+  to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
 
 .piece {
   position: absolute;
@@ -543,4 +667,11 @@ h1 {
 
 @media (prefers-reduced-motion: reduce) {
   * { scroll-behavior: auto !important; transition: none !important; }
+  .king-checked,
+  .king-checked .piece,
+  .king-checked::before,
+  .king-mated::before,
+  .king-shattered,
+  .king-fragment,
+  .board-celebration { animation-duration: .01ms !important; animation-delay: 0ms !important; }
 }
