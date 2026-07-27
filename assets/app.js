@@ -127,6 +127,105 @@ function applyMove(board, move) {
   delete board[from];
 }
 
+function pieceColor(piece) {
+  return piece === piece.toUpperCase() ? "w" : "b";
+}
+
+function squareAt(fileIndex, rank) {
+  if (fileIndex < 0 || fileIndex > 7 || rank < 1 || rank > 8) return null;
+  return "abcdefgh"[fileIndex] + rank;
+}
+
+function addStepMove(board, moves, color, fileIndex, rank) {
+  const target = squareAt(fileIndex, rank);
+  if (!target) return false;
+  const occupant = board[target];
+  if (!occupant) {
+    moves.push(target);
+    return true;
+  }
+  if (pieceColor(occupant) !== color) moves.push(target);
+  return false;
+}
+
+function pseudoLegalTargets(board, from, attacksOnly = false) {
+  const piece = board[from];
+  if (!piece) return [];
+  const color = pieceColor(piece);
+  const type = piece.toLowerCase();
+  const fileIndex = "abcdefgh".indexOf(from[0]);
+  const rank = Number(from[1]);
+  const moves = [];
+
+  if (type === "p") {
+    const direction = color === "w" ? 1 : -1;
+    for (const fileDelta of [-1, 1]) {
+      const target = squareAt(fileIndex + fileDelta, rank + direction);
+      if (target && (attacksOnly || (board[target] && pieceColor(board[target]) !== color))) {
+        moves.push(target);
+      }
+    }
+    if (attacksOnly) return moves;
+
+    const forward = squareAt(fileIndex, rank + direction);
+    if (forward && !board[forward]) {
+      moves.push(forward);
+      const startRank = color === "w" ? 2 : 7;
+      const doubleForward = squareAt(fileIndex, rank + direction * 2);
+      if (rank === startRank && doubleForward && !board[doubleForward]) moves.push(doubleForward);
+    }
+    return moves;
+  }
+
+  const jumpDirections = type === "n"
+    ? [[1, 2], [2, 1], [2, -1], [1, -2], [-1, -2], [-2, -1], [-2, 1], [-1, 2]]
+    : [[1, 1], [1, 0], [1, -1], [0, -1], [-1, -1], [-1, 0], [-1, 1], [0, 1]];
+
+  if (type === "n" || type === "k") {
+    jumpDirections.forEach(([fileDelta, rankDelta]) => {
+      addStepMove(board, moves, color, fileIndex + fileDelta, rank + rankDelta);
+    });
+    return moves;
+  }
+
+  const directions = [];
+  if (type === "r" || type === "q") directions.push([1, 0], [-1, 0], [0, 1], [0, -1]);
+  if (type === "b" || type === "q") directions.push([1, 1], [1, -1], [-1, 1], [-1, -1]);
+  directions.forEach(([fileDelta, rankDelta]) => {
+    let distance = 1;
+    while (addStepMove(
+      board,
+      moves,
+      color,
+      fileIndex + fileDelta * distance,
+      rank + rankDelta * distance
+    )) distance += 1;
+  });
+  return moves;
+}
+
+function isSquareAttacked(board, square, attackingColor) {
+  return Object.keys(board).some(from => {
+    const piece = board[from];
+    return pieceColor(piece) === attackingColor
+      && pseudoLegalTargets(board, from, true).includes(square);
+  });
+}
+
+function legalTargets(board, from) {
+  const piece = board[from];
+  if (!piece) return [];
+  const color = pieceColor(piece);
+  const enemyColor = color === "w" ? "b" : "w";
+
+  return pseudoLegalTargets(board, from).filter(to => {
+    const nextBoard = { ...board };
+    applyMove(nextBoard, from + to);
+    const kingSquare = Object.keys(nextBoard).find(square => nextBoard[square] === (color === "w" ? "K" : "k"));
+    return !kingSquare || !isSquareAttacked(nextBoard, kingSquare, enemyColor);
+  });
+}
+
 function setupChallenge(root) {
   const id = root.dataset.puzzle;
   const puzzle = PUZZLES[id];
@@ -147,6 +246,7 @@ function setupChallenge(root) {
   const answer = root.querySelector(".ai-answer");
 
   function render() {
+    const availableTargets = selected ? legalTargets(board, selected) : [];
     boardEl.innerHTML = "";
     for (let rank = 8; rank >= 1; rank--) {
       for (let fileIndex = 0; fileIndex < 8; fileIndex++) {
@@ -158,7 +258,10 @@ function setupChallenge(root) {
         square.dataset.square = squareName;
         square.setAttribute("aria-label", squareName + (board[squareName] ? " " + PIECE_NAMES[board[squareName]] : " 空格"));
         if (selected === squareName) square.classList.add("selected");
-        if (selected && squareName !== selected) square.classList.add("target");
+        if (availableTargets.includes(squareName)) {
+          square.classList.add("target");
+          if (board[squareName]) square.classList.add("capture");
+        }
         if (lastMove && lastMove.includes(squareName)) square.classList.add("last-move");
 
         if (board[squareName]) {
@@ -210,6 +313,12 @@ function setupChallenge(root) {
 
     if (piece && piece === piece.toUpperCase()) {
       selected = squareName;
+      render();
+      return;
+    }
+
+    if (!legalTargets(board, selected).includes(squareName)) {
+      setStatus("error", "这里不能走", `${PIECE_NAMES[board[selected]]}不能走到 ${squareName}。请选择棋盘上标出的合法目标格。`);
       render();
       return;
     }
