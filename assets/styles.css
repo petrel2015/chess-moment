@@ -170,6 +170,82 @@ h1 {
   background: rgba(22, 45, 74, .07);
 }
 
+.position-panel {
+  max-width: 520px;
+  margin: 0 auto 13px;
+  padding: 13px 14px 11px;
+  border: 1px solid rgba(12, 32, 57, .14);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, .64);
+  color: #172539;
+  font-family: ui-sans-serif, system-ui, sans-serif;
+}
+
+.material-line,
+.odds-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.material-side {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.material-side-black { text-align: right; }
+.material-side strong { display: block; font-size: 12px; }
+.material-side small {
+  display: block;
+  margin-top: 2px;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 10px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.side-dot {
+  width: 13px;
+  height: 13px;
+  flex: 0 0 auto;
+  border: 2px solid #172539;
+  border-radius: 50%;
+}
+.white-dot { background: #fffaf0; }
+.black-dot { background: #172539; }
+
+.odds-head {
+  margin-top: 11px;
+  font-size: 10px;
+}
+.odds-head strong { font-size: 11px; }
+.odds-head span { color: var(--muted); }
+
+.odds-bar {
+  height: 9px;
+  margin-top: 6px;
+  display: flex;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #d4dae0;
+  box-shadow: inset 0 0 0 1px rgba(12, 32, 57, .12);
+}
+.odds-bar span { min-width: 0; transition: width .28s ease; }
+.odds-white { background: #f7f1e6; }
+.odds-draw { background: #aeb7c1; }
+.odds-black { background: #172539; }
+
+.odds-note {
+  margin: 5px 0 0;
+  color: var(--muted);
+  font-size: 9px;
+  text-align: right;
+}
+
 .board {
   width: 100%;
   max-width: 520px;
@@ -408,6 +484,8 @@ h1 {
   .issue-mark { display: none; }
   .story { font-size: 17px; }
   .challenge-head { padding: 20px 18px 17px; }
+  .position-panel { padding-inline: 11px; }
+  .material-side small { max-width: 125px; }
   .board { border-width: 5px; }
   .ask-row { align-items: stretch; flex-direction: column; }
   .ask-row .btn { width: 100%; }

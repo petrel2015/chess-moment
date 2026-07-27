@@ -44,6 +44,10 @@ const PUZZLES = {
     fen: "6k1/5ppp/8/8/8/8/8/4R1K1 w - - 0 1",
     goal: "白方走。找到一步将杀。",
     steps: [{ move: "e1e8" }],
+    odds: [
+      { white: 100, draw: 0, black: 0 },
+      { white: 100, draw: 0, black: 0 }
+    ],
     success: "Re8#。黑王被自己的三枚兵关在第八横线，车一落到 e8，三个逃生格都不存在了。",
     defaultAnswer: "车走到 e8 后沿第八横线将军。黑王不能向前，因为 f7、g7、h7 都被自己的兵占着；也没有棋子能挡在车和王之间。因此这不是普通将军，而是立即将杀。",
     errors: {
@@ -60,6 +64,10 @@ const PUZZLES = {
     fen: "7k/7p/5N2/8/8/8/8/6RK w - - 0 1",
     goal: "白方走。用车和马完成将杀。",
     steps: [{ move: "g1g8" }],
+    odds: [
+      { white: 100, draw: 0, black: 0 },
+      { white: 100, draw: 0, black: 0 }
+    ],
     success: "Rg8#。车负责将军，f6 的马守住 g8 和 h7 周边的关键格。两枚棋子配合得像一把锁。",
     defaultAnswer: "车到 g8 直接攻击 h8 的王。黑王不能吃掉车，因为 f6 的马会保护 g8；h7 又被自己的兵堵住，所以没有合法逃路。",
     errors: {},
@@ -73,6 +81,10 @@ const PUZZLES = {
     fen: "2q3k1/8/8/5N2/8/8/8/6K1 w - - 0 1",
     goal: "白方走。找到同时攻击王和后的落点。",
     steps: [{ move: "f5e7" }],
+    odds: [
+      { white: 94, draw: 5, black: 1 },
+      { white: 99, draw: 1, black: 0 }
+    ],
     success: "Ne7+！马在 e7 将军，同时攻击 c8 的黑后。黑方必须先应对将军，白方下一步就能吃后。",
     defaultAnswer: "马到 e7 后同时攻击 g8 的王和 c8 的后。因为将军具有最高优先级，黑方必须先救王，无法同时保住后。",
     errors: {},
@@ -88,6 +100,11 @@ const PUZZLES = {
     steps: [
       { move: "d2d4", opponent: "e5d4", note: "黑方接受挑战，...exd4。现在该用哪枚已经发展的棋子收回中心兵？" },
       { move: "f3d4" }
+    ],
+    odds: [
+      { white: 40, draw: 49, black: 11 },
+      { white: 42, draw: 48, black: 10 },
+      { white: 44, draw: 47, black: 9 }
     ],
     success: "d4、...exd4、Nxd4。白方用一个中心兵换来了空间，并让马自然地站到活跃位置。",
     defaultAnswer: "d4 立即质问黑方的 e5 兵。交换后用 f3 的马收回，既恢复兵力平衡，又让马占据中心；同一步棋完成了两个发展目标。",
@@ -226,6 +243,26 @@ function legalTargets(board, from) {
   });
 }
 
+const MATERIAL_VALUES = { q: 9, r: 5, b: 3, n: 3, p: 1, k: 0 };
+const MATERIAL_LABELS = { q: "后", r: "车", b: "象", n: "马", p: "兵", k: "王" };
+const MATERIAL_ORDER = ["q", "r", "b", "n", "p", "k"];
+
+function materialFor(board, color) {
+  const counts = {};
+  let score = 0;
+  Object.values(board).forEach(piece => {
+    if (pieceColor(piece) !== color) return;
+    const type = piece.toLowerCase();
+    counts[type] = (counts[type] || 0) + 1;
+    score += MATERIAL_VALUES[type];
+  });
+  const pieces = MATERIAL_ORDER
+    .filter(type => counts[type])
+    .map(type => `${MATERIAL_LABELS[type]}×${counts[type]}`)
+    .join(" · ");
+  return { pieces: pieces || "无棋子", score };
+}
+
 function setupChallenge(root) {
   const id = root.dataset.puzzle;
   const puzzle = PUZZLES[id];
@@ -244,9 +281,44 @@ function setupChallenge(root) {
   const askBtn = root.querySelector("[data-ask]");
   const askInput = root.querySelector("textarea");
   const answer = root.querySelector(".ai-answer");
+  const boardWrap = boardEl.parentElement;
+  const positionPanel = document.createElement("section");
+  positionPanel.className = "position-panel";
+  positionPanel.setAttribute("aria-label", "当前子力与局面胜算");
+  boardWrap.insertBefore(positionPanel, boardEl);
+
+  function renderPositionPanel() {
+    const whiteMaterial = materialFor(board, "w");
+    const blackMaterial = materialFor(board, "b");
+    const odds = puzzle.odds?.[Math.min(step, puzzle.odds.length - 1)]
+      || { white: 34, draw: 33, black: 33 };
+    positionPanel.innerHTML = `
+      <div class="material-line">
+        <div class="material-side">
+          <span class="side-dot white-dot" aria-hidden="true"></span>
+          <span><strong>白方 ${whiteMaterial.score}分</strong><small>${whiteMaterial.pieces}</small></span>
+        </div>
+        <div class="material-side material-side-black">
+          <span><strong>黑方 ${blackMaterial.score}分</strong><small>${blackMaterial.pieces}</small></span>
+          <span class="side-dot black-dot" aria-hidden="true"></span>
+        </div>
+      </div>
+      <div class="odds-head">
+        <strong>局面胜算</strong>
+        <span>白胜 ${odds.white}% · 和棋 ${odds.draw}% · 黑胜 ${odds.black}%</span>
+      </div>
+      <div class="odds-bar" role="img" aria-label="白胜 ${odds.white}%，和棋 ${odds.draw}%，黑胜 ${odds.black}%">
+        <span class="odds-white" style="width:${odds.white}%"></span>
+        <span class="odds-draw" style="width:${odds.draw}%"></span>
+        <span class="odds-black" style="width:${odds.black}%"></span>
+      </div>
+      <p class="odds-note">教学局面估算 · 走子后实时更新</p>
+    `;
+  }
 
   function render() {
     const availableTargets = selected ? legalTargets(board, selected) : [];
+    renderPositionPanel();
     boardEl.innerHTML = "";
     for (let rank = 8; rank >= 1; rank--) {
       for (let fileIndex = 0; fileIndex < 8; fileIndex++) {
