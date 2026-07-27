@@ -3,9 +3,40 @@ const PIECE_NAMES = {
   k: "黑王", q: "黑后", r: "黑车", b: "黑象", n: "黑马", p: "黑兵"
 };
 
+// Each source PNG uses a different amount of transparent canvas. These values
+// describe the visible artwork inside its 512 × 512 source image so every
+// piece can be optically centered and normalized to the same visual footprint.
+const PIECE_BOUNDS = {
+  bb: [311, 67, 201, 313],
+  bk: [336, 81, 176, 428],
+  bn: [0, 63, 386, 316],
+  bp: [0, 108, 195, 274],
+  bq: [0, 161, 512, 346],
+  br: [0, 199, 206, 305],
+  wb: [195, 0, 270, 389],
+  wk: [219, 20, 221, 492],
+  wn: [127, 75, 279, 304],
+  wp: [80, 89, 218, 282],
+  wq: [87, 116, 352, 341],
+  wr: [79, 139, 236, 321]
+};
+
 function pieceAsset(piece) {
   const color = piece === piece.toUpperCase() ? "w" : "b";
   return `assets/pieces/${color}${piece.toLowerCase()}.png`;
+}
+
+function normalizePieceArtwork(element, piece) {
+  const color = piece === piece.toUpperCase() ? "w" : "b";
+  const key = color + piece.toLowerCase();
+  const [x, y, width, height] = PIECE_BOUNDS[key];
+  const scale = 0.82 * 512 / Math.max(width, height);
+  const visibleCenterX = x + width / 2;
+  const visibleCenterY = y + height / 2;
+
+  element.style.setProperty("--piece-canvas-size", `${scale * 100}%`);
+  element.style.setProperty("--piece-left", `${50 - scale * visibleCenterX / 512 * 100}%`);
+  element.style.setProperty("--piece-top", `${50 - scale * visibleCenterY / 512 * 100}%`);
 }
 
 const PUZZLES = {
@@ -136,6 +167,7 @@ function setupChallenge(root) {
           piece.src = pieceAsset(board[squareName]);
           piece.alt = "";
           piece.draggable = false;
+          normalizePieceArtwork(piece, board[squareName]);
           square.appendChild(piece);
         }
         if (fileIndex === 0) {

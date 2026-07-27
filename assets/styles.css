@@ -210,11 +210,14 @@ h1 {
 .square:focus-visible { z-index: 2; outline: 3px solid #1677c8; outline-offset: -3px; }
 
 .piece {
-  position: relative;
+  position: absolute;
   z-index: 1;
-  width: 92%;
-  height: 92%;
-  object-fit: contain;
+  left: var(--piece-left);
+  top: var(--piece-top);
+  width: var(--piece-canvas-size);
+  height: var(--piece-canvas-size);
+  max-width: none;
+  object-fit: fill;
   pointer-events: none;
   user-select: none;
   filter: drop-shadow(0 2px 2px rgba(7, 20, 36, .22));
