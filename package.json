@@ -7,6 +7,15 @@
     "validate": "node scripts/validate-content.mjs",
     "build": "node scripts/build-site.mjs",
     "publish:root": "npm run build && node scripts/publish-root.mjs",
+    "wechat:prepare": "node scripts/wechat-publish.mjs prepare",
+    "wechat:publish": "node scripts/wechat-publish.mjs publish",
+    "wechat:status": "node scripts/wechat-publish.mjs status",
+    "wechat:retry": "node scripts/wechat-publish.mjs retry",
+    "wechat:list": "node scripts/wechat-publish.mjs list",
     "test": "node --test tests/*.test.mjs"
+  },
+  "dependencies": {
+    "chess.js": "^1.4.0",
+    "pngjs": "^7.0.0"
   }
 }

@@ -1,2 +1,4 @@
 _site/
+_artifacts/
 .DS_Store
+node_modules/
