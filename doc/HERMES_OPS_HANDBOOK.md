@@ -6,8 +6,8 @@
 
 - Node.js 22+ 已安装
 - 项目目录：`/Users/aquarist/Documents/公众号发布自动流水线/chess-moment`
-- 当前分支：`codex/wechat-dual-output`
-- `npm install` 已执行（唯一运行时依赖：chess.js）
+- 当前分支：`main`
+- `npm ci` 已执行（运行时依赖：chess.js、pngjs）
 
 ## 命令速查
 
@@ -148,8 +148,7 @@ prompt: "执行棋刻 publish：node scripts/wechat-publish.mjs publish --slug <
 | 依赖 | 版本 | 用途 |
 |------|------|------|
 | chess.js | ^1.4.0 | 真实国际象棋规则校验：FEN 解析、走法合法性验证、将军/将死判定 |
-
-无其他运行时依赖。PNG 生成使用 Node.js 内置 zlib，HTTP 使用内置 fetch。
+| pngjs | ^7.0.0 | 棋盘 PNG 生成：像素级合成棋子素材，支持从行棋方视角翻转 |
 
 ## 安全约束
 
