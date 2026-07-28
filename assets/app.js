@@ -165,7 +165,7 @@ function normalizePieceArtwork(element, piece) {
   element.style.setProperty("--piece-top", `${50 - scale * visibleCenterY / 512 * 100}%`);
 }
 
-const PUZZLES = {
+const BUILT_IN_PUZZLES = {
   corridor: {
     fen: "6k1/5ppp/8/8/8/8/8/4R1K1 w - - 0 1",
     goal: "白方走。找到一步将杀。",
@@ -261,6 +261,11 @@ const PUZZLES = {
     ]
   }
 };
+
+const PUZZLES = { ...BUILT_IN_PUZZLES };
+if (window.CHESS_LESSON?.id && window.CHESS_LESSON?.challenge) {
+  PUZZLES[window.CHESS_LESSON.id] = window.CHESS_LESSON.challenge;
+}
 
 function parseFen(fen) {
   const board = {};

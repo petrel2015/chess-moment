@@ -14,18 +14,31 @@
 
 ## 内容结构
 
-- `index.html`：最新一期，也是 GitHub Pages 首页
-- `*.html`：历史推送
+- `content/*.json`：唯一课程内容源
+- `doc/`：框架设计与 roadmap
+- `scripts/`：校验和静态站生成器
+- `_site/`：自动生成的发布目录，不提交
 - `assets/styles.css`：全站样式
-- `assets/app.js`：棋盘交互与题目配置
+- `assets/app.js`：共享棋盘交互
 - `assets/pieces/`：透明贴纸棋子素材
 
 ## Hermes 更新流程
 
-1. 新增或更新文章 HTML。
-2. 在 `assets/app.js` 中添加对应棋局配置。
-3. 确认首页和历史文章链接正确。
-4. 本地打开页面完成走棋检查。
-5. 提交并推送到 `main` 分支。
+1. 只新增一个 `content/YYYY-MM-DD-topic.json`。
+2. 运行 `npm test`，查看字段、步骤、胜率和生成链接检查。
+3. 运行 `npm run build` 生成 `_site/`。
+4. 运行 `npm run preview`，在手机宽度下实走全部步骤。
+5. 提交 JSON 并推送到 `main`。
 
-GitHub Pages 会从 `main` 分支根目录自动更新，无需单独构建。
+GitHub Actions 会自动校验、构建并发布 `_site/` 到 GitHub Pages。新增课程不再手工编辑 HTML。
+
+## 本地命令
+
+```bash
+npm run validate
+npm test
+npm run build
+npm run preview
+```
+
+详细字段与失败诊断见 [`doc/DESIGN.md`](doc/DESIGN.md)，迭代计划见 [`doc/ROADMAP.md`](doc/ROADMAP.md)。
