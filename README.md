@@ -26,11 +26,11 @@
 
 1. 只新增一个 `content/YYYY-MM-DD-topic.json`。
 2. 运行 `npm test`，查看字段、步骤、胜率和生成链接检查。
-3. 运行 `npm run build` 生成 `_site/`。
-4. 运行 `npm run preview`，在手机宽度下实走全部步骤。
+3. 运行 `npm run publish:root` 生成 `_site/`，并把生成的 HTML 同步到仓库根目录。
+4. 在本地服务器中预览，并在手机宽度下实走全部步骤。
 5. 提交 JSON 并推送到 `main`。
 
-GitHub Actions 会自动校验、构建并发布 `_site/` 到 GitHub Pages。新增课程不再手工编辑 HTML。
+GitHub Actions 会自动校验并构建 `_site/`。当前 GitHub Pages 使用 `main` 根目录发布，所以新增课程不再手工编辑 HTML，但提交前需运行 `npm run publish:root`。
 
 ## 本地命令
 
@@ -38,7 +38,7 @@ GitHub Actions 会自动校验、构建并发布 `_site/` 到 GitHub Pages。新
 npm run validate
 npm test
 npm run build
-npm run preview
+npm run publish:root
 ```
 
 详细字段与失败诊断见 [`doc/DESIGN.md`](doc/DESIGN.md)，迭代计划见 [`doc/ROADMAP.md`](doc/ROADMAP.md)。
