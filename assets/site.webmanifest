@@ -1,0 +1,22 @@
+{
+  "name": "棋刻 · 每日国际象棋挑战",
+  "short_name": "棋刻",
+  "description": "每天一篇可互动、会讲解的国际象棋课程",
+  "start_url": "../index.html",
+  "scope": "../",
+  "display": "standalone",
+  "background_color": "#f3ecdd",
+  "theme_color": "#183c34",
+  "icons": [
+    {
+      "src": "icons/chess-moment-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/chess-moment-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

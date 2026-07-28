@@ -27,7 +27,7 @@ function archiveCards(currentSlug) {
     .join("");
 }
 
-function renderLesson(lesson) {
+function renderLesson(lesson, { homepage = false } = {}) {
   const lessonPayload = {
     id: lesson.slug,
     challenge: lesson.challenge
@@ -41,7 +41,15 @@ function renderLesson(lesson) {
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="${escapeHtml(lesson.summary)}">
-  <title>${escapeHtml(lesson.title)}｜棋刻 Chess Moment</title>
+  <meta name="theme-color" content="#183c34">
+  <meta name="application-name" content="棋刻">
+  <meta name="apple-mobile-web-app-title" content="棋刻">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <title>${homepage ? "棋刻｜每日国际象棋挑战" : `${escapeHtml(lesson.title)}｜棋刻`}</title>
+  <link rel="icon" type="image/svg+xml" href="assets/icons/chess-moment.svg">
+  <link rel="apple-touch-icon" sizes="180x180" href="assets/icons/apple-touch-icon.png">
+  <link rel="manifest" href="assets/site.webmanifest">
   <link rel="stylesheet" href="assets/styles.css">
 </head>
 <body>
@@ -84,5 +92,8 @@ function renderLesson(lesson) {
 for (const lesson of lessons) {
   await writeFile(path.join(outDir, `${lesson.slug}.html`), renderLesson(publicLesson(lesson)));
 }
-await writeFile(path.join(outDir, "index.html"), renderLesson(publicLesson(lessons[0])));
+await writeFile(
+  path.join(outDir, "index.html"),
+  renderLesson(publicLesson(lessons[0]), { homepage: true }),
+);
 console.log(`Built ${lessons.length} lessons and index.html into _site/.`);
