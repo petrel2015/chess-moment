@@ -36,7 +36,7 @@
 
 ```bash
 npm run validate              # 校验内容（含真实棋规验证）
-npm test                      # 运行全部测试
+npm test                      # 运行全部测试（串行执行，避免共享 _site 竞态）
 npm run build                 # 构建双版本站点（互动 + 公众号 + PNG + payload）
 npm run publish:root          # 构建并同步 HTML 到仓库根目录
 
