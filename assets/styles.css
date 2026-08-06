@@ -381,6 +381,17 @@ h1 {
 .move-feedback-correct .piece {
   animation: correct-piece-pop .48s cubic-bezier(.2, 1.35, .35, 1);
 }
+/* alternatives：合理但非最优的候选着，用琥珀色区别于「错」(红)与「正确」(绿)。 */
+.move-feedback-alt .move-feedback-ring {
+  border-color: #e6a817;
+  box-shadow: 0 0 0 3px rgba(230, 168, 23, .2), 0 0 16px rgba(230, 168, 23, .42);
+  animation: alt-ring .72s cubic-bezier(.18, .84, .3, 1) 1;
+}
+@keyframes alt-ring {
+  0% { opacity: 0; transform: scale(.72); }
+  35%, 75% { opacity: 1; transform: scale(1); }
+  100% { opacity: .55; transform: scale(1.05); }
+}
 
 @keyframes wrong-ring {
   0% { opacity: 0; transform: scale(.72); }
@@ -600,6 +611,7 @@ h1 {
 }
 .status.error { background: #f0ded8; color: #682b25; }
 .status.success { background: #dceadd; color: #16472c; }
+.status.alt { background: #f6ecd2; color: #6b4a12; }
 .status-label {
   display: block;
   margin-bottom: 4px;
@@ -738,6 +750,31 @@ h1 {
 .archive-card h3 { margin: 14px 0 8px; font-size: 20px; }
 .archive-card p { margin: 0; color: var(--muted); font-size: 14px; }
 .archive-card .tag { margin-top: auto; padding-top: 16px; color: var(--forest); font-family: ui-sans-serif, system-ui, sans-serif; font-size: 12px; font-weight: 700; }
+.tag-row { display: flex; flex-wrap: wrap; gap: 6px; padding-top: 10px; margin-top: 6px; }
+.tag-chip {
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: var(--forest-soft);
+  color: var(--forest);
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.7;
+}
+
+/* 先修课程提示，放在正文叙事之前。 */
+.prereq {
+  margin: 0 0 18px;
+  padding: 10px 14px;
+  border-left: 3px solid var(--gold);
+  background: rgba(183, 122, 42, .08);
+  border-radius: 0 8px 8px 0;
+  color: var(--forest);
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  font-size: 13px;
+}
+.prereq a { color: var(--gold); font-weight: 600; text-decoration: none; }
+.prereq a:hover { text-decoration: underline; }
 
 .site-footer {
   padding: 28px 0 50px;

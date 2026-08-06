@@ -17,14 +17,37 @@ await writeFile(path.join(outDir, ".nojekyll"), "");
 function archiveCards(currentSlug) {
   return lessons
     .filter(lesson => lesson.slug !== currentSlug)
-    .map(lesson => `
+    .map(lesson => {
+      const tagChips = (lesson.tags || [])
+        .map(tag => `<span class="tag-chip">${escapeHtml(tag)}</span>`).join("");
+      return `
       <a class="archive-card" href="${lesson.slug}.html">
         <time>${escapeHtml(lesson.dateLabel)} · ${escapeHtml(lesson.edition)}</time>
         <h3>${escapeHtml(lesson.title)}</h3>
         <p>${escapeHtml(lesson.summary)}</p>
         <span class="tag">${escapeHtml(lesson.category)} · ${lesson.challenge.steps.length}次选择 →</span>
-      </a>`)
+        ${tagChips ? `<span class="tag-row">${tagChips}</span>` : ""}
+      </a>`;
+    })
     .join("");
+}
+
+// 把 prerequisites slug 数组渲染成可点击的先修链接（标题取自当前课程集合）。
+function prereqLinks(lesson) {
+  if (!Array.isArray(lesson.prerequisites) || lesson.prerequisites.length === 0) return "";
+  const links = lesson.prerequisites
+    .map(slug => {
+      const target = lessons.find(item => item.slug === slug);
+      const title = target ? target.title : slug;
+      return `<a href="${slug}.html">${escapeHtml(title)}</a>`;
+    })
+    .join("、");
+  return `<p class="prereq"><strong>先修：</strong>${links} →</p>`;
+}
+
+function tagLine(tags) {
+  if (!Array.isArray(tags) || tags.length === 0) return "";
+  return `　·　标签：${tags.map(escapeHtml).join("、")}`;
 }
 
 function renderLesson(lesson, { homepage = false } = {}) {
@@ -60,9 +83,10 @@ function renderLesson(lesson, { homepage = false } = {}) {
         <p class="eyebrow">${escapeHtml(lesson.dateLabel)} · ${escapeHtml(lesson.edition)}${escapeHtml(lesson.category)}</p>
         <h1>${escapeHtml(lesson.title)}</h1>
         <p class="dek">${escapeHtml(lesson.summary)}</p>
-        <div class="meta">难度 ${lesson.difficulty}/5　·　预计 ${lesson.duration} 分钟　·　${lesson.challenge.steps.length} 次关键选择　·　主题：${escapeHtml(lesson.topic)}</div>
+        <div class="meta">难度 ${lesson.difficulty}/5　·　预计 ${lesson.duration} 分钟　·　${lesson.challenge.steps.length} 次关键选择　·　主题：${escapeHtml(lesson.topic)}${tagLine(lesson.tags)}</div>
       </header>
       <section class="story">
+        ${prereqLinks(lesson)}
         ${paragraphs}
         <aside class="culture-note"><strong>${escapeHtml(lesson.culture.title)}</strong>${escapeHtml(lesson.culture.content)}</aside>
       </section>
@@ -84,7 +108,7 @@ function renderLesson(lesson, { homepage = false } = {}) {
   </main>
   <footer class="site-footer">棋刻 Chess Moment · 每天三分钟，想明白一步棋</footer>
   <script>window.CHESS_LESSON=${JSON.stringify(lessonPayload).replaceAll("<", "\\u003c")};</script>
-  <script src="assets/app.js"></script>
+  <script type="module" src="assets/app.js"></script>
 </body>
 </html>`;
 }

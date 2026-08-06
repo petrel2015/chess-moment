@@ -1,8 +1,10 @@
 import { readdir, readFile } from "node:fs/promises";
 import path from "node:path";
 
-const MOVE_RE = /^[a-h][1-8][a-h][1-8]$/;
+// 走法格式：4 字符标准 UCI（如 e2e4），或 5 字符兵升变（末位 q/r/b/n，如 e7e8q）。
+const MOVE_RE = /^[a-h][1-8][a-h][1-8][qrbn]?$/;
 const FEN_RE = /^([prnbqkPRNBQK1-8]+\/){7}[prnbqkPRNBQK1-8]+ [wb] /;
+const SLUG_RE = /^[a-z0-9-]+$/;
 
 export async function loadLessons(root = process.cwd()) {
   const contentDir = path.join(root, "content");
@@ -57,6 +59,20 @@ export function validateLessons(lessons) {
         if (!MOVE_RE.test(step.move || "")) errors.push(`${at}: invalid step ${index + 1} move`);
         if (step.opponent && !MOVE_RE.test(step.opponent)) errors.push(`${at}: invalid opponent move at step ${index + 1}`);
         if (!step.note) errors.push(`${at}: step ${index + 1} needs note`);
+        // alternatives：可选，合理但非最优的候选着。命中时讲解但不推进进度。
+        if (step.alternatives !== undefined) {
+          if (!Array.isArray(step.alternatives) || step.alternatives.length === 0) {
+            errors.push(`${at}: step ${index + 1} alternatives must be a non-empty array if present`);
+          } else {
+            const altMoves = new Set([step.move]);
+            step.alternatives.forEach(alt => {
+              if (!MOVE_RE.test(alt.move || "")) errors.push(`${at}: invalid alternative move at step ${index + 1}`);
+              if (!alt.note) errors.push(`${at}: step ${index + 1} alternative needs note`);
+              if (altMoves.has(alt.move)) errors.push(`${at}: step ${index + 1} duplicate alternative move ${alt.move}`);
+              altMoves.add(alt.move);
+            });
+          }
+        }
       });
     }
     if (!Array.isArray(challenge.odds) || challenge.odds.length !== (challenge.steps?.length || 0) + 1) {
@@ -74,6 +90,29 @@ export function validateLessons(lessons) {
       challenge.suggestions.forEach(item => {
         if (!item.label || !challenge.quick[item.key]) errors.push(`${at}: suggestion ${item.key} has no answer`);
       });
+    }
+    // tags：可选，非空字符串数组（用于 M3 路径浏览与当前 archive 展示）。
+    if (lesson.tags !== undefined) {
+      if (!Array.isArray(lesson.tags) || lesson.tags.length === 0
+        || lesson.tags.some(tag => typeof tag !== "string" || !tag.trim())) {
+        errors.push(`${at}: tags must be a non-empty array of strings if present`);
+      }
+    }
+    // prerequisites：可选，slug 数组，引用必须指向当前课程集合中存在的课程。
+    if (lesson.prerequisites !== undefined) {
+      if (!Array.isArray(lesson.prerequisites) || lesson.prerequisites.length === 0
+        || lesson.prerequisites.some(slug => !SLUG_RE.test(slug))) {
+        errors.push(`${at}: prerequisites must be a non-empty array of slugs if present`);
+      }
+    }
+  }
+
+  // prerequisites 引用死链检查（需要所有 slug 已收集完毕）。
+  for (const lesson of lessons) {
+    if (!Array.isArray(lesson.prerequisites)) continue;
+    const at = lesson.__file || lesson.slug || "unknown";
+    for (const slug of lesson.prerequisites) {
+      if (!slugs.has(slug)) errors.push(`${at}: prerequisite ${slug} not found`);
     }
   }
   return errors;

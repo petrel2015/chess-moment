@@ -1,3 +1,12 @@
+import {
+  applyMove as engineApplyMove,
+  kingThreatState,
+  legalTargets,
+  materialFor,
+  parseFen as engineParseFen,
+  pieceColor,
+} from "./chess-engine.mjs";
+
 const PIECE_NAMES = {
   K: "白王", Q: "白后", R: "白车", B: "白象", N: "白马", P: "白兵",
   k: "黑王", q: "黑后", r: "黑车", b: "黑象", n: "黑马", p: "黑兵"
@@ -267,168 +276,17 @@ if (window.CHESS_LESSON?.id && window.CHESS_LESSON?.challenge) {
   PUZZLES[window.CHESS_LESSON.id] = window.CHESS_LESSON.challenge;
 }
 
-function parseFen(fen) {
-  const board = {};
-  const rows = fen.split(" ")[0].split("/");
-  rows.forEach((row, rowIndex) => {
-    let file = 0;
-    for (const token of row) {
-      if (/\d/.test(token)) file += Number(token);
-      else {
-        const square = "abcdefgh"[file] + (8 - rowIndex);
-        board[square] = token;
-        file += 1;
-      }
-    }
-  });
-  return board;
-}
-
-function applyMove(board, move) {
-  const from = move.slice(0, 2);
-  const to = move.slice(2, 4);
-  board[to] = board[from];
-  delete board[from];
-}
-
-function pieceColor(piece) {
-  return piece === piece.toUpperCase() ? "w" : "b";
-}
-
-function squareAt(fileIndex, rank) {
-  if (fileIndex < 0 || fileIndex > 7 || rank < 1 || rank > 8) return null;
-  return "abcdefgh"[fileIndex] + rank;
-}
-
-function addStepMove(board, moves, color, fileIndex, rank) {
-  const target = squareAt(fileIndex, rank);
-  if (!target) return false;
-  const occupant = board[target];
-  if (!occupant) {
-    moves.push(target);
-    return true;
-  }
-  if (pieceColor(occupant) !== color) moves.push(target);
-  return false;
-}
-
-function pseudoLegalTargets(board, from, attacksOnly = false) {
-  const piece = board[from];
-  if (!piece) return [];
-  const color = pieceColor(piece);
-  const type = piece.toLowerCase();
-  const fileIndex = "abcdefgh".indexOf(from[0]);
-  const rank = Number(from[1]);
-  const moves = [];
-
-  if (type === "p") {
-    const direction = color === "w" ? 1 : -1;
-    for (const fileDelta of [-1, 1]) {
-      const target = squareAt(fileIndex + fileDelta, rank + direction);
-      if (target && (attacksOnly || (board[target] && pieceColor(board[target]) !== color))) {
-        moves.push(target);
-      }
-    }
-    if (attacksOnly) return moves;
-
-    const forward = squareAt(fileIndex, rank + direction);
-    if (forward && !board[forward]) {
-      moves.push(forward);
-      const startRank = color === "w" ? 2 : 7;
-      const doubleForward = squareAt(fileIndex, rank + direction * 2);
-      if (rank === startRank && doubleForward && !board[doubleForward]) moves.push(doubleForward);
-    }
-    return moves;
-  }
-
-  const jumpDirections = type === "n"
-    ? [[1, 2], [2, 1], [2, -1], [1, -2], [-1, -2], [-2, -1], [-2, 1], [-1, 2]]
-    : [[1, 1], [1, 0], [1, -1], [0, -1], [-1, -1], [-1, 0], [-1, 1], [0, 1]];
-
-  if (type === "n" || type === "k") {
-    jumpDirections.forEach(([fileDelta, rankDelta]) => {
-      addStepMove(board, moves, color, fileIndex + fileDelta, rank + rankDelta);
-    });
-    return moves;
-  }
-
-  const directions = [];
-  if (type === "r" || type === "q") directions.push([1, 0], [-1, 0], [0, 1], [0, -1]);
-  if (type === "b" || type === "q") directions.push([1, 1], [1, -1], [-1, 1], [-1, -1]);
-  directions.forEach(([fileDelta, rankDelta]) => {
-    let distance = 1;
-    while (addStepMove(
-      board,
-      moves,
-      color,
-      fileIndex + fileDelta * distance,
-      rank + rankDelta * distance
-    )) distance += 1;
-  });
-  return moves;
-}
-
-function isSquareAttacked(board, square, attackingColor) {
-  return Object.keys(board).some(from => {
-    const piece = board[from];
-    return pieceColor(piece) === attackingColor
-      && pseudoLegalTargets(board, from, true).includes(square);
-  });
-}
-
-function legalTargets(board, from) {
-  const piece = board[from];
-  if (!piece) return [];
-  const color = pieceColor(piece);
-  const enemyColor = color === "w" ? "b" : "w";
-
-  return pseudoLegalTargets(board, from).filter(to => {
-    const nextBoard = { ...board };
-    applyMove(nextBoard, from + to);
-    const kingSquare = Object.keys(nextBoard).find(square => nextBoard[square] === (color === "w" ? "K" : "k"));
-    return !kingSquare || !isSquareAttacked(nextBoard, kingSquare, enemyColor);
-  });
-}
-
-function kingThreatState(board, color) {
-  const king = color === "w" ? "K" : "k";
-  const kingSquare = Object.keys(board).find(square => board[square] === king);
-  if (!kingSquare) return "none";
-  const enemyColor = color === "w" ? "b" : "w";
-  if (!isSquareAttacked(board, kingSquare, enemyColor)) return "none";
-
-  const canEscape = Object.keys(board).some(square => {
-    return pieceColor(board[square]) === color && legalTargets(board, square).length > 0;
-  });
-  return canEscape ? "check" : "checkmate";
-}
-
-const MATERIAL_VALUES = { q: 9, r: 5, b: 3, n: 3, p: 1, k: 0 };
-const MATERIAL_LABELS = { q: "后", r: "车", b: "象", n: "马", p: "兵", k: "王" };
-const MATERIAL_ORDER = ["q", "r", "b", "n", "p", "k"];
-
-function materialFor(board, color) {
-  const counts = {};
-  let score = 0;
-  Object.values(board).forEach(piece => {
-    if (pieceColor(piece) !== color) return;
-    const type = piece.toLowerCase();
-    counts[type] = (counts[type] || 0) + 1;
-    score += MATERIAL_VALUES[type];
-  });
-  const pieces = MATERIAL_ORDER
-    .filter(type => counts[type])
-    .map(type => `${MATERIAL_LABELS[type]}×${counts[type]}`)
-    .join(" · ");
-  return { pieces: pieces || "无棋子", score };
-}
+// 引擎在 chess-engine.mjs 中实现，覆盖王车易位、兵升变、吃过路兵与将军/将死判定。
+// app.js 用 state = { board, castling, enPassant } 表示局面，下面两个别名保持调用简洁。
+const parseFen = engineParseFen;
+const applyMove = engineApplyMove;
 
 function setupChallenge(root) {
   const id = root.dataset.puzzle;
   const puzzle = PUZZLES[id];
   if (!puzzle) return;
 
-  let board = parseFen(puzzle.fen);
+  let state = parseFen(puzzle.fen);
   let selected = null;
   let step = 0;
   let lastMove = null;
@@ -470,8 +328,8 @@ function setupChallenge(root) {
   boardWrap.insertBefore(positionPanel, boardEl);
 
   function renderPositionPanel() {
-    const whiteMaterial = materialFor(board, "w");
-    const blackMaterial = materialFor(board, "b");
+    const whiteMaterial = materialFor(state.board, "w");
+    const blackMaterial = materialFor(state.board, "b");
     const odds = puzzle.odds?.[Math.min(step, puzzle.odds.length - 1)]
       || { white: 34, draw: 33, black: 33 };
     positionPanel.innerHTML = `
@@ -499,7 +357,8 @@ function setupChallenge(root) {
   }
 
   function render() {
-    const availableTargets = selected ? legalTargets(board, selected) : [];
+    const board = state.board;
+    const availableTargets = selected ? legalTargets(state, selected) : [];
     renderPositionPanel();
     boardEl.innerHTML = "";
     for (let rank = 8; rank >= 1; rank--) {
@@ -612,6 +471,7 @@ function setupChallenge(root) {
   }
 
   function animateThreatenedKing(threatState) {
+    const board = state.board;
     const kingSquare = Object.keys(board).find(square => board[square] === "k");
     const kingImage = kingSquare
       ? boardEl.querySelector(`[data-square="${kingSquare}"] .piece`)
@@ -634,14 +494,14 @@ function setupChallenge(root) {
   }
 
   function playCompletionFeedback() {
-    const threatState = kingThreatState(board, "b");
+    const threatState = kingThreatState(state, "b");
     animateThreatenedKing(threatState);
     showBoardCelebration(threatState);
   }
 
   function startDrag(event, squareName) {
     if (step >= puzzle.steps.length || event.button > 0) return;
-    const piece = board[squareName];
+    const piece = state.board[squareName];
     if (!piece || pieceColor(piece) !== "w") return;
     const pieceImage = event.currentTarget.querySelector(".piece");
     dragState = {
@@ -656,7 +516,8 @@ function setupChallenge(root) {
   }
 
   function showNativeDragTargets(from) {
-    const targets = legalTargets(board, from);
+    const board = state.board;
+    const targets = legalTargets(state, from);
     boardEl.querySelectorAll(".square").forEach(square => {
       const squareName = square.dataset.square;
       square.classList.toggle("selected", squareName === from);
@@ -666,7 +527,7 @@ function setupChallenge(root) {
   }
 
   function startNativeDrag(event, squareName) {
-    const piece = board[squareName];
+    const piece = state.board[squareName];
     if (step >= puzzle.steps.length || !piece || pieceColor(piece) !== "w") {
       event.preventDefault();
       return;
@@ -764,6 +625,7 @@ function setupChallenge(root) {
 
   function choose(squareName) {
     if (step >= puzzle.steps.length) return;
+    const board = state.board;
     const piece = board[squareName];
     if (!selected) {
       if (!piece || piece === piece.toLowerCase()) {
@@ -783,7 +645,7 @@ function setupChallenge(root) {
       return;
     }
 
-    if (!legalTargets(board, selected).includes(squareName)) {
+    if (!legalTargets(state, selected).includes(squareName)) {
       markMoveFeedback(selected, "wrong");
       setStatus("error", "这里不能走", `${PIECE_NAMES[board[selected]]}不能走到 ${squareName}。请选择棋盘上标出的合法目标格。`);
       render();
@@ -795,6 +657,14 @@ function setupChallenge(root) {
     const current = puzzle.steps[step];
     selected = null;
     if (move !== current.move) {
+      // 先查 alternatives：合理但非最优的候选着，讲解但不推进进度。
+      const alt = (current.alternatives || []).find(candidate => candidate.move === move);
+      if (alt) {
+        markMoveFeedback(fromSquare, "alt");
+        setStatus("alt", "这步也合理", alt.note);
+        render();
+        return;
+      }
       markMoveFeedback(fromSquare, "wrong");
       const message = puzzle.errors[move] || puzzle.genericError;
       setStatus("error", "想法还差一步", message);
@@ -802,7 +672,7 @@ function setupChallenge(root) {
       return;
     }
 
-    applyMove(board, move);
+    state = applyMove(state, move);
     lastMove = move;
     step += 1;
     markMoveFeedback(squareName, "correct", current.opponent ? 680 : 1150);
@@ -812,7 +682,7 @@ function setupChallenge(root) {
       render();
       window.setTimeout(() => {
         clearMoveFeedback();
-        applyMove(board, current.opponent);
+        state = applyMove(state, current.opponent);
         lastMove = current.opponent;
         render();
       }, 700);
@@ -827,7 +697,7 @@ function setupChallenge(root) {
   }
 
   function reset() {
-    board = parseFen(puzzle.fen);
+    state = parseFen(puzzle.fen);
     selected = null;
     step = 0;
     lastMove = null;
