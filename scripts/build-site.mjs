@@ -1,6 +1,9 @@
 import { cp, mkdir, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { escapeHtml, loadLessons, publicLesson, validateLessons } from "./content-lib.mjs";
+import { renderWechatArticle, renderWechatIndex } from "./wechat-render.mjs";
+import { generateBoardPng } from "./board-png.mjs";
+import { buildWechatPayload, auditPayload } from "./wechat-payload.mjs";
 
 const root = process.cwd();
 const outDir = path.join(root, "_site");
@@ -13,6 +16,15 @@ await rm(outDir, { recursive: true, force: true });
 await mkdir(outDir, { recursive: true });
 await cp(path.join(root, "assets"), path.join(outDir, "assets"), { recursive: true });
 await writeFile(path.join(outDir, ".nojekyll"), "");
+
+// Create wechat output directories
+const wechatDir = path.join(outDir, "wechat");
+const wechatAssetsDir = path.join(wechatDir, "assets");
+const wechatBoardsDir = path.join(wechatAssetsDir, "boards");
+const artifactsDir = path.join(root, "_artifacts", "wechat");
+await mkdir(wechatDir, { recursive: true });
+await mkdir(wechatBoardsDir, { recursive: true });
+await mkdir(artifactsDir, { recursive: true });
 
 function archiveCards(currentSlug) {
   return lessons
@@ -113,6 +125,7 @@ function renderLesson(lesson, { homepage = false } = {}) {
 </html>`;
 }
 
+// Generate interactive pages
 for (const lesson of lessons) {
   await writeFile(path.join(outDir, `${lesson.slug}.html`), renderLesson(publicLesson(lesson)));
 }
@@ -120,4 +133,34 @@ await writeFile(
   path.join(outDir, "index.html"),
   renderLesson(publicLesson(lessons[0]), { homepage: true }),
 );
-console.log(`Built ${lessons.length} lessons and index.html into _site/.`);
+
+// Generate WeChat preview pages, board PNGs, and payloads
+for (const lesson of lessons) {
+  // WeChat HTML preview
+  await writeFile(
+    path.join(wechatDir, `${lesson.slug}.html`),
+    renderWechatArticle(publicLesson(lesson)),
+  );
+
+  // Static board PNG
+  const png = await generateBoardPng(lesson.challenge.fen, { size: 480 });
+  await writeFile(path.join(wechatBoardsDir, `${lesson.slug}.png`), png);
+
+  // Structured payload (no credentials)
+  const payload = await buildWechatPayload(publicLesson(lesson));
+  await writeFile(
+    path.join(artifactsDir, `${lesson.slug}.payload.json`),
+    JSON.stringify(payload, null, 2),
+  );
+
+  // Audit payload for credential leakage
+  const violations = auditPayload(payload);
+  if (violations.length) {
+    throw new Error(`Payload audit failed for ${lesson.slug}: ${violations.join(", ")}`);
+  }
+}
+
+// WeChat preview index
+await writeFile(path.join(wechatDir, "index.html"), renderWechatIndex(lessons));
+
+console.log(`Built ${lessons.length} lessons, ${lessons.length} wechat previews, and ${lessons.length} payloads into _site/.`);

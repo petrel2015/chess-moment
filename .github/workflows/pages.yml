@@ -8,6 +8,7 @@ on:
       - "scripts/**"
       - "assets/**"
       - "package.json"
+      - "package-lock.json"
       - ".github/workflows/pages.yml"
   workflow_dispatch:
 
@@ -28,6 +29,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 24
+          cache: npm
+      - run: npm ci
       - run: npm test
       - run: npm run build
       - uses: actions/upload-pages-artifact@v4

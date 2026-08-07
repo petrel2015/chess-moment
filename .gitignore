@@ -1,3 +1,5 @@
 _site/
+_artifacts/
 .DS_Store
 .zcode/
+node_modules/
