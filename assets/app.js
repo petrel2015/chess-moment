@@ -337,6 +337,10 @@ function setupChallenge(root) {
   let suppressClick = false;
   let nativeDragFrom = null;
   let nativeDropHandled = false;
+  // 对手回应窗口：用户走对一步后到对手 auto-reply 完成之间为 true，
+  // 期间禁止用户操作（避免与异步 render 竞争导致状态错乱）。
+  let awaitingOpponent = false;
+  let opponentTimer = null;
   const boardEl = root.querySelector(".board");
   const status = root.querySelector(".status");
   const statusLabel = status.querySelector(".status-label");
@@ -676,6 +680,8 @@ function setupChallenge(root) {
 
   function choose(squareName) {
     if (step >= puzzle.steps.length) return;
+    // 对手正在回应（异步窗口）：忽略用户操作，避免与 render 竞争。
+    if (awaitingOpponent) return;
     const board = state.board;
     const piece = board[squareName];
     if (!selected) {
@@ -729,13 +735,32 @@ function setupChallenge(root) {
     markMoveFeedback(squareName, "correct", current.opponent ? 680 : 1150);
 
     if (current.opponent) {
+      // 进入对手回应窗口：阻止用户在此期间操作（避免与异步 render 竞争）。
+      awaitingOpponent = true;
       setStatus("", "方向正确", current.note || "对手正在回应……");
       render();
-      window.setTimeout(() => {
-        clearMoveFeedback();
-        state = applyMove(state, current.opponent);
-        lastMove = current.opponent;
-        render();
+      const opponentMove = current.opponent;
+      const opponentFrom = opponentMove.slice(0, 2);
+      const opponentTo = opponentMove.slice(2, 4);
+      opponentTimer = window.setTimeout(() => {
+        opponentTimer = null;
+        try {
+          // 校验对手回应在当前局面合法，避免数据错误静默腐蚀棋盘。
+          if (!legalTargets(state, opponentFrom).includes(opponentTo)) {
+            throw new Error(`对手回应 ${opponentMove} 在当前局面不合法`);
+          }
+          clearMoveFeedback();
+          state = applyMove(state, opponentMove);
+          lastMove = opponentMove;
+          awaitingOpponent = false;
+          render();
+        } catch (err) {
+          // 对手回应失败：解锁状态并明确提示，绝不让用户卡在无反馈的空窗。
+          awaitingOpponent = false;
+          setStatus("error", "对手回应异常", "对手的自动回未能完成。可以点「反馈问题」附上当前局面报告，或点「重新挑战」重试。");
+          console.error("opponent reply failed:", err);
+          render();
+        }
       }, 700);
     } else if (step >= puzzle.steps.length) {
       setStatus("success", "挑战完成", puzzle.success);
@@ -777,6 +802,12 @@ function setupChallenge(root) {
   }
 
   function reset() {
+    // 取消任何挂起的对手回应定时器，并解锁操作窗口。
+    if (opponentTimer !== null) {
+      window.clearTimeout(opponentTimer);
+      opponentTimer = null;
+    }
+    awaitingOpponent = false;
     state = parseFen(puzzle.fen);
     selected = null;
     step = 0;

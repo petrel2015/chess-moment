@@ -70,6 +70,25 @@ test("shared interaction JavaScript parses", () => {
   assert.equal(result.status, 0, result.stderr);
 });
 
+// 架构断言：对手回应窗口必须有健壮性保护，防止用户卡在无反馈的空窗。
+// 这些守卫是针对"走完一步后对手 auto-reply 没正常执行"类 bug 的回归保护。
+test("app.js guards the opponent-reply window against getting stuck", async () => {
+  const src = await readFile(path.join(root, "assets", "app.js"), "utf8");
+  // 1) awaitingOpponent 标志：对手回应窗口内禁止用户操作
+  assert.ok(/let awaitingOpponent/.test(src), "missing awaitingOpponent flag");
+  assert.ok(/if \(awaitingOpponent\) return/.test(src), "choose() must early-return while awaiting opponent");
+  // 2) 对手回应用 try/catch 包裹，失败时显示提示而非静默吞错
+  assert.ok(/opponent reply failed/.test(src), "opponent reply errors must be logged");
+  assert.ok(/对手回应异常/.test(src), "opponent reply failure must surface a user-visible status");
+  // 3) reset() 清理挂起的定时器，避免悬挂的对手回应污染重置后的状态
+  assert.ok(/clearTimeout\(opponentTimer\)/.test(src), "reset() must clear pending opponent timer");
+  // 4) 对手回应前用 legalTargets 校验合法性（防御 state 偏离）
+  assert.ok(
+    /legalTargets\(state, opponentFrom\)\.includes\(opponentTo\)/.test(src),
+    "opponent reply must be validated against legalTargets before applying"
+  );
+});
+
 test("build generates wechat preview pages for all lessons", async () => {
   const wechatDir = path.join(root, "_site", "wechat");
   const wechatFiles = (await readdir(wechatDir)).filter(f => f.endsWith(".html")).sort();
