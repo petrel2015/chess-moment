@@ -7,6 +7,7 @@ import {
   legalTargets,
   parseFen,
   pseudoLegalTargets,
+  toFen,
 } from "../assets/chess-engine.mjs";
 
 // ---- 兵升变 ---------------------------------------------------------------
@@ -170,4 +171,56 @@ test("double pawn push from a starting rank sets the en passant square", () => {
   assert.equal(startState.board.d2, "P", "d2 should hold a white pawn for the push");
   const after = applyMove(startState, "d2d4");
   assert.equal(after.enPassant, "d3");
+});
+
+// ---- FEN 序列化 (toFen) --------------------------------------------------
+// toFen 是 parseFen 的逆操作；往返测试只比较引擎实际使用的 4 个字段
+// （placement / sideToMove / castling / enPassant），半步与全步计数器固定 0 1。
+
+function fourFieldFen(fen) {
+  // 取 FEN 前 4 段，丢弃 halfmove/fullmove，再补回占位 "0 1" 用于和 toFen 比较。
+  const parts = fen.split(" ");
+  return `${parts[0]} ${parts[1]} ${parts[2]} ${parts[3]} 0 1`;
+}
+
+test("toFen round-trips a simple endgame FEN (4 fields)", () => {
+  const fen = "7k/6P1/6K1/8/8/8/8/8 w - - 0 1";
+  assert.equal(toFen(parseFen(fen), "w"), fourFieldFen(fen));
+});
+
+test("toFen merges consecutive empty squares into digits", () => {
+  const fen = "8/8/8/8/8/8/8/8 w - - 0 1";
+  const out = toFen(parseFen(fen), "w");
+  assert.equal(out.split(" ")[0], "8/8/8/8/8/8/8/8");
+});
+
+test("toFen emits castling rights in KQkq order, or '-' when none", () => {
+  const full = "r1bqkbnr/ppp1pppp/2n5/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 2 3";
+  assert.equal(toFen(parseFen(full), "w").split(" ")[2], "KQkq");
+  const none = "4k3/8/8/8/8/8/8/4K3 w - - 0 1";
+  assert.equal(toFen(parseFen(none), "w").split(" ")[2], "-");
+});
+
+test("toFen emits enPassant square or '-'", () => {
+  const withEp = "4k3/8/8/3pP3/8/8/8/4K3 w - d6 0 1";
+  assert.equal(toFen(parseFen(withEp), "w").split(" ")[3], "d6");
+  const noEp = "4k3/8/8/8/8/8/8/4K3 w - - 0 1";
+  assert.equal(toFen(parseFen(noEp), "w").split(" ")[3], "-");
+});
+
+test("toFen does not depend on the sideToMove field dropped by applyMove", () => {
+  // applyMove 丢弃 sideToMove；toFen 必须仍能序列化其输出。
+  const state = parseFen("4k3/8/8/8/8/8/4P3/4K3 w - - 0 1");
+  const next = applyMove(state, "e2e4");
+  const fen = toFen(next, "b");
+  assert.equal(typeof fen, "string");
+  assert.equal(fen.split(" ")[1], "b");
+  assert.equal(fen.split(" ")[3], "e3", "double pawn push should serialize enPassant e3");
+});
+
+test("toFen serializes a promoted piece correctly", () => {
+  const state = parseFen("7k/6P1/6K1/8/8/8/8/8 w - - 0 1");
+  const after = applyMove(state, "g7g8q");
+  const fen = toFen(after, "b");
+  assert.equal(fen.split(" ")[0], "6Qk/8/6K1/8/8/8/8/8");
 });

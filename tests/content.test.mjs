@@ -4,7 +4,7 @@ import { spawnSync } from "node:child_process";
 import path from "node:path";
 import test from "node:test";
 import { Chess } from "chess.js";
-import { loadLessons, validateLessons, PUBLIC_BASE_URL, interactiveUrl, idempotencyKey, contentHash } from "../scripts/content-lib.mjs";
+import { loadLessons, validateLessons, PUBLIC_BASE_URL, interactiveUrl, idempotencyKey, contentHash, pickHomepageLesson, monthDayOrdinal } from "../scripts/content-lib.mjs";
 
 const root = process.cwd();
 
@@ -188,6 +188,86 @@ test("contentHash is deterministic", async () => {
   const hash2 = await contentHash(pub);
   assert.equal(hash1, hash2);
   assert.equal(hash1.length, 16);
+});
+
+// 主页"今日"选择：按月日匹配 publishedAt，命中取该期；未命中取最近历史一期；
+// 跨年全晚于今天取最晚一期；多期同月日取年份最新。详见 pickHomepageLesson 注释。
+
+test("monthDayOrdinal handles leap year and year boundaries", () => {
+  assert.equal(monthDayOrdinal(1, 1, 2026), 1);
+  assert.equal(monthDayOrdinal(3, 1, 2024), 61);   // 2024 闰年：2/29 存在，3/1 = 31+29+1
+  assert.equal(monthDayOrdinal(3, 1, 2025), 60);   // 2025 平年：3/1 = 31+28+1
+  assert.equal(monthDayOrdinal(12, 31, 2024), 366);
+  assert.equal(monthDayOrdinal(12, 31, 2025), 365);
+});
+
+function lessonAt(slug, publishedAt) {
+  return { ...validLesson(), slug, publishedAt };
+}
+
+test("pickHomepageLesson returns undefined on empty input", () => {
+  assert.equal(pickHomepageLesson([], new Date("2026-08-11T00:00:00+08:00")), undefined);
+});
+
+test("pickHomepageLesson picks exact month-day match when present", () => {
+  const lessons = [
+    lessonAt("a", "2026-07-24T09:00:00+08:00"),
+    lessonAt("b", "2026-07-29T09:00:00+08:00"),
+  ];
+  const picked = pickHomepageLesson(lessons, new Date("2026-08-11T00:00:00+08:00"));
+  // 今天 8/11，候选 = 月日 ≤ 8/11 的全部 → 取月日最晚的 7/29
+  assert.equal(picked.slug, "b");
+});
+
+test("pickHomepageLesson takes nearest past month-day when today unmatched", () => {
+  const lessons = [
+    lessonAt("a", "2026-07-24T09:00:00+08:00"),
+    lessonAt("b", "2026-07-25T09:00:00+08:00"),
+    lessonAt("c", "2026-07-27T09:00:00+08:00"),
+    lessonAt("d", "2026-07-29T09:00:00+08:00"),
+  ];
+  const picked = pickHomepageLesson(lessons, new Date("2026-07-26T00:00:00+08:00"));
+  // 今天 7/26，候选 = 7/24、7/25 → 取 7/25
+  assert.equal(picked.slug, "b");
+});
+
+test("pickHomepageLesson falls back to latest issue across year boundary", () => {
+  const lessons = [
+    lessonAt("a", "2026-07-24T09:00:00+08:00"),
+    lessonAt("b", "2026-07-29T09:00:00+08:00"),
+  ];
+  // 今天 1/5，所有期月日都晚于今天 → 取月日最晚的 7/29
+  const picked = pickHomepageLesson(lessons, new Date("2027-01-05T00:00:00+08:00"));
+  assert.equal(picked.slug, "b");
+});
+
+test("pickHomepageLesson resolves same month-day across years by newest publishedAt", () => {
+  const lessons = [
+    lessonAt("old", "2024-07-29T09:00:00+08:00"),
+    lessonAt("new", "2026-07-29T09:00:00+08:00"),
+  ];
+  const picked = pickHomepageLesson(lessons, new Date("2026-07-29T00:00:00+08:00"));
+  assert.equal(picked.slug, "new");
+});
+
+test("pickHomepageLesson honors leap day when today is march 1", () => {
+  const lessons = [
+    lessonAt("leap", "2024-02-29T09:00:00+08:00"),
+    lessonAt("after", "2024-03-05T09:00:00+08:00"),
+  ];
+  // 今天 3/1（按 2026 平年算序数 = 60），2/29 的序数在闰年 = 60，相等 → 命中 leap
+  const picked = pickHomepageLesson(lessons, new Date("2026-03-01T00:00:00+08:00"));
+  assert.equal(picked.slug, "leap");
+});
+
+test("pickHomepageLesson is deterministic for fixed now across host timezones", async () => {
+  const lessons = await loadLessons(root);
+  // 固定 now（+08:00 午夜），无论宿主机时区都应得到同一期。
+  const a = pickHomepageLesson(lessons, new Date("2026-08-11T00:00:00+08:00")).slug;
+  const b = pickHomepageLesson(lessons, new Date("2026-08-11T00:00:00+08:00")).slug;
+  assert.equal(a, b);
+  // 8/11 时所有 7 月期都 ≤ 今天 → 取月日最晚的 7/29 = promotion-combo
+  assert.equal(a, "promotion-combo");
 });
 
 test("shared chess engine module parses", () => {

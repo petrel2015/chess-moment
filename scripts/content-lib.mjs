@@ -292,6 +292,84 @@ export function idempotencyKey(lesson) {
 }
 
 /**
+ * 把 (month, day) 折算成该年的"月日序数"（1 月 1 日 = 1，12 月 31 日 = 365/366）。
+ * 用传入 year 计算，从而正确区分平年/闰年的 2 月 29 日。
+ * 纯函数：仅依赖入参，不读系统时钟。
+ */
+export function monthDayOrdinal(month, day, year) {
+  // 当年 1 月 1 日 00:00（本地）与目标日 00:00 的天数差 +1 即序数。
+  // 使用本地午夜构造、取整日期差，时区不影响 day-to-day 差值结果。
+  const startOfYear = new Date(year, 0, 1);
+  const target = new Date(year, month - 1, day);
+  return Math.round((target - startOfYear) / 86_400_000) + 1;
+}
+
+/**
+ * 在 +08:00（Asia/Shanghai）时区下读取一个 Date 的 (year, month, day)。
+ * publishedAt 全部使用 +08:00，主页"今天"也必须在该时区判定，
+ * 否则不同宿主机时区会在午夜前后选到不同的期数。
+ */
+function shanghaiParts(date) {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "Asia/Shanghai",
+    year: "numeric", month: "2-digit", day: "2-digit",
+  }).formatToParts(date);
+  const get = type => Number(parts.find(p => p.type === type).value);
+  return { year: get("year"), month: get("month"), day: get("day") };
+}
+
+/**
+ * 从 lesson.publishedAt（ISO 8601，+08:00）解析出月/日。
+ * 直接用 ISO 串里的 MM-DD，避免 Date 解析与时区二次干扰。
+ */
+function monthDayFromPublishedAt(lesson) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(lesson.publishedAt || "");
+  if (!m) return null;
+  return { year: Number(m[1]), month: Number(m[2]), day: Number(m[3]) };
+}
+
+/**
+ * 选择主页展示的"今日"课程。规则（仅看月日，不看年份）：
+ *   1. 把每期月日和"今天"月日都折算成当年序数；
+ *   2. 候选 = 序数 ≤ 今天序数的所有期；
+ *   3. 候选非空：取 (序数 desc, publishedAt desc) 第一篇
+ *      —— 今天命中则直接取该期，多期同年月日则取年份最新；
+ *   4. 候选为空（所有期月日晚于今天，跨年场景）：取 publishedAt desc 第一篇
+ *      —— 即月日最晚的一期，作为"跨年衔接"；
+ *   5. 无法解析 publishedAt 的期被忽略；全部都无法解析 → 返回 undefined。
+ *
+ * 纯函数：now 由调用方注入（默认读系统时钟），便于测试与确定性构建。
+ */
+export function pickHomepageLesson(lessons, now = new Date()) {
+  if (!Array.isArray(lessons) || lessons.length === 0) return undefined;
+  const today = shanghaiParts(now);
+  const todayOrdinal = monthDayOrdinal(today.month, today.day, today.year);
+
+  const scored = lessons
+    .map(lesson => {
+      const md = monthDayFromPublishedAt(lesson);
+      if (!md) return null;
+      return {
+        lesson,
+        ordinal: monthDayOrdinal(md.month, md.day, md.year),
+        publishedAt: lesson.publishedAt || "",
+      };
+    })
+    .filter(Boolean);
+
+  if (scored.length === 0) return undefined;
+
+  const candidates = scored.filter(item => item.ordinal <= todayOrdinal);
+  const pool = candidates.length > 0 ? candidates : scored;
+
+  pool.sort((a, b) => {
+    if (b.ordinal !== a.ordinal) return b.ordinal - a.ordinal;
+    return b.publishedAt.localeCompare(a.publishedAt);
+  });
+  return pool[0].lesson;
+}
+
+/**
  * Compute a stable content hash for a lesson's public payload.
  */
 export async function contentHash(lesson) {

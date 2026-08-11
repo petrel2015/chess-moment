@@ -55,6 +55,40 @@ export function parseFen(fen) {
   return { board, castling, enPassant, sideToMove: rights || "w" };
 }
 
+/**
+ * 把 state 序列化回 FEN 字符串，与 parseFen 对称。
+ *
+ * 注意：applyMove 会丢弃 sideToMove 字段（引擎不强制行棋方），因此这里
+ * 不从 state 读取，而由调用方传入 sideToMove（默认 "w"）。半步/全步计数器
+ * 引擎从不使用，固定输出 "0 1" 占位以保证 FEN 形态合法。
+ */
+export function toFen(state, sideToMove = "w") {
+  const ranks = [];
+  for (let rank = 8; rank >= 1; rank--) {
+    let row = "";
+    let empties = 0;
+    for (let fileIndex = 0; fileIndex < 8; fileIndex++) {
+      const square = FILES[fileIndex] + rank;
+      const piece = state.board[square];
+      if (piece) {
+        if (empties > 0) { row += empties; empties = 0; }
+        row += piece;
+      } else {
+        empties += 1;
+      }
+    }
+    if (empties > 0) row += empties;
+    ranks.push(row);
+  }
+
+  const c = state.castling || {};
+  const castlingStr =
+    (c.K ? "K" : "") + (c.Q ? "Q" : "") + (c.k ? "k" : "") + (c.q ? "q" : "") || "-";
+  const enPassantStr = state.enPassant || "-";
+
+  return `${ranks.join("/")} ${sideToMove} ${castlingStr} ${enPassantStr} 0 1`;
+}
+
 function squareAt(fileIndex, rank) {
   if (fileIndex < 0 || fileIndex > 7 || rank < 1 || rank > 8) return null;
   return FILES[fileIndex] + rank;

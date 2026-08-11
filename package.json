@@ -2,10 +2,12 @@
   "name": "chess-moment",
   "version": "1.0.0",
   "private": true,
+  "author": "Yu Hong <petrel2015@foxmail.com>",
   "type": "module",
   "scripts": {
     "validate": "node scripts/validate-content.mjs",
-    "build": "node scripts/build-site.mjs",
+    "optimize-pieces": "node scripts/optimize-pieces.mjs",
+    "build": "node scripts/optimize-pieces.mjs && node scripts/build-site.mjs",
     "publish:root": "npm run build && node scripts/publish-root.mjs",
     "wechat:prepare": "node scripts/wechat-publish.mjs prepare",
     "wechat:publish": "node scripts/wechat-publish.mjs publish",

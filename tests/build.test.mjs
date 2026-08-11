@@ -28,6 +28,40 @@ test("build generates index plus one page per lesson with working links", async 
   }
 });
 
+// Interactive lesson pages must preload all 12 piece PNGs in <head> so the
+// first board render is not blocked on lazy <img> fetches.
+test("interactive pages preload all 12 piece PNGs in head", async () => {
+  const lessons = await loadLessons(root);
+  const pieceKeys = ["wk", "wq", "wr", "wb", "wn", "wp", "bk", "bq", "br", "bb", "bn", "bp"];
+  for (const lesson of lessons) {
+    const html = await readFile(path.join(root, "_site", `${lesson.slug}.html`), "utf8");
+    for (const key of pieceKeys) {
+      assert.ok(
+        html.includes(`rel="preload" as="image" href="assets/pieces/${key}.png"`),
+        `${lesson.slug}.html missing preload for ${key}.png`
+      );
+    }
+  }
+});
+
+// 每个交互页必须有"反馈问题"按钮（棋盘旁 + 页脚），供用户报告题目/交互问题。
+test("interactive pages include feedback buttons in coach-actions and footer", async () => {
+  const lessons = await loadLessons(root);
+  for (const lesson of lessons) {
+    const html = await readFile(path.join(root, "_site", `${lesson.slug}.html`), "utf8");
+    // 棋盘旁按钮（在 .coach-actions 内，带 data-report）
+    assert.ok(
+      html.includes('type="button" data-report>反馈问题</button>'),
+      `${lesson.slug}.html missing coach-actions feedback button`
+    );
+    // 页脚链接（带 data-footer-report）
+    assert.ok(
+      html.includes('data-footer-report>反馈问题</a>'),
+      `${lesson.slug}.html missing footer feedback link`
+    );
+  }
+});
+
 test("shared interaction JavaScript parses", () => {
   const result = spawnSync(process.execPath, ["--check", "assets/app.js"], {
     cwd: root,
@@ -220,4 +254,59 @@ test("P1-7: wechat preview shows challenge.title and instruction as question bef
   // Must have clickable interactive link
   assert.ok(html.includes("进入互动版"), "Should have clickable interactive link");
   assert.ok(html.includes(`href="https://petrel2015.github.io/chess-moment/${lesson.slug}.html"`), "Interactive link must point to same-slug URL");
+});
+
+// 主页"今日"选择端到端：注入 CHESS_HOME_DATE 让构建可复现，
+// 断言 _site/index.html 的 data-puzzle 等于当天应取的 slug。
+// 今天 2026-08-11，内容库覆盖 7/24–7/29，全部月日 ≤ 今天 → 取月日最晚的 7/29。
+test("homepage reflects injected CHESS_HOME_DATE (today's lesson by month-day)", () => {
+  const result = spawnSync(process.execPath, ["scripts/build-site.mjs"], {
+    cwd: root,
+    encoding: "utf8",
+    env: { ...process.env, CHESS_HOME_DATE: "2026-08-11T00:00:00+08:00" },
+  });
+  assert.equal(result.status, 0, result.stderr);
+
+  return readFile(path.join(root, "_site", "index.html"), "utf8").then(index => {
+    assert.ok(
+      index.includes('data-puzzle="promotion-combo"'),
+      "Homepage should render promotion-combo (7/29, latest month-day <= 8/11)"
+    );
+  });
+});
+
+// 主页在"今天月日早于所有内容"时跨年回退到月日最晚的一期。
+// 今天 1/5，内容全是 7 月 → 回退到 7/29 = promotion-combo。
+test("homepage falls back to latest month-day when CHESS_HOME_DATE precedes all issues", () => {
+  const result = spawnSync(process.execPath, ["scripts/build-site.mjs"], {
+    cwd: root,
+    encoding: "utf8",
+    env: { ...process.env, CHESS_HOME_DATE: "2027-01-05T00:00:00+08:00" },
+  });
+  assert.equal(result.status, 0, result.stderr);
+
+  return readFile(path.join(root, "_site", "index.html"), "utf8").then(index => {
+    assert.ok(
+      index.includes('data-puzzle="promotion-combo"'),
+      "Homepage should fall back to promotion-combo (7/29) when today precedes all issues"
+    );
+  });
+});
+
+// 主页在"今天月日恰好命中某一期"时取该期。
+// 真实内容库含 7/26 = italian-center-plan，今天 7/26 → 候选含 7/24/25/26，取月日最晚的 7/26。
+test("homepage picks nearest past month-day when today falls between issues", () => {
+  const result = spawnSync(process.execPath, ["scripts/build-site.mjs"], {
+    cwd: root,
+    encoding: "utf8",
+    env: { ...process.env, CHESS_HOME_DATE: "2026-07-26T00:00:00+08:00" },
+  });
+  assert.equal(result.status, 0, result.stderr);
+
+  return readFile(path.join(root, "_site", "index.html"), "utf8").then(index => {
+    assert.ok(
+      index.includes('data-puzzle="italian-center-plan"'),
+      "Homepage should render italian-center-plan (7/26, latest month-day <= 7/26 in real content)"
+    );
+  });
 });

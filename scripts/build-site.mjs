@@ -1,6 +1,6 @@
 import { cp, mkdir, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
-import { escapeHtml, loadLessons, publicLesson, validateLessons } from "./content-lib.mjs";
+import { escapeHtml, loadLessons, pickHomepageLesson, publicLesson, validateLessons } from "./content-lib.mjs";
 import { renderWechatArticle, renderWechatIndex } from "./wechat-render.mjs";
 import { generateBoardPng } from "./board-png.mjs";
 import { buildWechatPayload, auditPayload } from "./wechat-payload.mjs";
@@ -25,6 +25,14 @@ const artifactsDir = path.join(root, "_artifacts", "wechat");
 await mkdir(wechatDir, { recursive: true });
 await mkdir(wechatBoardsDir, { recursive: true });
 await mkdir(artifactsDir, { recursive: true });
+
+// Preload piece sprites in parallel as soon as the HTML head parses, so the
+// first board render is not blocked on lazy <img> fetches triggered by app.js.
+// Mirrors the PIECE_KEYS list in assets/app.js.
+const PIECE_KEYS = ["wk", "wq", "wr", "wb", "wn", "wp", "bk", "bq", "br", "bb", "bn", "bp"];
+const PIECE_PRELOAD_LINKS = PIECE_KEYS
+  .map(key => `  <link rel="preload" as="image" href="assets/pieces/${key}.png">`)
+  .join("\n");
 
 function archiveCards(currentSlug) {
   return lessons
@@ -86,6 +94,7 @@ function renderLesson(lesson, { homepage = false } = {}) {
   <link rel="apple-touch-icon" sizes="180x180" href="assets/icons/apple-touch-icon.png">
   <link rel="manifest" href="assets/site.webmanifest">
   <link rel="stylesheet" href="assets/styles.css">
+  ${PIECE_PRELOAD_LINKS}
 </head>
 <body>
   <header class="site-header"><div class="header-inner"><a class="brand" href="index.html">棋刻 <span>Chess Moment</span></a><span class="issue-mark">每期完整挑战 · 立即讲解</span></div></header>
@@ -109,7 +118,7 @@ function renderLesson(lesson, { homepage = false } = {}) {
           <div class="coach">
             <div class="progress" aria-label="进度">${progress}</div>
             <div class="status" aria-live="polite"><span class="status-label"></span><p></p></div>
-            <div class="coach-actions"><button class="btn" type="button" data-hint>给一点提示</button><button class="btn" type="button" data-reset>重新挑战</button></div>
+            <div class="coach-actions"><button class="btn" type="button" data-hint>给一点提示</button><button class="btn" type="button" data-reset>重新挑战</button><button class="btn" type="button" data-report>反馈问题</button></div>
             <div class="ask-box"><label for="ask-${lesson.slug}">有哪里没想通？</label><div class="ask-row"><textarea id="ask-${lesson.slug}" placeholder="写下你对这一步的疑问"></textarea><button class="btn btn-primary" type="button" data-ask>问教练</button></div><div class="ai-answer" aria-live="polite"></div></div>
           </div>
         </div>
@@ -118,7 +127,7 @@ function renderLesson(lesson, { homepage = false } = {}) {
     </article>
     <section class="archive"><div class="archive-head"><h2>往期推送</h2><span class="meta">每一篇都可直接挑战</span></div><div class="archive-grid">${archiveCards(lesson.slug)}</div></section>
   </main>
-  <footer class="site-footer">棋刻 Chess Moment · 每天三分钟，想明白一步棋</footer>
+  <footer class="site-footer">棋刻 Chess Moment · 每天三分钟，想明白一步棋 · <a class="footer-report" href="#" data-footer-report>反馈问题</a></footer>
   <script>window.CHESS_LESSON=${JSON.stringify(lessonPayload).replaceAll("<", "\\u003c")};</script>
   <script type="module" src="assets/app.js"></script>
 </body>
@@ -129,9 +138,14 @@ function renderLesson(lesson, { homepage = false } = {}) {
 for (const lesson of lessons) {
   await writeFile(path.join(outDir, `${lesson.slug}.html`), renderLesson(publicLesson(lesson)));
 }
+// 主页默认展示"今天"那一期（按月日匹配，不看年份；今天未命中则取最近历史一期，
+// 跨年全晚于今天则取最晚一期）。生产构建读真实系统时钟；测试/CI 可用
+// CHESS_HOME_DATE 注入固定 ISO 日期，使构建结果可复现。
+const homeDate = process.env.CHESS_HOME_DATE ? new Date(process.env.CHESS_HOME_DATE) : new Date();
+const homeLesson = pickHomepageLesson(lessons, homeDate) || lessons[0];
 await writeFile(
   path.join(outDir, "index.html"),
-  renderLesson(publicLesson(lessons[0]), { homepage: true }),
+  renderLesson(publicLesson(homeLesson), { homepage: true }),
 );
 
 // Generate WeChat preview pages, board PNGs, and payloads

@@ -544,10 +544,30 @@ h1 {
   width: var(--piece-canvas-size);
   height: var(--piece-canvas-size);
   max-width: none;
-  object-fit: fill;
+  object-fit: contain;
   pointer-events: none;
   user-select: none;
   filter: drop-shadow(0 2px 2px rgba(7, 20, 36, .22));
+}
+
+/* Placeholder shown while piece PNGs are still decoding over a slow network.
+   Shares the same footprint as .piece so the swap is visually seamless. */
+.piece-placeholder {
+  position: absolute;
+  z-index: 1;
+  left: var(--piece-left);
+  top: var(--piece-top);
+  width: var(--piece-canvas-size);
+  height: var(--piece-canvas-size);
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 40%, rgba(23, 33, 28, .22), rgba(23, 33, 28, .08) 70%, transparent);
+  pointer-events: none;
+  animation: piece-pulse .9s ease-in-out infinite;
+}
+
+@keyframes piece-pulse {
+  0%, 100% { opacity: .4; }
+  50% { opacity: .7; }
 }
 
 .drag-ghost {
@@ -785,6 +805,15 @@ h1 {
   text-align: center;
 }
 
+.site-footer .footer-report {
+  color: var(--forest);
+  text-decoration: underline;
+}
+
+.site-footer .footer-report:hover {
+  color: #245239;
+}
+
 @media (max-width: 760px) {
   .page { padding-top: 34px; }
   .challenge { border-radius: 18px; margin-inline: -6px; }
@@ -818,5 +847,6 @@ h1 {
   .king-fragment,
   .move-feedback-ring,
   .move-feedback .piece,
+  .piece-placeholder,
   .board-celebration { animation-duration: .01ms !important; animation-delay: 0ms !important; }
 }

@@ -5,6 +5,7 @@ import {
   materialFor,
   parseFen as engineParseFen,
   pieceColor,
+  toFen,
 } from "./chess-engine.mjs";
 
 const PIECE_NAMES = {
@@ -138,40 +139,80 @@ document.addEventListener("keydown", event => {
 window.addEventListener("scroll", () => closeNotationTooltips(), { passive: true });
 window.addEventListener("resize", () => closeNotationTooltips());
 
-// Each source PNG uses a different amount of transparent canvas. These values
-// describe the visible artwork inside its 512 × 512 source image so every
-// piece can be optically centered and normalized to the same visual footprint.
-const PIECE_BOUNDS = {
-  bb: [311, 67, 201, 313],
-  bk: [336, 81, 176, 428],
-  bn: [0, 63, 386, 316],
-  bp: [0, 108, 195, 274],
-  bq: [0, 161, 512, 346],
-  br: [0, 199, 206, 305],
-  wb: [195, 0, 270, 389],
-  wk: [219, 20, 221, 492],
-  wn: [127, 75, 279, 304],
-  wp: [80, 89, 218, 282],
-  wq: [87, 116, 352, 341],
-  wr: [79, 139, 236, 321]
-};
+// Piece sprites are preprocessed by scripts/optimize-pieces.mjs: each piece's
+// visible artwork is cropped, scaled to a uniform visible HEIGHT, and centered
+// on a square 160x160 transparent canvas. Because the canvas is already uniform
+// and centered, every piece uses the same footprint — no per-piece bounds table
+// is needed. The visual height (scale) is what makes king/pawn/queen line up.
+const PIECE_VISIBLE_SCALE = 0.86;   // fraction of the square the piece occupies
+const PIECE_KEYS = [
+  "wk", "wq", "wr", "wb", "wn", "wp",
+  "bk", "bq", "br", "bb", "bn", "bp",
+];
 
 function pieceAsset(piece) {
   const color = piece === piece.toUpperCase() ? "w" : "b";
   return `assets/pieces/${color}${piece.toLowerCase()}.png`;
 }
 
-function normalizePieceArtwork(element, piece) {
-  const color = piece === piece.toUpperCase() ? "w" : "b";
-  const key = color + piece.toLowerCase();
-  const [x, y, width, height] = PIECE_BOUNDS[key];
-  const scale = 0.82 * 512 / Math.max(width, height);
-  const visibleCenterX = x + width / 2;
-  const visibleCenterY = y + height / 2;
+function normalizePieceArtwork(element) {
+  // All piece PNGs share an identical centered square canvas after optimization,
+  // so the placement formula is the same for every piece: fill the square's
+  // central region and keep object-fit: contain (set in CSS) to preserve each
+  // piece's internal aspect ratio.
+  element.style.setProperty("--piece-canvas-size", `${PIECE_VISIBLE_SCALE * 100}%`);
+  element.style.setProperty("--piece-left", `${(1 - PIECE_VISIBLE_SCALE) * 50}%`);
+  element.style.setProperty("--piece-top", `${(1 - PIECE_VISIBLE_SCALE) * 50}%`);
+}
 
-  element.style.setProperty("--piece-canvas-size", `${scale * 100}%`);
-  element.style.setProperty("--piece-left", `${50 - scale * visibleCenterX / 512 * 100}%`);
-  element.style.setProperty("--piece-top", `${50 - scale * visibleCenterY / 512 * 100}%`);
+// Preload every piece PNG once so the first render shows real artwork instead
+// of an empty board. Resolves even on error so rendering never blocks forever.
+let piecesReady = false;
+let piecesPreload = null;
+function preloadPieces() {
+  if (piecesPreload) return piecesPreload;
+  piecesPreload = Promise.all(
+    PIECE_KEYS.map(key => new Promise(resolve => {
+      const img = new Image();
+      img.onload = () => resolve();
+      img.onerror = () => resolve();
+      img.src = `assets/pieces/${key}.png`;
+    }))
+  ).then(() => { piecesReady = true; });
+  return piecesPreload;
+}
+
+// ---- 题目反馈 (mailto) ---------------------------------------------------
+// 当玩家怀疑题目或交互有问题时，一键打开邮件客户端并预填诊断信息。
+// 棋盘旁的按钮可读到闭包内的实时 state（当前局面 FEN、第几步等）；
+// 页脚按钮不在闭包内，只能附带基础信息（slug/标题/URL/UA），不含实时局面。
+
+const REPORT_MAILTO = "petrel2015@foxmail.com";
+
+function buildReportMailto(opts) {
+  const { title, dateLabel, slug, step, totalSteps, lastMove, startFen, currentFen, sideToMove, includeLiveState, url, userAgent } = opts;
+  const subject = `【棋刻反馈】${title || "题目问题"}${dateLabel ? `（${dateLabel}）` : ""}`;
+  const lines = [
+    "请在此处描述你遇到的问题或疑惑：",
+    "",
+    "——以下为系统自动收集的诊断信息，请勿删除——",
+    `题目：${slug || "未知"}${title ? `（${title}）` : ""}`,
+  ];
+  if (dateLabel) lines.push(`日期标签：${dateLabel}`);
+  if (includeLiveState) {
+    lines.push(`当前步骤：第 ${(step ?? 0) + 1} 步（共 ${totalSteps ?? "?"} 步）`);
+    lines.push(`轮到：${sideToMove === "b" ? "黑方" : "白方"}`);
+    if (lastMove) lines.push(`最后一步走法：${lastMove}`);
+    if (startFen) lines.push(`起始局面 FEN：${startFen}`);
+    if (currentFen) lines.push(`当前局面 FEN：${currentFen}`);
+  } else {
+    lines.push("（未含实时局面。如需更精准诊断，请用棋盘旁的「反馈问题」按钮，会自动带上当前局面。）");
+  }
+  if (url) lines.push(`页面地址：${url}`);
+  if (userAgent) lines.push(`浏览器：${userAgent}`);
+
+  const body = lines.join("\n");
+  return `mailto:${REPORT_MAILTO}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 }
 
 const BUILT_IN_PUZZLES = {
@@ -303,6 +344,7 @@ function setupChallenge(root) {
   const resetBtn = root.querySelector("[data-reset]");
   const hintBtn = root.querySelector("[data-hint]");
   const askBtn = root.querySelector("[data-ask]");
+  const reportBtn = root.querySelector("[data-report]");
   const askInput = root.querySelector("textarea");
   const answer = root.querySelector(".ai-answer");
   const askRow = root.querySelector(".ask-row");
@@ -386,13 +428,22 @@ function setupChallenge(root) {
         }
 
         if (board[squareName]) {
-          const piece = document.createElement("img");
-          piece.className = "piece";
-          piece.src = pieceAsset(board[squareName]);
-          piece.alt = "";
-          piece.draggable = false;
-          normalizePieceArtwork(piece, board[squareName]);
-          square.appendChild(piece);
+          if (piecesReady) {
+            const piece = document.createElement("img");
+            piece.className = "piece";
+            piece.src = pieceAsset(board[squareName]);
+            piece.alt = "";
+            piece.draggable = false;
+            normalizePieceArtwork(piece);
+            square.appendChild(piece);
+          } else {
+            // Pieces still loading: show a pulsing silhouette placeholder so
+            // users see something is on the way rather than an empty board.
+            const placeholder = document.createElement("div");
+            placeholder.className = "piece-placeholder";
+            normalizePieceArtwork(placeholder);
+            square.appendChild(placeholder);
+          }
         }
         if (moveFeedback?.square === squareName) {
           const feedbackRing = document.createElement("span");
@@ -696,6 +747,35 @@ function setupChallenge(root) {
     }
   }
 
+  // 构造棋盘旁「反馈问题」按钮的 mailto 链接，附带当前实时局面等诊断信息。
+  function composeReport() {
+    const titleEl = document.querySelector("main h1");
+    const title = titleEl ? titleEl.textContent.trim() : "";
+    const eyebrowEl = root.querySelector(".eyebrow");
+    const dateLabel = eyebrowEl ? eyebrowEl.textContent.split("·")[0].trim() : "";
+    // 轮次推断：用户永远执白。若 lastMove 等于"用户上一步应走的着法"，说明对手尚未回应，轮到黑；
+    // 若 lastMove 等于"对手的回应着法"，则轮到白。否则默认白。
+    const prevUserMove = step > 0 ? puzzle.steps[step - 1]?.move : null;
+    const prevOpponentMove = step > 0 ? puzzle.steps[step - 1]?.opponent : null;
+    let sideToMove = "w";
+    if (lastMove && lastMove === prevUserMove && lastMove !== prevOpponentMove) sideToMove = "b";
+    else if (lastMove && lastMove === prevOpponentMove) sideToMove = "w";
+    return buildReportMailto({
+      title,
+      dateLabel,
+      slug: id,
+      step,
+      totalSteps: puzzle.steps.length,
+      lastMove,
+      startFen: puzzle.fen,
+      currentFen: toFen(state, sideToMove),
+      sideToMove,
+      includeLiveState: true,
+      url: location.href,
+      userAgent: navigator.userAgent,
+    });
+  }
+
   function reset() {
     state = parseFen(puzzle.fen);
     selected = null;
@@ -715,6 +795,13 @@ function setupChallenge(root) {
 
   resetBtn.addEventListener("click", reset);
 
+  // 棋盘旁「反馈问题」按钮：附带当前实时局面等诊断信息。
+  if (reportBtn) {
+    reportBtn.addEventListener("click", () => {
+      window.location.href = composeReport();
+    });
+  }
+
   function showCoachAnswer(question, preferredKey = "") {
     const compact = question.toLowerCase().replace(/[？?，,。\s]/g, "");
     let response = puzzle.quick[preferredKey] || puzzle.defaultAnswer;
@@ -733,7 +820,29 @@ function setupChallenge(root) {
   });
 
   reset();
+
+  // Once piece PNGs have decoded, swap any placeholders for real artwork.
+  preloadPieces().then(() => render());
 }
 
 document.querySelectorAll("[data-puzzle]").forEach(setupChallenge);
 enhanceNotation(document.querySelector("main"));
+
+// 页脚「反馈问题」链接：不在 challenge 闭包内，只能附带基础信息（不含实时局面）。
+document.querySelectorAll("[data-footer-report]").forEach(link => {
+  link.addEventListener("click", event => {
+    event.preventDefault();
+    const challengeRoot = document.querySelector("[data-puzzle]");
+    const slug = challengeRoot ? challengeRoot.dataset.puzzle : "";
+    const titleEl = document.querySelector("main h1");
+    const title = titleEl ? titleEl.textContent.trim() : "";
+    const eyebrowEl = challengeRoot ? challengeRoot.querySelector(".eyebrow") : null;
+    const dateLabel = eyebrowEl ? eyebrowEl.textContent.split("·")[0].trim() : "";
+    window.location.href = buildReportMailto({
+      title, dateLabel, slug,
+      includeLiveState: false,
+      url: location.href,
+      userAgent: navigator.userAgent,
+    });
+  });
+});
