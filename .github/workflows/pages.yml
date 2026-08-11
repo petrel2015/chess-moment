@@ -7,6 +7,7 @@ on:
       - "content/**"
       - "scripts/**"
       - "assets/**"
+      - "tests/**"
       - "package.json"
       - "package-lock.json"
       - ".github/workflows/pages.yml"
