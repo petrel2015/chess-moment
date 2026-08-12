@@ -7,6 +7,7 @@ import {
   pieceColor,
   toFen,
 } from "./chess-engine.mjs";
+import { buildCoachMessages, resolveWorkerUrl } from "./coach-ai.mjs";
 
 const PIECE_NAMES = {
   K: "白王", Q: "白后", R: "白车", B: "白象", N: "白马", P: "白兵",
@@ -213,6 +214,46 @@ function buildReportMailto(opts) {
 
   const body = lines.join("\n");
   return `mailto:${REPORT_MAILTO}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+}
+
+// ---- AI 教练（智谱 GLM-4-Flash，经 Cloudflare Worker 代理）------------------
+// Worker URL 默认为空 → 走预制答案降级。部署 Worker 后填入配置即接入真 AI。
+// 三层优先级：localStorage 覆盖 > window.CHESS_COACH_CONFIG.workerUrl > 空。
+function coachWorkerUrl() {
+  return resolveWorkerUrl({
+    storage: typeof localStorage !== "undefined" ? localStorage : null,
+    config: typeof window !== "undefined" ? window.CHESS_COACH_CONFIG : null,
+  });
+}
+
+function coachUserKey() {
+  return typeof localStorage !== "undefined" ? (localStorage.getItem("chessCoachUserKey") || "").trim() : "";
+}
+
+/**
+ * 调用 Worker 请求 AI 回答。成功返回文本，失败抛错（调用方降级）。
+ * 15 秒超时，避免用户长时间等待。
+ */
+async function askCoachAI(workerUrl, messages, userKey) {
+  const headers = { "Content-Type": "application/json" };
+  if (userKey) headers["X-User-Key"] = userKey;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 15000);
+  try {
+    const res = await fetch(workerUrl, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ messages, temperature: 0.7, max_tokens: 800 }),
+      signal: controller.signal,
+    });
+    if (!res.ok) throw new Error(`worker HTTP ${res.status}`);
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+    if (typeof data.answer !== "string" || !data.answer.trim()) throw new Error("empty answer");
+    return data.answer.trim();
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 const BUILT_IN_PUZZLES = {
@@ -833,7 +874,9 @@ function setupChallenge(root) {
     });
   }
 
-  function showCoachAnswer(question, preferredKey = "") {
+  // 预制答案（降级用）：先按 suggestions key 匹配，再按用户问题里的关键词匹配 quick 字典，
+  // 都不中就用 defaultAnswer。
+  function prefabAnswer(question, preferredKey = "") {
     const compact = question.toLowerCase().replace(/[？?，,。\s]/g, "");
     let response = puzzle.quick[preferredKey] || puzzle.defaultAnswer;
     if (!preferredKey) {
@@ -841,9 +884,52 @@ function setupChallenge(root) {
         if (compact.includes(key)) { response = value; break; }
       }
     }
-    answer.innerHTML = `<strong>棋局教练：</strong>${response}`;
+    return response;
+  }
+
+  function renderCoachReply(text, { fallback } = {}) {
+    const prefix = fallback
+      ? `<small class="ai-fallback-note">AI 暂时不可用，已显示预设参考：</small>`
+      : "";
+    answer.innerHTML = `${prefix}<strong>棋局教练：</strong>${text}`;
     enhanceNotation(answer);
     answer.classList.add("show");
+  }
+
+  async function showCoachAnswer(question, preferredKey = "") {
+    if (!question && !preferredKey) {
+      renderCoachReply(prefabAnswer("", preferredKey));
+      return;
+    }
+    const workerUrl = coachWorkerUrl();
+    // 未配置 Worker：直接走预制答案（现状行为）。
+    if (!workerUrl) {
+      renderCoachReply(prefabAnswer(question, preferredKey));
+      return;
+    }
+    // 配置了 Worker：显示 loading，调 AI，失败降级。
+    answer.innerHTML = `<strong>棋局教练：</strong><span class="ai-loading">正在思考…</span>`;
+    answer.classList.add("show", "loading");
+    try {
+      const titleEl = document.querySelector("main h1");
+      // 点快捷问题按钮时 question 可能为空，用 quick 字典里对应的 label 作为问题文本。
+      const questionForAI = question || (preferredKey ? puzzle.quick[preferredKey] : "") || "请讲讲这一步的思路。";
+      const messages = buildCoachMessages(questionForAI, {
+        title: titleEl ? titleEl.textContent.trim() : "",
+        goal: puzzle.goal,
+        startFen: puzzle.fen,
+        currentFen: toFen(state, "w"),
+        step,
+        totalSteps: puzzle.steps.length,
+      });
+      const reply = await askCoachAI(workerUrl, messages, coachUserKey());
+      renderCoachReply(reply);
+    } catch (err) {
+      console.error("AI coach failed, falling back:", err);
+      renderCoachReply(prefabAnswer(question, preferredKey), { fallback: true });
+    } finally {
+      answer.classList.remove("loading");
+    }
   }
 
   askBtn.addEventListener("click", () => {
@@ -875,5 +961,41 @@ document.querySelectorAll("[data-footer-report]").forEach(link => {
       url: location.href,
       userAgent: navigator.userAgent,
     });
+  });
+});
+
+// ---- AI 设置面板（全局）--------------------------------------------------
+// 让用户填自己的 Worker URL 和智谱 Key（存 localStorage），覆盖站点默认配置。
+// 默认折叠，不影响普通访客。触发器：[data-coach-settings-toggle]。
+document.querySelectorAll("[data-coach-settings-toggle]").forEach(toggle => {
+  toggle.addEventListener("click", () => {
+    const panel = document.querySelector("[data-coach-settings-panel]");
+    if (!panel) return;
+    const open = panel.classList.toggle("open");
+    toggle.setAttribute("aria-expanded", String(open));
+    if (open) {
+      const urlInput = panel.querySelector("[data-coach-url]");
+      const keyInput = panel.querySelector("[data-coach-key]");
+      if (urlInput) urlInput.value = localStorage.getItem("chessCoachWorkerUrl") || "";
+      if (keyInput) keyInput.value = localStorage.getItem("chessCoachUserKey") || "";
+    }
+  });
+});
+
+document.querySelectorAll("[data-coach-settings-panel]").forEach(panel => {
+  const saveBtn = panel.querySelector("[data-coach-save]");
+  if (!saveBtn) return;
+  saveBtn.addEventListener("click", () => {
+    const url = panel.querySelector("[data-coach-url]")?.value.trim() || "";
+    const key = panel.querySelector("[data-coach-key]")?.value.trim() || "";
+    if (url) localStorage.setItem("chessCoachWorkerUrl", url);
+    else localStorage.removeItem("chessCoachWorkerUrl");
+    if (key) localStorage.setItem("chessCoachUserKey", key);
+    else localStorage.removeItem("chessCoachUserKey");
+    const note = panel.querySelector("[data-coach-saved]");
+    if (note) {
+      note.textContent = "已保存。";
+      window.setTimeout(() => { note.textContent = ""; }, 2000);
+    }
   });
 });

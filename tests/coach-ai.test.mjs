@@ -1,0 +1,90 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+import { buildCoachMessages, resolveWorkerUrl } from "../assets/coach-ai.mjs";
+
+// ---- buildCoachMessages ---------------------------------------------------
+
+test("buildCoachMessages returns system + user roles", () => {
+  const msgs = buildCoachMessages("为什么这步要升后？", {});
+  assert.equal(msgs.length, 2);
+  assert.equal(msgs[0].role, "system");
+  assert.equal(msgs[1].role, "user");
+});
+
+test("system prompt forbids giving the answer directly", () => {
+  const msgs = buildCoachMessages("q", {});
+  const system = msgs[0].content;
+  // 教学硬约束：不能直接吐出标准走法序列。
+  assert.ok(system.includes("严禁"), "system must forbid direct answers");
+  assert.ok(/正确走法/.test(system), "system must mention forbidding the correct move");
+  assert.ok(/150 字/.test(system), "system must constrain length");
+  assert.ok(/简体中文/.test(system), "system must request Chinese");
+});
+
+test("user message includes the question and provided context fields", () => {
+  const msgs = buildCoachMessages("这步怎么理解", {
+    title: "升变选择",
+    goal: "三步将杀",
+    startFen: "7k/6P1/6K1/8/8/8/8/8 w - - 0 1",
+    currentFen: "8/5KPk/8/8/8/8/8/8 w - - 0 1",
+    step: 1,
+    totalSteps: 3,
+  });
+  const user = msgs[1].content;
+  assert.ok(user.includes("升变选择"), "user msg must include title");
+  assert.ok(user.includes("三步将杀"), "user msg must include goal");
+  assert.ok(user.includes("7k/6P1/6K1"), "user msg must include start FEN");
+  assert.ok(user.includes("第 2 步"), "user msg must show step (0-indexed +1)");
+  assert.ok(user.includes("这步怎么理解"), "user msg must include the question");
+});
+
+test("buildCoachMessages works with no context", () => {
+  const msgs = buildCoachMessages("国际象棋怎么算赢", {});
+  assert.equal(msgs[1].content, "国际象棋怎么算赢");
+});
+
+test("buildCoachMessages omits empty context gracefully", () => {
+  // 只给了 title，其他字段空 → 不应出现空行。
+  const msgs = buildCoachMessages("q", { title: "T", goal: "", startFen: undefined });
+  const user = msgs[1].content;
+  assert.ok(user.includes("题目标题：T"));
+  assert.ok(!user.includes("本题目标：\n"), "empty goal must not produce a label-only line");
+});
+
+// ---- resolveWorkerUrl -----------------------------------------------------
+
+test("resolveWorkerUrl returns empty when nothing configured", () => {
+  assert.equal(resolveWorkerUrl({}), "");
+  assert.equal(resolveWorkerUrl({ storage: null, config: null }), "");
+});
+
+test("resolveWorkerUrl uses config.workerUrl when no localStorage override", () => {
+  const url = resolveWorkerUrl({ config: { workerUrl: "https://w.example.dev" } });
+  assert.equal(url, "https://w.example.dev");
+});
+
+test("resolveWorkerUrl prefers localStorage over config", () => {
+  const fakeStorage = {
+    store: { chessCoachWorkerUrl: "https://mine.workers.dev" },
+    getItem(k) { return this.store[k] ?? null; },
+  };
+  const url = resolveWorkerUrl({
+    storage: fakeStorage,
+    config: { workerUrl: "https://default.workers.dev" },
+  });
+  assert.equal(url, "https://mine.workers.dev");
+});
+
+test("resolveWorkerUrl falls back to config when localStorage key is empty", () => {
+  const fakeStorage = { getItem: () => null };
+  const url = resolveWorkerUrl({
+    storage: fakeStorage,
+    config: { workerUrl: "https://default.workers.dev" },
+  });
+  assert.equal(url, "https://default.workers.dev");
+});
+
+test("resolveWorkerUrl trims whitespace", () => {
+  const url = resolveWorkerUrl({ config: { workerUrl: "  https://w.example.dev  " } });
+  assert.equal(url, "https://w.example.dev");
+});

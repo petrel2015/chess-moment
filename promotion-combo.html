@@ -26,6 +26,7 @@
   <link rel="preload" as="image" href="assets/pieces/bb.png">
   <link rel="preload" as="image" href="assets/pieces/bn.png">
   <link rel="preload" as="image" href="assets/pieces/bp.png">
+  <script>window.CHESS_COACH_CONFIG = {"workerUrl":""};</script>
 </head>
 <body>
   <header class="site-header"><div class="header-inner"><a class="brand" href="index.html">棋刻 <span>Chess Moment</span></a><span class="issue-mark">每期完整挑战 · 立即讲解</span></div></header>
@@ -50,7 +51,7 @@
             <div class="progress" aria-label="进度"><span></span><span></span><span></span></div>
             <div class="status" aria-live="polite"><span class="status-label"></span><p></p></div>
             <div class="coach-actions"><button class="btn" type="button" data-hint>给一点提示</button><button class="btn" type="button" data-reset>重新挑战</button><button class="btn" type="button" data-report>反馈问题</button></div>
-            <div class="ask-box"><label for="ask-promotion-combo">有哪里没想通？</label><div class="ask-row"><textarea id="ask-promotion-combo" placeholder="写下你对这一步的疑问"></textarea><button class="btn btn-primary" type="button" data-ask>问教练</button></div><div class="ai-answer" aria-live="polite"></div></div>
+            <div class="ask-box"><div class="ask-label-row"><label for="ask-promotion-combo">有哪里没想通？</label><a class="coach-settings-toggle" href="#" aria-expanded="false" data-coach-settings-toggle>AI 设置</a></div><div class="ask-row"><textarea id="ask-promotion-combo" placeholder="写下你对这一步的疑问"></textarea><button class="btn btn-primary" type="button" data-ask>问教练</button></div><div class="ai-answer" aria-live="polite"></div></div>
           </div>
         </div>
       </section>
@@ -94,6 +95,16 @@
       </a></div></section>
   </main>
   <footer class="site-footer">棋刻 Chess Moment · 每天三分钟，想明白一步棋 · <a class="footer-report" href="#" data-footer-report>反馈问题</a></footer>
+  <div class="coach-settings-panel" data-coach-settings-panel hidden>
+    <div class="coach-settings-inner">
+      <h3>AI 教练设置</h3>
+      <p class="coach-settings-hint">默认使用站点配置。你也可以填自己的智谱 API Key 和 Worker URL，Key 只存在本浏览器里。</p>
+      <label>Worker URL<input type="url" data-coach-url placeholder="https://your-worker.workers.dev"></label>
+      <label>智谱 API Key（可选）<input type="password" data-coach-key placeholder="留空则用站点默认 Key"></label>
+      <div class="coach-settings-actions"><button class="btn btn-primary" type="button" data-coach-save>保存</button><span class="coach-saved" data-coach-saved aria-live="polite"></span></div>
+      <p class="coach-settings-help">没有 Key？看 <a href="https://open.bigmodel.cn/" target="_blank" rel="noopener">智谱开放平台</a>，GLM-4-Flash 模型免费。</p>
+    </div>
+  </div>
   <script>window.CHESS_LESSON={"id":"promotion-combo","challenge":{"title":"三步完成：到位、升变、收网","instruction":"每走一步后对手会自动回应。第一步先把白王走到保护位，第二步选择升变棋子（仔细看升后和升车的差别），第三步完成将杀。","fen":"7k/6P1/6K1/8/8/8/8/8 w - - 0 1","goal":"白方走三步：先用王占住保护格，再升变成正确的棋子，最后将杀黑王。","steps":[{"move":"g6f7","opponent":"h8h7","note":"第一步正确：Kf7。白王从 g6 走到 f7，既能控制 g8（升变后的落脚格），又将军黑王（f7 不直接将军，但封死了黑王南下逃路）。黑王被兵和边线困住，只能从 h8 挪到 h7。"},{"move":"g7g8q","opponent":"h7h6","note":"第二步正确：g8=Q+。兵 g7 冲到 g8 升变成后（g7g8q，末位 q 代表后）。白后站在 g8，沿 g8-h7 斜线立刻将军黑王，并占据第 8 行准备收网。黑王被迫继续退到 h6。注意：后同时控制横、竖、斜，这就是为什么必须升后。","alternatives":[{"move":"g7g8r","note":"这步也合理，但不够：g8=R 升车。车控制横线和竖线，却不控制斜线，所以它不会沿 g8-h7 将军，黑王获得喘息。升车后白方无法在限定步数内将杀——这是升变选择里最经典的「升后 vs 升车」差别。"}]},{"move":"g8g6","note":"第三步正确：Qg6#。白后从 g8 走到 g6，沿 g6-h7 斜线封死黑王 h6 的退路，同时 f7 白王控制 h7/g7/h5 等格。黑王在 h6 既不能前进、不能吃后、也没有棋子能挡，是漂亮的将杀。"}],"odds":[{"white":72,"draw":20,"black":8},{"white":81,"draw":15,"black":4},{"white":96,"draw":3,"black":1},{"white":100,"draw":0,"black":0}],"success":"三步完成。整条杀法的核心是第二步：升后让白棋沿斜线将军并控制 h7，升车则完全没有这层火力。升变前先想清楚你需要的是横竖斜全覆盖（后），还是只挑某一条线（车/象/马）。","defaultAnswer":"这局的关键不在「要不要升变」，而在「升变成什么」。后覆盖横、竖、斜三条线，所以 g8=Q+ 能沿 g8-h7 斜线将军黑王；车只覆盖横线和竖线，g8=R 控制不了 h7，黑王就能从容调整防线。先 Kf7 占住保护格，再升后，最后 Qg6# 收网——顺序和升变棋子都不能错。","errors":{"g6g7":"Kg7 看似保护兵，但 g7 已经被白兵占着，王不能走到自己的兵上。白王的任务是去 f7 控制升变格 g8，不是挤到兵旁边。"},"genericError":"这步没把白王送到保护格。黑王现在被钉死，但你的升变格 g8 还需要白王在 f7 来保护升变后的棋子。先想：哪个格能让白王同时威胁 g8 和封住黑王？","quick":{"为什么升后":"后同时控制横、竖、斜三条线。升到 g8 后，白后沿 g8-h7 斜线将军黑王 h7，并立刻准备 Qg6# 收网。车不控制斜线，制造不出这层连续将军。","升车为什么不行":"升车 g8=R 只控制横线和竖线，没有斜线火力，所以不会将军 h7 的黑王。黑王因此获得一整步自由调整，白方在限定步数内无法将杀。","为什么先走王":"升变后的棋子需要保护。白王走到 f7 后控制 g8，即使黑王想过来吃升变后的棋子也会被白王看住。先到位、再升变，是这个残局的标准顺序。","升变记法":"升变走法写成五个字符：前四位是起点到落点，第五位是升变成的棋子。g7g8q 表示兵从 g7 到 g8 升变成后（Queen）；把 q 换成 r（车）、b（象）、n（马）就是升变成其他棋子。"},"suggestions":[{"label":"为什么必须升后？","key":"为什么升后"},{"label":"升车为什么不行？","key":"升车为什么不行"},{"label":"为什么要先走王？","key":"为什么先走王"},{"label":"升变的走法怎么记？","key":"升变记法"}]}};</script>
   <script type="module" src="assets/app.js"></script>
 </body>

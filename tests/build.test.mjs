@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { readFile, readdir } from "node:fs/promises";
+import { readFileSync } from "node:fs";
 import { spawnSync } from "node:child_process";
 import path from "node:path";
 import test from "node:test";
@@ -86,6 +87,34 @@ test("app.js guards the opponent-reply window against getting stuck", async () =
   assert.ok(
     /legalTargets\(state, opponentFrom\)\.includes\(opponentTo\)/.test(src),
     "opponent reply must be validated against legalTargets before applying"
+  );
+});
+
+// AI 教练配置注入：每个交互页 <head> 必须含 window.CHESS_COACH_CONFIG。
+// 未设置环境变量时 workerUrl 为空（前端走预制答案降级）；设置后自动注入。
+test("interactive pages inject CHESS_COACH_CONFIG in head", async () => {
+  const lessons = await loadLessons(root);
+  for (const lesson of lessons) {
+    const html = await readFile(path.join(root, "_site", `${lesson.slug}.html`), "utf8");
+    assert.ok(
+      /window\.CHESS_COACH_CONFIG\s*=\s*\{/.test(html),
+      `${lesson.slug}.html missing window.CHESS_COACH_CONFIG`
+    );
+  }
+});
+
+test("CHESS_COACH_WORKER_URL env var injects workerUrl into built HTML", () => {
+  // 单独跑一次 build，注入环境变量，验证 URL 出现在产物里。
+  const result = spawnSync(process.execPath, ["scripts/build-site.mjs"], {
+    cwd: root,
+    encoding: "utf8",
+    env: { ...process.env, CHESS_COACH_WORKER_URL: "https://test-coach.example.workers.dev" },
+  });
+  assert.equal(result.status, 0, result.stderr);
+  const idx = readFileSync(path.join(root, "_site", "index.html"), "utf8");
+  assert.ok(
+    idx.includes('"workerUrl":"https://test-coach.example.workers.dev"'),
+    "workerUrl env var must appear in built HTML"
   );
 });
 

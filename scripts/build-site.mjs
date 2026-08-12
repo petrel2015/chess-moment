@@ -34,6 +34,12 @@ const PIECE_PRELOAD_LINKS = PIECE_KEYS
   .map(key => `  <link rel="preload" as="image" href="assets/pieces/${key}.png">`)
   .join("\n");
 
+// AI 教练配置：部署 Cloudflare Worker 后，把 Worker URL 设到环境变量
+// CHESS_COACH_WORKER_URL（或 GitHub repo secret），构建时自动注入。
+// 未设置时 workerUrl 为空字符串，前端走预制答案降级。
+const COACH_WORKER_URL = (process.env.CHESS_COACH_WORKER_URL || "").trim();
+const COACH_CONFIG_JSON = JSON.stringify({ workerUrl: COACH_WORKER_URL });
+
 function archiveCards(currentSlug) {
   return lessons
     .filter(lesson => lesson.slug !== currentSlug)
@@ -95,6 +101,7 @@ function renderLesson(lesson, { homepage = false } = {}) {
   <link rel="manifest" href="assets/site.webmanifest">
   <link rel="stylesheet" href="assets/styles.css">
   ${PIECE_PRELOAD_LINKS}
+  <script>window.CHESS_COACH_CONFIG = ${COACH_CONFIG_JSON};</script>
 </head>
 <body>
   <header class="site-header"><div class="header-inner"><a class="brand" href="index.html">棋刻 <span>Chess Moment</span></a><span class="issue-mark">每期完整挑战 · 立即讲解</span></div></header>
@@ -119,7 +126,7 @@ function renderLesson(lesson, { homepage = false } = {}) {
             <div class="progress" aria-label="进度">${progress}</div>
             <div class="status" aria-live="polite"><span class="status-label"></span><p></p></div>
             <div class="coach-actions"><button class="btn" type="button" data-hint>给一点提示</button><button class="btn" type="button" data-reset>重新挑战</button><button class="btn" type="button" data-report>反馈问题</button></div>
-            <div class="ask-box"><label for="ask-${lesson.slug}">有哪里没想通？</label><div class="ask-row"><textarea id="ask-${lesson.slug}" placeholder="写下你对这一步的疑问"></textarea><button class="btn btn-primary" type="button" data-ask>问教练</button></div><div class="ai-answer" aria-live="polite"></div></div>
+            <div class="ask-box"><div class="ask-label-row"><label for="ask-${lesson.slug}">有哪里没想通？</label><a class="coach-settings-toggle" href="#" aria-expanded="false" data-coach-settings-toggle>AI 设置</a></div><div class="ask-row"><textarea id="ask-${lesson.slug}" placeholder="写下你对这一步的疑问"></textarea><button class="btn btn-primary" type="button" data-ask>问教练</button></div><div class="ai-answer" aria-live="polite"></div></div>
           </div>
         </div>
       </section>
@@ -128,6 +135,16 @@ function renderLesson(lesson, { homepage = false } = {}) {
     <section class="archive"><div class="archive-head"><h2>往期推送</h2><span class="meta">每一篇都可直接挑战</span></div><div class="archive-grid">${archiveCards(lesson.slug)}</div></section>
   </main>
   <footer class="site-footer">棋刻 Chess Moment · 每天三分钟，想明白一步棋 · <a class="footer-report" href="#" data-footer-report>反馈问题</a></footer>
+  <div class="coach-settings-panel" data-coach-settings-panel hidden>
+    <div class="coach-settings-inner">
+      <h3>AI 教练设置</h3>
+      <p class="coach-settings-hint">默认使用站点配置。你也可以填自己的智谱 API Key 和 Worker URL，Key 只存在本浏览器里。</p>
+      <label>Worker URL<input type="url" data-coach-url placeholder="https://your-worker.workers.dev"></label>
+      <label>智谱 API Key（可选）<input type="password" data-coach-key placeholder="留空则用站点默认 Key"></label>
+      <div class="coach-settings-actions"><button class="btn btn-primary" type="button" data-coach-save>保存</button><span class="coach-saved" data-coach-saved aria-live="polite"></span></div>
+      <p class="coach-settings-help">没有 Key？看 <a href="https://open.bigmodel.cn/" target="_blank" rel="noopener">智谱开放平台</a>，GLM-4-Flash 模型免费。</p>
+    </div>
+  </div>
   <script>window.CHESS_LESSON=${JSON.stringify(lessonPayload).replaceAll("<", "\\u003c")};</script>
   <script type="module" src="assets/app.js"></script>
 </body>
