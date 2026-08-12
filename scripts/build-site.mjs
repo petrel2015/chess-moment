@@ -134,7 +134,7 @@ function renderLesson(lesson, { homepage = false } = {}) {
     </article>
     <section class="archive"><div class="archive-head"><h2>往期推送</h2><span class="meta">每一篇都可直接挑战</span></div><div class="archive-grid">${archiveCards(lesson.slug)}</div></section>
   </main>
-  <footer class="site-footer">棋刻 Chess Moment · 每天三分钟，想明白一步棋 · <a class="footer-report" href="#" data-footer-report>反馈问题</a></footer>
+  <footer class="site-footer"><div class="footer-meta">棋刻 Chess Moment · 每天三分钟，想明白一步棋 · <a class="footer-report" href="#" data-footer-report>反馈问题</a></div><div class="donate-section"><span class="donate-tag">请我喝杯咖啡 ￥4.9</span><div class="donate-triggers"><button type="button" class="donate-trigger alipay" data-donate-alipay>支付宝</button><button type="button" class="donate-trigger wechat" data-donate-wechat>微信</button></div></div></footer>
   <div class="coach-settings-panel" data-coach-settings-panel hidden>
     <div class="coach-settings-inner">
       <h3>AI 教练设置</h3>

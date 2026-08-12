@@ -999,3 +999,90 @@ document.querySelectorAll("[data-coach-settings-panel]").forEach(panel => {
     }
   });
 });
+
+// ---- 赞赏支持（全局）----------------------------------------------------
+// 页脚「请我喝杯咖啡 ￥4.9」：支付宝优先智能唤起 alipays://，唤起失败或桌面端
+// 兜底弹二维码；微信始终弹二维码（微信无 URL scheme 直接付款）。
+// 模态框按需构建，ESC / 点遮罩 / × 关闭。二维码在页面就绪后预加载，
+// 模态框打开时瞬间显示。
+const DONATE_ALIPAY_URL = "https://qr.alipay.com/fkx16432isyyhmx9ttwpi79";
+const DONATE_ALIPAY_SCHEME = `alipays://platformapi/startapp?saId=10000007&qrcode=${encodeURIComponent(DONATE_ALIPAY_URL)}`;
+const DONATE_QR = {
+  alipay: "assets/donate/alipay-qr.png",
+  wechat: "assets/donate/wechat-qr.png",
+};
+const DONATE_LABEL = { alipay: "支付宝", wechat: "微信" };
+const DONATE_HINT = {
+  alipay: "长按或保存二维码，打开支付宝扫一扫",
+  wechat: "长按或保存二维码，打开微信扫一扫",
+};
+
+function donateIsMobile() {
+  return /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+}
+
+// 预加载两张二维码到浏览器缓存，避免首次打开模态框时的"反应一下"。
+[DONATE_QR.alipay, DONATE_QR.wechat].forEach(src => {
+  const img = new Image();
+  img.src = src;
+});
+
+function closeDonateModal() {
+  const overlay = document.querySelector("[data-donate-overlay]");
+  if (!overlay) return;
+  overlay.remove();
+  document.removeEventListener("keydown", donateKeydown);
+}
+
+function donateKeydown(event) {
+  if (event.key === "Escape") closeDonateModal();
+}
+
+function openDonateModal(channel) {
+  // 同一时刻只保留一个模态框
+  closeDonateModal();
+
+  const overlay = document.createElement("div");
+  overlay.className = "donate-modal-overlay";
+  overlay.dataset.donateOverlay = "";
+  overlay.setAttribute("role", "dialog");
+  overlay.setAttribute("aria-modal", "true");
+  overlay.setAttribute("aria-label", `${DONATE_LABEL[channel]}赞赏二维码`);
+
+  const modal = document.createElement("div");
+  modal.className = "donate-modal";
+  modal.innerHTML = `
+    <button type="button" class="donate-close" aria-label="关闭">×</button>
+    <h3>请我喝杯咖啡 ￥4.9</h3>
+    <img class="donate-qr" src="${DONATE_QR[channel]}" alt="${DONATE_LABEL[channel]}收款码">
+    <small>${DONATE_HINT[channel]}</small>`;
+
+  overlay.appendChild(modal);
+  overlay.addEventListener("click", event => {
+    if (event.target === overlay) closeDonateModal();
+  });
+  modal.querySelector(".donate-close").addEventListener("click", closeDonateModal);
+
+  document.body.appendChild(overlay);
+  document.addEventListener("keydown", donateKeydown);
+}
+
+document.querySelectorAll("[data-donate-alipay]").forEach(btn => {
+  btn.addEventListener("click", () => {
+    if (donateIsMobile()) {
+      // 记录可见性：1.5s 内未切走说明 alipays:// 唤起失败 → 兜底弹二维码。
+      const before = document.visibilityState;
+      window.location.href = DONATE_ALIPAY_SCHEME;
+      window.setTimeout(() => {
+        if (document.visibilityState === before) openDonateModal("alipay");
+      }, 1500);
+    } else {
+      // 桌面端无 alipays scheme，直接弹二维码。
+      openDonateModal("alipay");
+    }
+  });
+});
+
+document.querySelectorAll("[data-donate-wechat]").forEach(btn => {
+  btn.addEventListener("click", () => openDonateModal("wechat"));
+});

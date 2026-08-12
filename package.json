@@ -7,6 +7,7 @@
   "scripts": {
     "validate": "node scripts/validate-content.mjs",
     "optimize-pieces": "node scripts/optimize-pieces.mjs",
+    "qr:generate": "node scripts/generate-donate-qr.mjs",
     "build": "node scripts/optimize-pieces.mjs && node scripts/build-site.mjs",
     "publish:root": "npm run build && node scripts/publish-root.mjs",
     "wechat:prepare": "node scripts/wechat-publish.mjs prepare",
@@ -19,5 +20,9 @@
   "dependencies": {
     "chess.js": "^1.4.0",
     "pngjs": "^7.0.0"
+  },
+  "devDependencies": {
+    "@types/qrcode": "^1.5.5",
+    "qrcode": "^1.5.4"
   }
 }

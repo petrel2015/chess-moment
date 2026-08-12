@@ -63,6 +63,46 @@ test("interactive pages include feedback buttons in coach-actions and footer", a
   }
 });
 
+// 每个交互页页脚都有「请我喝杯咖啡」赞赏区，含支付宝/微信两个触发按钮。
+test("interactive pages include donate section with alipay and wechat triggers", async () => {
+  const lessons = await loadLessons(root);
+  for (const lesson of lessons) {
+    const html = await readFile(path.join(root, "_site", `${lesson.slug}.html`), "utf8");
+    assert.ok(html.includes("请我喝杯咖啡 ￥4.9"), `${lesson.slug}.html missing donate copy`);
+    assert.ok(html.includes("支付宝"), `${lesson.slug}.html missing alipay trigger`);
+    assert.ok(html.includes("微信"), `${lesson.slug}.html missing wechat trigger`);
+    assert.ok(
+      html.includes('data-donate-alipay>支付宝</button>'),
+      `${lesson.slug}.html missing data-donate-alipay button`
+    );
+    assert.ok(
+      html.includes('data-donate-wechat>微信</button>'),
+      `${lesson.slug}.html missing data-donate-wechat button`
+    );
+  }
+});
+
+// 赞赏二维码必须是真实 PNG，并被构建复制到 _site/assets/donate/。
+test("donate QR PNGs exist and are real images", async () => {
+  const { stat } = await import("node:fs/promises");
+  for (const name of ["alipay-qr.png", "wechat-qr.png"]) {
+    const source = await stat(path.join(root, "assets", "donate", name));
+    assert.ok(source.size > 2000, `${name} should be a real PNG (source)`);
+    const built = await stat(path.join(root, "_site", "assets", "donate", name));
+    assert.ok(built.size > 2000, `${name} should be copied into _site/assets/donate`);
+  }
+});
+
+// app.js 必须包含赞赏装配：预加载二维码、alipays scheme 唤起、ESC 关闭模态框。
+test("app.js wires the donate modal with preload, alipay scheme, and ESC close", () => {
+  const src = readFileSync(path.join(root, "assets", "app.js"), "utf8");
+  assert.ok(/new Image\(\)/.test(src), "missing QR preload via new Image()");
+  assert.ok(/alipays:\/\//.test(src), "missing alipays:// scheme");
+  assert.ok(/data-donate-alipay/.test(src), "missing [data-donate-alipay] binding");
+  assert.ok(/data-donate-wechat/.test(src), "missing [data-donate-wechat] binding");
+  assert.ok(/key === "Escape"/.test(src), "missing ESC-to-close handler");
+});
+
 test("shared interaction JavaScript parses", () => {
   const result = spawnSync(process.execPath, ["--check", "assets/app.js"], {
     cwd: root,
