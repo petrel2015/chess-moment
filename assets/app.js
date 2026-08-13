@@ -8,35 +8,37 @@ import {
   toFen,
 } from "./chess-engine.mjs";
 import { buildCoachMessages, buildKeylessUrl, resolveWorkerUrl } from "./coach-ai.mjs";
+import { t, ui } from "./i18n.mjs";
 
-const PIECE_NAMES = {
-  K: "白王", Q: "白后", R: "白车", B: "白象", N: "白马", P: "白兵",
-  k: "黑王", q: "黑后", r: "黑车", b: "黑象", n: "黑马", p: "黑兵"
-};
+// 当前语言下的棋子名（用于棋盘 aria-label 与提示）。
+function pieceName(piece) {
+  return ui().pieceNames[piece] || piece;
+}
 
-const NOTATION_GLOSSARY = {
-  "Re8#": "白车走到 e8。R 是车（Rook），# 表示将死。",
-  "Rg8#": "白车走到 g8。R 是车（Rook），# 表示将死。",
-  "Ne7+": "白马跳到 e7。N 是马（Knight），+ 表示将军。",
-  "Nxc8": "白马吃掉 c8 的棋子。N 是马，x 表示吃子。",
-  "Nxd4": "白马吃到 d4。N 是马，x 表示吃子。",
-  "Bc4": "白象走到 c4。B 是象（Bishop）。",
-  "...exd4": "黑方的 e 线兵吃到 d4；省略号表示这是黑方着法，x 表示吃子。",
-  "exd4": "e 线兵吃到 d4；x 表示吃子。",
-  "Re8": "白车走到 e8。R 是车（Rook）。",
-  "Rg8": "白车走到 g8。R 是车（Rook）。"
-};
+// 当前页所在目录的资源基础路径：英文页位于 en/ 子目录，需回到上一级。
+function assetBase() {
+  return currentLang() === "en" ? "../assets" : "assets";
+}
 
-const NOTATION_PATTERN = new RegExp(
-  Object.keys(NOTATION_GLOSSARY)
-    .sort((a, b) => b.length - a.length)
-    .map(term => term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))
-    .join("|"),
-  "g"
-);
+// 当前语言下的棋谱记号解释 + 匹配正则（enhanceNotation 用）。
+function notationGlossary() {
+  return ui().notationGlossary;
+}
+
+function notationPattern() {
+  return new RegExp(
+    Object.keys(notationGlossary())
+      .sort((a, b) => b.length - a.length)
+      .map(term => term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))
+      .join("|"),
+    "g"
+  );
+}
 
 function enhanceNotation(container) {
   if (!container) return;
+  const pattern = notationPattern();
+  const glossary = notationGlossary();
   const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT);
   const textNodes = [];
   while (walker.nextNode()) {
@@ -44,22 +46,22 @@ function enhanceNotation(container) {
     if (
       node.nodeValue.trim()
       && !node.parentElement.closest("button, textarea, script, style, .chess-notation")
-      && NOTATION_PATTERN.test(node.nodeValue)
+      && pattern.test(node.nodeValue)
     ) textNodes.push(node);
-    NOTATION_PATTERN.lastIndex = 0;
+    pattern.lastIndex = 0;
   }
 
   textNodes.forEach(node => {
     const fragment = document.createDocumentFragment();
     let cursor = 0;
-    node.nodeValue.replace(NOTATION_PATTERN, (term, offset) => {
+    node.nodeValue.replace(pattern, (term, offset) => {
       fragment.append(node.nodeValue.slice(cursor, offset));
       const notation = document.createElement("button");
       notation.type = "button";
       notation.className = "chess-notation";
       notation.textContent = term;
-      notation.dataset.explanation = NOTATION_GLOSSARY[term];
-      notation.setAttribute("aria-label", `${term}，点击查看棋谱解释`);
+      notation.dataset.explanation = glossary[term];
+      notation.setAttribute("aria-label", t("notationAria", { term }));
       notation.setAttribute("aria-expanded", "false");
       notation.setAttribute("aria-describedby", "notation-tooltip");
       notation.addEventListener("mouseenter", () => showNotationTooltip(notation));
@@ -76,7 +78,7 @@ function enhanceNotation(container) {
     });
     fragment.append(node.nodeValue.slice(cursor));
     node.replaceWith(fragment);
-    NOTATION_PATTERN.lastIndex = 0;
+    pattern.lastIndex = 0;
   });
 }
 
@@ -153,7 +155,7 @@ const PIECE_KEYS = [
 
 function pieceAsset(piece) {
   const color = piece === piece.toUpperCase() ? "w" : "b";
-  return `assets/pieces/${color}${piece.toLowerCase()}.png`;
+  return `${assetBase()}/pieces/${color}${piece.toLowerCase()}.png`;
 }
 
 function normalizePieceArtwork(element) {
@@ -177,7 +179,7 @@ function preloadPieces() {
       const img = new Image();
       img.onload = () => resolve();
       img.onerror = () => resolve();
-      img.src = `assets/pieces/${key}.png`;
+      img.src = `${assetBase()}/pieces/${key}.png`;
     }))
   ).then(() => { piecesReady = true; });
   return piecesPreload;
@@ -192,25 +194,29 @@ const REPORT_MAILTO = "petrel2015@foxmail.com";
 
 function buildReportMailto(opts) {
   const { title, dateLabel, slug, step, totalSteps, lastMove, startFen, currentFen, sideToMove, includeLiveState, url, userAgent } = opts;
-  const subject = `【棋刻反馈】${title || "题目问题"}${dateLabel ? `（${dateLabel}）` : ""}`;
+  const fallbackTitle = t("reportSubjectTitle");
+  const base = `${t("reportSubjectPrefix")}${title || fallbackTitle}`;
+  const subject = dateLabel ? `${base}${t("reportSubjectDate", { date: dateLabel })}` : base;
   const lines = [
-    "请在此处描述你遇到的问题或疑惑：",
+    t("reportIntro"),
     "",
-    "——以下为系统自动收集的诊断信息，请勿删除——",
-    `题目：${slug || "未知"}${title ? `（${title}）` : ""}`,
+    t("reportDiag"),
+    title
+      ? t("reportLesson", { slug: slug || "unknown", title })
+      : t("reportLessonNoTitle", { slug: slug || "unknown" }),
   ];
-  if (dateLabel) lines.push(`日期标签：${dateLabel}`);
+  if (dateLabel) lines.push(t("reportDate", { date: dateLabel }));
   if (includeLiveState) {
-    lines.push(`当前步骤：第 ${(step ?? 0) + 1} 步（共 ${totalSteps ?? "?"} 步）`);
-    lines.push(`轮到：${sideToMove === "b" ? "黑方" : "白方"}`);
-    if (lastMove) lines.push(`最后一步走法：${lastMove}`);
-    if (startFen) lines.push(`起始局面 FEN：${startFen}`);
-    if (currentFen) lines.push(`当前局面 FEN：${currentFen}`);
+    lines.push(t("reportStep", { step: (step ?? 0) + 1, total: totalSteps ?? "?" }));
+    lines.push(t("reportSide", { side: sideToMove === "b" ? t("sideBlack") : t("sideWhite") }));
+    if (lastMove) lines.push(t("reportLastMove", { move: lastMove }));
+    if (startFen) lines.push(t("reportStartFen", { fen: startFen }));
+    if (currentFen) lines.push(t("reportCurrentFen", { fen: currentFen }));
   } else {
-    lines.push("（未含实时局面。如需更精准诊断，请用棋盘旁的「反馈问题」按钮，会自动带上当前局面。）");
+    lines.push(t("reportNoLive"));
   }
-  if (url) lines.push(`页面地址：${url}`);
-  if (userAgent) lines.push(`浏览器：${userAgent}`);
+  if (url) lines.push(t("reportUrl", { url }));
+  if (userAgent) lines.push(t("reportUa", { ua: userAgent }));
 
   const body = lines.join("\n");
   return `mailto:${REPORT_MAILTO}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
@@ -263,7 +269,7 @@ async function askCoachAI(workerUrl, messages, userKey) {
  * 必须把失败兜底到预制答案。15 秒超时，避免用户长时间等待。
  */
 async function askCoachKeyless(question, ctx) {
-  const url = buildKeylessUrl(question, ctx);
+  const url = buildKeylessUrl(question, ctx, currentLang());
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 15000);
   try {
@@ -420,7 +426,7 @@ function setupChallenge(root) {
   const askRow = root.querySelector(".ask-row");
   const quickQuestions = document.createElement("div");
   quickQuestions.className = "quick-questions";
-  quickQuestions.setAttribute("aria-label", "常见问题快捷选项");
+  quickQuestions.setAttribute("aria-label", t("quickQuestionsAria"));
   (puzzle.suggestions || []).forEach(suggestion => {
     const button = document.createElement("button");
     button.type = "button";
@@ -448,23 +454,23 @@ function setupChallenge(root) {
       <div class="material-line">
         <div class="material-side">
           <span class="side-dot white-dot" aria-hidden="true"></span>
-          <span><strong>白方 ${whiteMaterial.score}分</strong><small>${whiteMaterial.pieces}</small></span>
+          <span><strong>${t("materialWhite", { score: whiteMaterial.score })}</strong><small>${whiteMaterial.pieces}</small></span>
         </div>
         <div class="material-side material-side-black">
-          <span><strong>黑方 ${blackMaterial.score}分</strong><small>${blackMaterial.pieces}</small></span>
+          <span><strong>${t("materialBlack", { score: blackMaterial.score })}</strong><small>${blackMaterial.pieces}</small></span>
           <span class="side-dot black-dot" aria-hidden="true"></span>
         </div>
       </div>
       <div class="odds-head">
-        <strong>局面胜算</strong>
-        <span>白胜 ${odds.white}% · 和棋 ${odds.draw}% · 黑胜 ${odds.black}%</span>
+        <strong>${t("oddsHead")}</strong>
+        <span>${t("oddsLine", { w: odds.white, d: odds.draw, b: odds.black })}</span>
       </div>
-      <div class="odds-bar" role="img" aria-label="白胜 ${odds.white}%，和棋 ${odds.draw}%，黑胜 ${odds.black}%">
+      <div class="odds-bar" role="img" aria-label="${t("oddsLine", { w: odds.white, d: odds.draw, b: odds.black })}">
         <span class="odds-white" style="width:${odds.white}%"></span>
         <span class="odds-draw" style="width:${odds.draw}%"></span>
         <span class="odds-black" style="width:${odds.black}%"></span>
       </div>
-      <p class="odds-note">教学局面估算 · 走子后实时更新</p>
+      <p class="odds-note">${t("oddsNote")}</p>
     `;
   }
 
@@ -486,7 +492,7 @@ function setupChallenge(root) {
           && pieceColor(board[squareName]) === "w"
           && step < puzzle.steps.length
         );
-        square.setAttribute("aria-label", squareName + (board[squareName] ? " " + PIECE_NAMES[board[squareName]] : " 空格"));
+        square.setAttribute("aria-label", squareName + (board[squareName] ? " " + pieceName(board[squareName]) : " " + t("emptySquare")));
         if (selected === squareName) square.classList.add("selected");
         if (availableTargets.includes(squareName)) {
           square.classList.add("target");
@@ -583,8 +589,8 @@ function setupChallenge(root) {
     celebration.className = `board-celebration ${threatState === "checkmate" ? "mate" : ""}`;
     celebration.innerHTML = `
       <span class="celebration-check" aria-hidden="true">✓</span>
-      <strong>挑战完成</strong>
-      <small>${threatState === "checkmate" ? "将死！黑王无路可逃" : threatState === "check" ? "将军！黑王必须回应" : "思路正确，漂亮完成"}</small>
+      <strong>${t("celebrationComplete")}</strong>
+      <small>${threatState === "checkmate" ? t("celebrationMate") : threatState === "check" ? t("celebrationCheck") : t("celebrationGood")}</small>
     `;
     boardEl.appendChild(celebration);
     window.setTimeout(() => celebration.classList.add("leaving"), 2100);
@@ -752,7 +758,7 @@ function setupChallenge(root) {
     const piece = board[squareName];
     if (!selected) {
       if (!piece || piece === piece.toLowerCase()) {
-        setStatus("error", "先选白棋", "点击你想移动的白色棋子，再点击目标格。");
+        setStatus("error", t("statusFirstSelectWhite"), t("statusFirstSelectWhiteBody"));
         return;
       }
       clearMoveFeedback();
@@ -770,7 +776,7 @@ function setupChallenge(root) {
 
     if (!legalTargets(state, selected).includes(squareName)) {
       markMoveFeedback(selected, "wrong");
-      setStatus("error", "这里不能走", `${PIECE_NAMES[board[selected]]}不能走到 ${squareName}。请选择棋盘上标出的合法目标格。`);
+      setStatus("error", t("statusCannotMove"), t("statusCannotMoveBody", { piece: pieceName(board[selected]), square: squareName }));
       render();
       return;
     }
@@ -784,13 +790,13 @@ function setupChallenge(root) {
       const alt = (current.alternatives || []).find(candidate => candidate.move === move);
       if (alt) {
         markMoveFeedback(fromSquare, "alt");
-        setStatus("alt", "这步也合理", alt.note);
+        setStatus("alt", t("statusAlt"), alt.note);
         render();
         return;
       }
       markMoveFeedback(fromSquare, "wrong");
       const message = puzzle.errors[move] || puzzle.genericError;
-      setStatus("error", "想法还差一步", message);
+      setStatus("error", t("statusError"), message);
       render();
       return;
     }
@@ -803,7 +809,7 @@ function setupChallenge(root) {
     if (current.opponent) {
       // 进入对手回应窗口：阻止用户在此期间操作（避免与异步 render 竞争）。
       awaitingOpponent = true;
-      setStatus("", "方向正确", current.note || "对手正在回应……");
+      setStatus("", t("statusGoodDirection"), current.note || t("statusOpponentReplying"));
       render();
       const opponentMove = current.opponent;
       const opponentFrom = opponentMove.slice(0, 2);
@@ -823,17 +829,17 @@ function setupChallenge(root) {
         } catch (err) {
           // 对手回应失败：解锁状态并明确提示，绝不让用户卡在无反馈的空窗。
           awaitingOpponent = false;
-          setStatus("error", "对手回应异常", "对手的自动回未能完成。可以点「反馈问题」附上当前局面报告，或点「重新挑战」重试。");
+          setStatus("error", t("statusOpponentError"), t("statusOpponentErrorBody"));
           console.error("opponent reply failed:", err);
           render();
         }
       }, 700);
     } else if (step >= puzzle.steps.length) {
-      setStatus("success", "挑战完成", puzzle.success);
+      setStatus("success", t("statusComplete"), puzzle.success);
       render();
       window.setTimeout(playCompletionFeedback, 80);
     } else {
-      setStatus("", "继续", current.note || puzzle.goal);
+      setStatus("", t("statusContinue"), current.note || puzzle.goal);
       render();
     }
   }
@@ -880,14 +886,14 @@ function setupChallenge(root) {
     lastMove = null;
     clearMoveFeedback();
     answer.classList.remove("show");
-    setStatus("", "轮到你了", puzzle.goal);
+    setStatus("", t("statusYourTurn"), puzzle.goal);
     render();
   }
 
   hintBtn.addEventListener("click", () => {
     const expected = puzzle.steps[step]?.move;
     if (!expected) return;
-    setStatus("", "给你一点方向", `观察 ${expected.slice(0, 2)} 上的棋子：它能不能前往一个同时制造威胁、又改善位置的格子？`);
+    setStatus("", t("hintLabel"), t("hintBody", { square: expected.slice(0, 2) }));
   });
 
   resetBtn.addEventListener("click", reset);
@@ -914,9 +920,9 @@ function setupChallenge(root) {
 
   function renderCoachReply(text, { fallback } = {}) {
     const prefix = fallback
-      ? `<small class="ai-fallback-note">AI 暂时不可用，已显示预设参考：</small>`
+      ? `<small class="ai-fallback-note">${t("aiFallback")}</small>`
       : "";
-    answer.innerHTML = `${prefix}<strong>棋局教练：</strong>${text}`;
+    answer.innerHTML = `${prefix}<strong>${t("coachPrefix")}</strong>${text}`;
     enhanceNotation(answer);
     answer.classList.add("show");
   }
@@ -936,11 +942,11 @@ function setupChallenge(root) {
 
   // 未配置 Worker 时尝试免 Key 免费中转；失败一律兜底预制答案。
   async function showCoachAnswerKeyless(question, preferredKey) {
-    answer.innerHTML = `<strong>棋局教练：</strong><span class="ai-loading">正在思考…</span>`;
+    answer.innerHTML = `<strong>${t("coachPrefix")}</strong><span class="ai-loading">${t("aiLoading")}</span>`;
     answer.classList.add("show", "loading");
     try {
       // 点快捷问题按钮时 question 可能为空，用 quick 字典里对应的 label 作为问题文本。
-      const questionForAI = question || (preferredKey ? puzzle.quick[preferredKey] : "") || "请讲讲这一步的思路。";
+      const questionForAI = question || (preferredKey ? puzzle.quick[preferredKey] : "") || t("askDefaultQuestion");
       const reply = await askCoachKeyless(questionForAI, coachContext());
       renderCoachReply(reply);
     } catch (err) {
@@ -963,12 +969,12 @@ function setupChallenge(root) {
       return;
     }
     // 配置了 Worker：显示 loading，调 AI，失败降级。
-    answer.innerHTML = `<strong>棋局教练：</strong><span class="ai-loading">正在思考…</span>`;
+    answer.innerHTML = `<strong>${t("coachPrefix")}</strong><span class="ai-loading">${t("aiLoading")}</span>`;
     answer.classList.add("show", "loading");
     try {
       // 点快捷问题按钮时 question 可能为空，用 quick 字典里对应的 label 作为问题文本。
-      const questionForAI = question || (preferredKey ? puzzle.quick[preferredKey] : "") || "请讲讲这一步的思路。";
-      const messages = buildCoachMessages(questionForAI, coachContext());
+      const questionForAI = question || (preferredKey ? puzzle.quick[preferredKey] : "") || t("askDefaultQuestion");
+      const messages = buildCoachMessages(questionForAI, coachContext(), currentLang());
       const reply = await askCoachAI(workerUrl, messages, coachUserKey());
       renderCoachReply(reply);
     } catch (err) {
@@ -1041,9 +1047,17 @@ document.querySelectorAll("[data-coach-settings-panel]").forEach(panel => {
     else localStorage.removeItem("chessCoachUserKey");
     const note = panel.querySelector("[data-coach-saved]");
     if (note) {
-      note.textContent = "已保存。";
+      note.textContent = t("aiSettingSaved");
       window.setTimeout(() => { note.textContent = ""; }, 2000);
     }
+  });
+});
+
+// ---- 语言切换（全局）----------------------------------------------------
+// 记住用户手动选择（localStorage），让目标页的自动检测脚本不再跳回当前语言。
+document.querySelectorAll(".lang-toggle").forEach(link => {
+  link.addEventListener("click", () => {
+    try { localStorage.setItem("chessMomentLang", link.dataset.lang || ""); } catch (e) { /* 忽略 */ }
   });
 });
 
@@ -1055,14 +1069,14 @@ document.querySelectorAll("[data-coach-settings-panel]").forEach(panel => {
 const DONATE_ALIPAY_URL = "https://qr.alipay.com/fkx16432isyyhmx9ttwpi79";
 const DONATE_ALIPAY_SCHEME = `alipays://platformapi/startapp?saId=10000007&qrcode=${encodeURIComponent(DONATE_ALIPAY_URL)}`;
 const DONATE_QR = {
-  alipay: "assets/donate/alipay-qr.png",
-  wechat: "assets/donate/wechat-qr.png",
+  alipay: `${assetBase()}/donate/alipay-qr.png`,
+  wechat: `${assetBase()}/donate/wechat-qr.png`,
 };
-const DONATE_LABEL = { alipay: "支付宝", wechat: "微信" };
-const DONATE_HINT = {
-  alipay: "长按或保存二维码，打开支付宝扫一扫",
-  wechat: "长按或保存二维码，打开微信扫一扫",
-};
+const DONATE_LABEL = () => ({ alipay: t("donateAlipay"), wechat: t("donateWechat") });
+const DONATE_HINT = () => ({
+  alipay: t("donateHintAlipay"),
+  wechat: t("donateHintWechat"),
+});
 
 function donateIsMobile() {
   return /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
@@ -1094,15 +1108,15 @@ function openDonateModal(channel) {
   overlay.dataset.donateOverlay = "";
   overlay.setAttribute("role", "dialog");
   overlay.setAttribute("aria-modal", "true");
-  overlay.setAttribute("aria-label", `${DONATE_LABEL[channel]}赞赏二维码`);
+  overlay.setAttribute("aria-label", t("donateModalAria", { channel: DONATE_LABEL()[channel] }));
 
   const modal = document.createElement("div");
   modal.className = "donate-modal";
   modal.innerHTML = `
-    <button type="button" class="donate-close" aria-label="关闭">×</button>
-    <h3>请我喝杯咖啡 ￥4.9</h3>
-    <img class="donate-qr" src="${DONATE_QR[channel]}" alt="${DONATE_LABEL[channel]}收款码">
-    <small>${DONATE_HINT[channel]}</small>`;
+    <button type="button" class="donate-close" aria-label="${t("donateClose")}">×</button>
+    <h3>${t("donateTag")}</h3>
+    <img class="donate-qr" src="${DONATE_QR[channel]}" alt="${t("donateQrAlt", { channel: DONATE_LABEL()[channel] })}">
+    <small>${DONATE_HINT()[channel]}</small>`;
 
   overlay.appendChild(modal);
   overlay.addEventListener("click", event => {

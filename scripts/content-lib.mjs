@@ -243,6 +243,51 @@ export function validateLessons(lessons) {
         }
       }
     }
+
+    // 多语言（中英）：英文文案字段必须齐全，保证英文版站点完整可用。
+    const enRequired = [
+      "title_en", "summary_en", "topic_en", "edition_en", "dateLabel_en", "category_en",
+      "introduction_en", "culture_en", "review_en", "challenge_en",
+    ];
+    for (const field of enRequired) {
+      if (lesson[field] === undefined || lesson[field] === null || lesson[field] === "") {
+        errors.push(`${at}: missing ${field} (English copy)`);
+      }
+    }
+    const cEn = lesson.challenge_en || {};
+    if (lesson.challenge_en) {
+      for (const f of ["title", "instruction", "goal", "success", "defaultAnswer", "genericError"]) {
+        if (!cEn[f]) errors.push(`${at}: challenge_en missing ${f}`);
+      }
+      if (!Array.isArray(cEn.steps) || cEn.steps.length !== (lesson.challenge?.steps?.length || 0)) {
+        errors.push(`${at}: challenge_en steps must mirror challenge.steps`);
+      } else {
+        cEn.steps.forEach((step, index) => {
+          if (!step.note) errors.push(`${at}: challenge_en step ${index + 1} needs note`);
+          if (Array.isArray(step.alternatives)) {
+            step.alternatives.forEach(alt => {
+              if (!alt.note) errors.push(`${at}: challenge_en step ${index + 1} alternative needs note`);
+            });
+          }
+        });
+      }
+      if (!cEn.quick || !Array.isArray(cEn.suggestions) || cEn.suggestions.length < 2) {
+        errors.push(`${at}: challenge_en quick questions need at least 2 suggestions`);
+      } else {
+        cEn.suggestions.forEach(item => {
+          if (!item.label || !cEn.quick[item.key]) errors.push(`${at}: challenge_en suggestion ${item.key} has no answer`);
+        });
+      }
+    }
+    if (lesson.culture_en && (!lesson.culture_en.title || !lesson.culture_en.content)) {
+      errors.push(`${at}: incomplete culture_en`);
+    }
+    if (lesson.review_en && (!lesson.review_en.title || !Array.isArray(lesson.review_en.steps) || !lesson.review_en.principle)) {
+      errors.push(`${at}: incomplete review_en`);
+    }
+    if (lesson.tags_en !== undefined && !Array.isArray(lesson.tags_en)) {
+      errors.push(`${at}: tags_en must be an array if present`);
+    }
   }
 
   // prerequisites 引用死链检查（需要所有 slug 已收集完毕）。
@@ -259,6 +304,62 @@ export function validateLessons(lessons) {
 export function publicLesson(lesson) {
   const { __file, ...clean } = lesson;
   return clean;
+}
+
+/**
+ * 把课程内容本地化到指定语言。中文为默认（原始字段即中文）；
+ * 英文文案取 *_en 字段，缺失时回退中文。只替换文案，棋盘数据
+ * （fen / move / opponent / odds / suggestions.key）保持共用。
+ * @param {object} lesson 原始课程对象（含 zh + en 字段）
+ * @param {"zh"|"en"} locale 目标语言
+ * @returns {object} 文案已切换到目标语言的课程对象
+ */
+export function localizeLesson(lesson, locale = "zh") {
+  if (locale !== "en") return lesson;
+  const ch = lesson.challenge || {};
+  const ce = lesson.challenge_en || {};
+  const zhSteps = Array.isArray(ch.steps) ? ch.steps : [];
+  const enSteps = Array.isArray(ce.steps) ? ce.steps : [];
+  const steps = zhSteps.map((step, i) => {
+    const enStep = enSteps[i] || {};
+    const zhAlt = step.alternatives;
+    const enAlt = enStep.alternatives;
+    return {
+      ...step,
+      ...enStep,
+      alternatives: zhAlt ? zhAlt.map((alt, ai) => ({ ...alt, ...(enAlt?.[ai] || {}) })) : undefined,
+    };
+  });
+  return {
+    ...lesson,
+    title: lesson.title_en || lesson.title,
+    summary: lesson.summary_en || lesson.summary,
+    topic: lesson.topic_en || lesson.topic,
+    edition: lesson.edition_en || lesson.edition,
+    dateLabel: lesson.dateLabel_en || lesson.dateLabel,
+    category: lesson.category_en || lesson.category,
+    tags: lesson.tags_en || lesson.tags,
+    introduction: lesson.introduction_en || lesson.introduction,
+    culture: {
+      title: lesson.culture_en?.title || lesson.culture?.title || "",
+      content: lesson.culture_en?.content || lesson.culture?.content || "",
+    },
+    review: {
+      title: lesson.review_en?.title || lesson.review?.title || "",
+      steps: lesson.review_en?.steps || lesson.review?.steps || [],
+      principle: lesson.review_en?.principle || lesson.review?.principle || "",
+    },
+    challenge: {
+      ...ch,
+      ...ce,
+      fen: ch.fen,
+      odds: ch.odds,
+      steps,
+      errors: ce.errors || ch.errors,
+      quick: ce.quick || ch.quick,
+      suggestions: ce.suggestions || ch.suggestions,
+    },
+  };
 }
 
 export function escapeHtml(value = "") {
