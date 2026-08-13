@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="The black king is trapped in the corner and your passed pawn is one step from promotion. But promote to a queen or a rook — the outcome is night and day.">
+  <meta name="theme-color" content="#183c34">
+  <meta name="application-name" content="Chess Moment">
+  <meta name="apple-mobile-web-app-title" content="Chess Moment">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <title>One Promotion: the Difference Between Mate and Draw | Chess Moment</title>
+  <link rel="icon" type="image/svg+xml" href="../assets/icons/chess-moment.svg">
+  <link rel="apple-touch-icon" sizes="180x180" href="../assets/icons/apple-touch-icon.png">
+  <link rel="manifest" href="../assets/site.webmanifest">
+  <link rel="stylesheet" href="../assets/styles.css">
+    <link rel="preload" as="image" href="../assets/pieces/wk.png">
+  <link rel="preload" as="image" href="../assets/pieces/wq.png">
+  <link rel="preload" as="image" href="../assets/pieces/wr.png">
+  <link rel="preload" as="image" href="../assets/pieces/wb.png">
+  <link rel="preload" as="image" href="../assets/pieces/wn.png">
+  <link rel="preload" as="image" href="../assets/pieces/wp.png">
+  <link rel="preload" as="image" href="../assets/pieces/bk.png">
+  <link rel="preload" as="image" href="../assets/pieces/bq.png">
+  <link rel="preload" as="image" href="../assets/pieces/br.png">
+  <link rel="preload" as="image" href="../assets/pieces/bb.png">
+  <link rel="preload" as="image" href="../assets/pieces/bn.png">
+  <link rel="preload" as="image" href="../assets/pieces/bp.png">
+  <script>window.CHESS_COACH_CONFIG = {"workerUrl":""};</script>
+  <script>
+(function(){
+  var stored = null;
+  try { stored = localStorage.getItem("chessMomentLang"); } catch (e) {}
+  var nav = (navigator.language || "").toLowerCase();
+  var want = (stored === "zh" || stored === "en") ? stored : (nav.indexOf("zh") === 0 ? "zh" : (nav.indexOf("en") === 0 ? "en" : "zh"));
+  var page = "en";
+  if (want !== page) {
+    var p = location.pathname;
+    var next = page === "zh" ? p.replace(/([^/]*)\.html$/, "en/$1.html") : p.replace(/\/en\//, "/");
+    if (next !== p) location.replace(next);
+  }
+})();
+</script>
+</head>
+<body>
+  <header class="site-header"><div class="header-inner"><a class="brand" href="index.html">棋刻 <span>Chess Moment</span></a><span class="issue-mark">A full challenge every day · explained instantly</span><a class="lang-toggle" href="../promotion-combo.html" data-lang="zh" hreflang="zh-CN">中文</a></div></header>
+  <main class="page">
+    <article>
+      <header class="article-header">
+        <p class="eyebrow">Jul 29 · MorningPromotion endgame</p>
+        <h1>One Promotion: the Difference Between Mate and Draw</h1>
+        <p class="dek">The black king is trapped in the corner and your passed pawn is one step from promotion. But promote to a queen or a rook — the outcome is night and day.</p>
+        <div class="meta">Difficulty 3/5　·　≈ 6 min　·　3 key decisions　·　Theme：Pawn promotion and choosing the right piece　·　标签：Endgame、Promotion、Tactics</div>
+      </header>
+      <section class="story">
+        <p class="prereq"><strong>Prerequisites: </strong><a href="rook-ladder.html">Two Rooks: Five Forcing Checks Down the Ladder</a></p>
+        <p>When a passed pawn reaches the last rank, you may exchange it for a queen, rook, bishop or knight — this is called promotion. Most of the time promoting to a queen is strongest, because the queen attacks along ranks, files and diagonals.</p><p>In this position the black king is already boxed into h8 by its own pawns and the edge of the board. Your white king is approaching to protect, and the passed pawn on g7 is ready to strike. The question is not whether to promote, but what to promote to: a queen gives immediate check and closes the net; a rook gives the win away.</p><p>Note the notation: a promotion move is written with five characters, e.g. g7g8q means &quot;the pawn moves from g7 to g8 and promotes to a queen&quot;; the final q is Queen, change it to r for Rook.</p>
+        <aside class="culture-note"><strong>Promotion is chess at its most dramatic</strong>A weak pawn that has crept forward one square at a time for the whole game suddenly becomes the strongest piece on the board. Since the nineteenth century there are famous games won by promotion comebacks. But players also lose chances by habitually promoting to a queen when a rook or knight would mate more precisely — choosing the promotion piece is itself a calculation.</aside>
+      </section>
+      <section class="challenge" data-puzzle="promotion-combo">
+        <div class="challenge-head"><p class="challenge-kicker">Today's Challenge</p><h2>Three moves: get into place, promote, close the net</h2><p>After each move the opponent replies automatically. First bring the white king to the protecting square, then choose the promotion piece (study the difference between queen and rook), and finally deliver mate.</p></div>
+        <div class="challenge-body">
+          <div class="board-wrap"><div class="board" role="grid" aria-label="Interactive chess board"></div></div>
+          <div class="coach">
+            <div class="progress" aria-label="Progress"><span></span><span></span><span></span></div>
+            <div class="status" aria-live="polite"><span class="status-label"></span><p></p></div>
+            <div class="coach-actions"><button class="btn" type="button" data-hint>Hint</button><button class="btn" type="button" data-reset>Restart</button><button class="btn" type="button" data-report>Report</button></div>
+            <div class="ask-box"><div class="ask-label-row"><label for="ask-promotion-combo">Something unclear?</label><a class="coach-settings-toggle" href="#" aria-expanded="false" data-coach-settings-toggle>AI Settings</a></div><div class="ask-row"><textarea id="ask-promotion-combo" placeholder="Type your question about this move"></textarea><button class="btn btn-primary" type="button" data-ask>Ask Coach</button></div><div class="ai-answer" aria-live="polite"></div></div>
+          </div>
+        </div>
+      </section>
+      <section class="lesson"><h2>Review: Promotion is a multiple-choice question</h2><ol class="lesson-steps"><li>Kf7 first: the white king controls the promotion square g8 and pins the black king in the corner.</li><li>g8=Q+ promotes to a queen: the queen&#39;s diagonal firepower keeps the checks coming — something a rook cannot do.</li><li>Qg6# closes the net: queen and king cooperate to seal the last escape squares.</li><li>Before promoting ask yourself — do you need full rank-file-diagonal coverage (queen), or just one line (rook/bishop/knight)?</li></ol><div class="principle">Takeaway: Promotion is not just &quot;trade the pawn for the strongest piece&quot;; it is choosing the piece that provides the line of attack this move needs. Usually the queen — but always know why.</div></section>
+    </article>
+    <section class="archive"><div class="archive-head"><h2>Archive</h2><span class="meta">Every issue is playable</span></div><div class="archive-grid">
+      <a class="archive-card" href="exchange-order.html">
+        <time>7月28日 · 早报</time>
+        <h3>先交换谁，最后会差一整车</h3>
+        <p>连续五次选择，不急着数眼前吃掉的棋子，而是算清整个交换序列的净收益。</p>
+        <span class="tag">子力判断 · 5次选择 →</span>
+        
+      </a>
+      <a class="archive-card" href="rook-ladder.html">
+        <time>7月27日 · 晚报</time>
+        <h3>两辆车，五步把王赶下楼梯</h3>
+        <p>不是寻找一步将杀，而是让两辆车轮流封锁横线，连续五步压缩黑王的空间。</p>
+        <span class="tag">战术组合 · 5次选择 →</span>
+        
+      </a>
+      <a class="archive-card" href="italian-center-plan.html">
+        <time>7月26日 · 早报</time>
+        <h3>意大利开局：五步准备一次 d4</h3>
+        <p>不背一串着法，而是连续完成出象、稳中心、准备兵突破和发展后翼马。</p>
+        <span class="tag">开局 · 5次选择 →</span>
+        
+      </a>
+      <a class="archive-card" href="king-opposition.html">
+        <time>7月25日 · 晚报</time>
+        <h3>王不是观众：五步抢到关键格</h3>
+        <p>没有将军也没有立即吃子，先用王取得空间，再决定兵从哪一侧制造突破。</p>
+        <span class="tag">残局 · 5次选择 →</span>
+        
+      </a>
+      <a class="archive-card" href="improve-worst-piece.html">
+        <time>7月24日 · 早报</time>
+        <h3>五步救活全场最差的马</h3>
+        <p>没有直接战术时，不要乱找将军；找到最差的棋子，为它规划一条通往前哨的路线。</p>
+        <span class="tag">局面棋 · 5次选择 →</span>
+        
+      </a></div></section>
+  </main>
+  <footer class="site-footer"><div class="footer-meta">棋刻 Chess Moment · Three minutes a day to understand one move · <a class="footer-report" href="#" data-footer-report>Report a problem</a></div><div class="donate-section"><span class="donate-tag">Buy me a coffee ￥4.9</span><div class="donate-triggers"><button type="button" class="donate-trigger alipay" data-donate-alipay>Alipay</button><button type="button" class="donate-trigger wechat" data-donate-wechat>WeChat</button></div></div></footer>
+  <div class="coach-settings-panel" data-coach-settings-panel hidden>
+    <div class="coach-settings-inner">
+      <h3>AI Coach Settings</h3>
+      <p class="coach-settings-hint">Uses the site default. You can also provide your own Zhipu API key and Worker URL; the key stays in this browser.</p>
+      <label>Worker URL<input type="url" data-coach-url placeholder="https://your-worker.workers.dev"></label>
+      <label>Zhipu API Key (optional)<input type="password" data-coach-key placeholder="Leave empty to use the site default key"></label>
+      <div class="coach-settings-actions"><button class="btn btn-primary" type="button" data-coach-save>Save</button><span class="coach-saved" data-coach-saved aria-live="polite"></span></div>
+      <p class="coach-settings-help">No key? See the Zhipu open platform (open.bigmodel.cn); the GLM-4-Flash model is free.</p>
+    </div>
+  </div>
+  <script>window.CHESS_LESSON={"id":"promotion-combo","challenge":{"title":"Three moves: get into place, promote, close the net","instruction":"After each move the opponent replies automatically. First bring the white king to the protecting square, then choose the promotion piece (study the difference between queen and rook), and finally deliver mate.","fen":"7k/6P1/6K1/8/8/8/8/8 w - - 0 1","goal":"White moves three times: first occupy the protecting square with the king, then promote to the correct piece, finally mate the black king.","steps":[{"move":"g6f7","opponent":"h8h7","note":"First move correct: Kf7. The white king moves from g6 to f7, controlling g8 (the square the pawn will promote onto) and sealing the black king in. Black, stuck between the pawn and the edge, can only shuffle from h8 to h7."},{"move":"g7g8q","opponent":"h7h6","note":"Second move correct: g8=Q+. The g7 pawn rushes to g8 and promotes to a queen (g7g8q — the final q is Queen). The white queen stands on g8, giving instant check along the g8-h7 diagonal and taking the eighth rank to close the net. Black must keep retreating to h6. Note: the queen controls ranks, files and diagonals — that is exactly why it must be a queen.","alternatives":[{"move":"g7g8r","note":"Reasonable but not enough: g8=R promotes to a rook. A rook controls ranks and files but not diagonals, so it does not give check along g8-h7 and Black gains a breather. With a rook White cannot mate within the required moves — the classic \"queen vs rook\" choice in promotion."}]},{"move":"g8g6","note":"Third move correct: Qg6#. The white queen steps from g8 to g6, sealing h6 as an escape along the g6-h7 diagonal, while the f7 white king covers h7, g7 and h5. Black on h6 cannot move forward, cannot capture the queen, and has no piece to interpose — a clean mate."}],"odds":[{"white":72,"draw":20,"black":8},{"white":81,"draw":15,"black":4},{"white":96,"draw":3,"black":1},{"white":100,"draw":0,"black":0}],"success":"Three moves complete. The heart of the mate is move two: promoting to a queen lets White give check along the diagonal and control h7; a rook simply lacks that firepower. Before promoting, ask whether you need full rank-file-diagonal coverage (queen) or just one line (rook/bishop/knight).","defaultAnswer":"The key here is not \"whether to promote\" but \"what to promote to\". The queen covers ranks, files and diagonals, so g8=Q+ checks the black king along the g8-h7 diagonal; a rook only covers ranks and files, so g8=R cannot control h7 and Black gets time to shore up. First Kf7 to guard the square, then promote to a queen, then Qg6# to close the net — order and piece choice both matter.","errors":{"g6g7":"Kg7 looks protective, but g7 is already occupied by your own pawn — the king cannot step onto it. Your king's job is to reach f7 to control the promotion square g8, not to crowd the pawn."},"genericError":"This move did not bring the white king to the protecting square. The black king is nailed down, but your promotion square g8 still needs the white king on f7 to protect the promoted piece. Ask: which square lets the king both threaten g8 and seal the black king?","quick":{"为什么升后":"The queen controls ranks, files and diagonals at once. Promoted to g8, she gives check to the black king on h7 along the g8-h7 diagonal and immediately prepares Qg6#. A rook controls no diagonals, so it cannot build this series of checks.","升车为什么不行":"Promoting to a rook (g8=R) only covers ranks and files; with no diagonal firepower it does not check the king on h7. Black therefore gains a whole move to regroup, and White cannot mate in time.","为什么先走王":"The promoted piece needs protection. Once the white king reaches f7 it controls g8, so even if the black king comes to capture the promoted piece it is watched. Get into place first, then promote — that is the standard order in this ending.","升变记法":"A promotion move is written in five characters: the first four are the from-square and to-square, the fifth is the promoted piece. g7g8q means the pawn goes from g7 to g8 and promotes to a queen; change q to r (rook), b (bishop) or n (knight) for other pieces."},"suggestions":[{"label":"Why must it be a queen?","key":"为什么升后"},{"label":"Why doesn't a rook work?","key":"升车为什么不行"},{"label":"Why move the king first?","key":"为什么先走王"},{"label":"How do I write a promotion move?","key":"升变记法"}]}};</script>
+  <script type="module" src="../assets/app.js"></script>
+</body>
+</html>

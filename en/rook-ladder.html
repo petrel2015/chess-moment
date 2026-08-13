@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Not a one-move mate. Two rooks take turns sealing the ranks, squeezing the black king down five flights.">
+  <meta name="theme-color" content="#183c34">
+  <meta name="application-name" content="Chess Moment">
+  <meta name="apple-mobile-web-app-title" content="Chess Moment">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <title>Two Rooks: Five Forcing Checks Down the Ladder | Chess Moment</title>
+  <link rel="icon" type="image/svg+xml" href="../assets/icons/chess-moment.svg">
+  <link rel="apple-touch-icon" sizes="180x180" href="../assets/icons/apple-touch-icon.png">
+  <link rel="manifest" href="../assets/site.webmanifest">
+  <link rel="stylesheet" href="../assets/styles.css">
+    <link rel="preload" as="image" href="../assets/pieces/wk.png">
+  <link rel="preload" as="image" href="../assets/pieces/wq.png">
+  <link rel="preload" as="image" href="../assets/pieces/wr.png">
+  <link rel="preload" as="image" href="../assets/pieces/wb.png">
+  <link rel="preload" as="image" href="../assets/pieces/wn.png">
+  <link rel="preload" as="image" href="../assets/pieces/wp.png">
+  <link rel="preload" as="image" href="../assets/pieces/bk.png">
+  <link rel="preload" as="image" href="../assets/pieces/bq.png">
+  <link rel="preload" as="image" href="../assets/pieces/br.png">
+  <link rel="preload" as="image" href="../assets/pieces/bb.png">
+  <link rel="preload" as="image" href="../assets/pieces/bn.png">
+  <link rel="preload" as="image" href="../assets/pieces/bp.png">
+  <script>window.CHESS_COACH_CONFIG = {"workerUrl":""};</script>
+  <script>
+(function(){
+  var stored = null;
+  try { stored = localStorage.getItem("chessMomentLang"); } catch (e) {}
+  var nav = (navigator.language || "").toLowerCase();
+  var want = (stored === "zh" || stored === "en") ? stored : (nav.indexOf("zh") === 0 ? "zh" : (nav.indexOf("en") === 0 ? "en" : "zh"));
+  var page = "en";
+  if (want !== page) {
+    var p = location.pathname;
+    var next = page === "zh" ? p.replace(/([^/]*)\.html$/, "en/$1.html") : p.replace(/\/en\//, "/");
+    if (next !== p) location.replace(next);
+  }
+})();
+</script>
+</head>
+<body>
+  <header class="site-header"><div class="header-inner"><a class="brand" href="index.html">棋刻 <span>Chess Moment</span></a><span class="issue-mark">A full challenge every day · explained instantly</span><a class="lang-toggle" href="../rook-ladder.html" data-lang="zh" hreflang="zh-CN">中文</a></div></header>
+  <main class="page">
+    <article>
+      <header class="article-header">
+        <p class="eyebrow">Jul 27 · EveningTactics</p>
+        <h1>Two Rooks: Five Forcing Checks Down the Ladder</h1>
+        <p class="dek">Not a one-move mate. Two rooks take turns sealing the ranks, squeezing the black king down five flights.</p>
+        <div class="meta">Difficulty 3/5　·　≈ 6 min　·　5 key decisions　·　Theme：Rook ladder and continuous forcing moves</div>
+      </header>
+      <section class="story">
+        
+        <p>Two rooks work like a pair of alternately closing doors: one gives check, the other guards the retreat, then they swap roles. Understanding this rhythm matters more than memorizing the final mating square.</p><p>You do not need to finish the game on move five. Your goal is to give check five times in a row, driving the black king from the eighth rank down to the fourth, while keeping the rooks protected in staggered layers.</p>
+        <aside class="culture-note"><strong>Why the ladder mate suits beginners</strong>European kids&#39; chess classes often draw the two-rook mate as a staircase. Each check pushes the king down one step, so students can see how control of space shrinks step by step — and how heavy pieces need to cooperate.</aside>
+      </section>
+      <section class="challenge" data-puzzle="rook-ladder">
+        <div class="challenge-head"><p class="challenge-kicker">Today's Challenge</p><h2>Give check five times in a row</h2><p>Advance the rooks alternately. Every move must give check, and never place both rooks on a line where the king can easily attack them.</p></div>
+        <div class="challenge-body">
+          <div class="board-wrap"><div class="board" role="grid" aria-label="Interactive chess board"></div></div>
+          <div class="coach">
+            <div class="progress" aria-label="Progress"><span></span><span></span><span></span><span></span><span></span></div>
+            <div class="status" aria-live="polite"><span class="status-label"></span><p></p></div>
+            <div class="coach-actions"><button class="btn" type="button" data-hint>Hint</button><button class="btn" type="button" data-reset>Restart</button><button class="btn" type="button" data-report>Report</button></div>
+            <div class="ask-box"><div class="ask-label-row"><label for="ask-rook-ladder">Something unclear?</label><a class="coach-settings-toggle" href="#" aria-expanded="false" data-coach-settings-toggle>AI Settings</a></div><div class="ask-row"><textarea id="ask-rook-ladder" placeholder="Type your question about this move"></textarea><button class="btn btn-primary" type="button" data-ask>Ask Coach</button></div><div class="ai-answer" aria-live="polite"></div></div>
+          </div>
+        </div>
+      </section>
+      <section class="lesson"><h2>Review: One rook pushes, one rook seals</h2><ol class="lesson-steps"><li>Rb8+, Ra7+ first build the staggered seal pair.</li><li>Rb6+, Ra5+ repeat the same structure instead of reinventing a plan every move.</li><li>Rb4+ shows a combination may aim for a stable structure rather than an immediate mate.</li><li>Before the mate lands, the white king still approaches to protect the front rook.</li></ol><div class="principle">Takeaway: The value of continuous forcing moves is repeating a reliable structure: one piece makes the threat, another seals the escape.</div></section>
+    </article>
+    <section class="archive"><div class="archive-head"><h2>Archive</h2><span class="meta">Every issue is playable</span></div><div class="archive-grid">
+      <a class="archive-card" href="promotion-combo.html">
+        <time>7月29日 · 早报</time>
+        <h3>一步升变，决定是将杀还是和棋</h3>
+        <p>黑王已被钉死在角落，你的通路兵只差一步升变。但升成后还是车，结果天差地别。</p>
+        <span class="tag">升变残局 · 3次选择 →</span>
+        <span class="tag-row"><span class="tag-chip">残局</span><span class="tag-chip">升变</span><span class="tag-chip">战术组合</span></span>
+      </a>
+      <a class="archive-card" href="exchange-order.html">
+        <time>7月28日 · 早报</time>
+        <h3>先交换谁，最后会差一整车</h3>
+        <p>连续五次选择，不急着数眼前吃掉的棋子，而是算清整个交换序列的净收益。</p>
+        <span class="tag">子力判断 · 5次选择 →</span>
+        
+      </a>
+      <a class="archive-card" href="italian-center-plan.html">
+        <time>7月26日 · 早报</time>
+        <h3>意大利开局：五步准备一次 d4</h3>
+        <p>不背一串着法，而是连续完成出象、稳中心、准备兵突破和发展后翼马。</p>
+        <span class="tag">开局 · 5次选择 →</span>
+        
+      </a>
+      <a class="archive-card" href="king-opposition.html">
+        <time>7月25日 · 晚报</time>
+        <h3>王不是观众：五步抢到关键格</h3>
+        <p>没有将军也没有立即吃子，先用王取得空间，再决定兵从哪一侧制造突破。</p>
+        <span class="tag">残局 · 5次选择 →</span>
+        
+      </a>
+      <a class="archive-card" href="improve-worst-piece.html">
+        <time>7月24日 · 早报</time>
+        <h3>五步救活全场最差的马</h3>
+        <p>没有直接战术时，不要乱找将军；找到最差的棋子，为它规划一条通往前哨的路线。</p>
+        <span class="tag">局面棋 · 5次选择 →</span>
+        
+      </a></div></section>
+  </main>
+  <footer class="site-footer"><div class="footer-meta">棋刻 Chess Moment · Three minutes a day to understand one move · <a class="footer-report" href="#" data-footer-report>Report a problem</a></div><div class="donate-section"><span class="donate-tag">Buy me a coffee ￥4.9</span><div class="donate-triggers"><button type="button" class="donate-trigger alipay" data-donate-alipay>Alipay</button><button type="button" class="donate-trigger wechat" data-donate-wechat>WeChat</button></div></div></footer>
+  <div class="coach-settings-panel" data-coach-settings-panel hidden>
+    <div class="coach-settings-inner">
+      <h3>AI Coach Settings</h3>
+      <p class="coach-settings-hint">Uses the site default. You can also provide your own Zhipu API key and Worker URL; the key stays in this browser.</p>
+      <label>Worker URL<input type="url" data-coach-url placeholder="https://your-worker.workers.dev"></label>
+      <label>Zhipu API Key (optional)<input type="password" data-coach-key placeholder="Leave empty to use the site default key"></label>
+      <div class="coach-settings-actions"><button class="btn btn-primary" type="button" data-coach-save>Save</button><span class="coach-saved" data-coach-saved aria-live="polite"></span></div>
+      <p class="coach-settings-help">No key? See the Zhipu open platform (open.bigmodel.cn); the GLM-4-Flash model is free.</p>
+    </div>
+  </div>
+  <script>window.CHESS_LESSON={"id":"rook-ladder","challenge":{"title":"Give check five times in a row","instruction":"Advance the rooks alternately. Every move must give check, and never place both rooks on a line where the king can easily attack them.","fen":"6k1/8/8/8/8/8/1R6/R6K w - - 0 1","goal":"White moves five times, using the rook ladder to drive the black king down rank by rank.","steps":[{"move":"b2b8","opponent":"g8h7","note":"First move correct: Rb8+ seals the eighth rank and forces the king to h7."},{"move":"a1a7","opponent":"h7g6","note":"Second move correct: Ra7+ takes over the checking, while the b8 rook guards the rank above."},{"move":"b8b6","opponent":"g6f5","note":"Third move correct: Rb6+ advances in a fresh staggered layer — the rooks fall like alternating gates."},{"move":"a7a5","opponent":"f5e4","note":"Fourth move correct: Ra5+ keeps pushing the king toward the fourth rank, keeping exactly one rank between the rooks."},{"move":"b6b4","note":"Fifth move correct: Rb4+ completes the five-step ladder. The king's space keeps shrinking; next White brings the king up to seal the side."}],"odds":[{"white":96,"draw":4,"black":0},{"white":97,"draw":3,"black":0},{"white":98,"draw":2,"black":0},{"white":98,"draw":2,"black":0},{"white":99,"draw":1,"black":0},{"white":99,"draw":1,"black":0}],"success":"Five-step ladder complete. You did not chase the king around; you let the two rooks take turns controlling ranks, slicing away its space layer by layer.","defaultAnswer":"The core of the ladder is rotation: the rook that checks pushes the king, while the other guards the rank behind. Swap roles each move, and the king can never come back.","errors":{"b2b7":"Rb7 does not give check, so Black gets time to bring the king closer or flee toward the center. Every step of the ladder should stay forcing.","a1a8":"Ra8 crowds both rooks onto the same rank and creates no new sealed layer. Keep them one rank apart."},"genericError":"Work out which rook must take over the checking: it needs to stand on the king's rank while the other rook guards the retreat.","quick":{"为什么不直接追王":"Chasing the king directly often leaves a rook exposed. The ladder is not about chasing — it is about cutting off whole ranks so the king is forced backward.","为什么两车错开":"When the rooks are staggered, one checks and the other blocks the way back. On the same rank they waste one rook's controlling power.","为什么还没结束":"The five-move goal is to learn the driving structure, not to cram a full ending into a single mate. Next you still bring the white king up to seal the side."},"suggestions":[{"label":"Why not chase the king directly?","key":"为什么不直接追王"},{"label":"Why must the rooks stay staggered?","key":"为什么两车错开"},{"label":"Why isn't it over after five moves?","key":"为什么还没结束"}]}};</script>
+  <script type="module" src="../assets/app.js"></script>
+</body>
+</html>

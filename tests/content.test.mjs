@@ -4,7 +4,7 @@ import { spawnSync } from "node:child_process";
 import path from "node:path";
 import test from "node:test";
 import { Chess } from "chess.js";
-import { loadLessons, validateLessons, PUBLIC_BASE_URL, interactiveUrl, idempotencyKey, contentHash, pickHomepageLesson, monthDayOrdinal } from "../scripts/content-lib.mjs";
+import { loadLessons, validateLessons, localizeLesson, PUBLIC_BASE_URL, interactiveUrl, idempotencyKey, contentHash, pickHomepageLesson, monthDayOrdinal } from "../scripts/content-lib.mjs";
 
 const root = process.cwd();
 
@@ -287,13 +287,23 @@ function validLesson(overrides = {}) {
     slug: "fake",
     publishedAt: "2026-01-01T09:00:00+08:00",
     edition: "早报",
+    edition_en: "Morning",
     category: "测试",
+    category_en: "Test",
     title: "测试课",
+    title_en: "Test lesson",
     summary: "摘要",
+    summary_en: "Summary",
     difficulty: 2,
     duration: 5,
+    topic: "主题",
+    topic_en: "Topic",
+    dateLabel: "1月1日",
+    dateLabel_en: "Jan 1",
     introduction: ["段一", "段二"],
+    introduction_en: ["P1", "P2"],
     culture: { title: "文化", content: "内容" },
+    culture_en: { title: "Culture", content: "Content" },
     challenge: {
       fen: "7k/6P1/6K1/8/8/8/8/8 w - - 0 1",
       goal: "目标",
@@ -317,7 +327,26 @@ function validLesson(overrides = {}) {
         { label: "再问", key: "为何" },
       ],
     },
+    challenge_en: {
+      title: "Challenge",
+      instruction: "Instruction",
+      goal: "Goal",
+      steps: [
+        { move: "g6f7", note: "n1" },
+        { move: "g7g8q", note: "n2" },
+        { move: "g8g6", note: "n3" },
+      ],
+      success: "Success",
+      defaultAnswer: "Default answer",
+      genericError: "Generic error",
+      quick: { 为何: "Answer" },
+      suggestions: [
+        { label: "Why?", key: "为何" },
+        { label: "Again", key: "为何" },
+      ],
+    },
     review: { title: "复盘", steps: ["s1"], principle: "原则" },
+    review_en: { title: "Review", steps: ["s1"], principle: "Principle" },
     ...overrides,
   };
 }
@@ -376,4 +405,60 @@ test("validateLessons rejects invalid tags and dangling prerequisites", () => {
 
   const badSlug = validateLessons([validLesson({ prerequisites: ["Bad Slug"] })]);
   assert.ok(badSlug.some(e => e.includes("prerequisites must be")), badSlug.join("; "));
+});
+
+// ---- localizeLesson（中英双语）------------------------------------------
+
+test("localizeLesson returns zh lesson unchanged (default)", async () => {
+  const lessons = await loadLessons(root);
+  for (const lesson of lessons) {
+    const localized = localizeLesson(lesson, "zh");
+    assert.equal(localized.title, lesson.title, "zh must keep original title");
+    assert.equal(localized.challenge.steps.length, lesson.challenge.steps.length);
+  }
+});
+
+test("localizeLesson maps English copy onto the lesson", async () => {
+  const lessons = await loadLessons(root);
+  for (const lesson of lessons) {
+    const en = localizeLesson(lesson, "en");
+    assert.equal(en.title, lesson.title_en, `${lesson.slug}: en title`);
+    assert.equal(en.summary, lesson.summary_en, `${lesson.slug}: en summary`);
+    assert.equal(en.edition, lesson.edition_en, `${lesson.slug}: en edition`);
+    assert.equal(en.dateLabel, lesson.dateLabel_en, `${lesson.slug}: en dateLabel`);
+    assert.equal(en.culture.title, lesson.culture_en.title, `${lesson.slug}: en culture title`);
+    assert.equal(en.review.principle, lesson.review_en.principle, `${lesson.slug}: en review principle`);
+    // 棋盘数据保持共用
+    assert.equal(en.challenge.fen, lesson.challenge.fen, "fen must be shared");
+    assert.deepEqual(en.challenge.odds, lesson.challenge.odds, "odds must be shared");
+    assert.equal(en.challenge.steps.length, lesson.challenge.steps.length, "steps length must match");
+    // 每步英文 note
+    lesson.challenge.steps.forEach((step, i) => {
+      assert.ok(en.challenge.steps[i].note, `${lesson.slug}: en step ${i + 1} note`);
+      assert.equal(en.challenge.steps[i].move, step.move, "move must be shared");
+    });
+    // 英文快捷问题：suggestions label 英文、key 共用
+    en.challenge.suggestions.forEach((s, i) => {
+      assert.ok(en.challenge.quick[s.key], `${lesson.slug}: en quick[${s.key}] exists`);
+      assert.equal(s.key, lesson.challenge.suggestions[i].key, "suggestion key must be shared");
+    });
+  }
+});
+
+test("localizeLesson localizes promotion-combo alternatives", async () => {
+  const lessons = await loadLessons(root);
+  const promo = lessons.find(l => l.slug === "promotion-combo");
+  assert.ok(promo, "promotion-combo must exist");
+  const en = localizeLesson(promo, "en");
+  const altStep = en.challenge.steps.find(s => s.move === "g7g8q");
+  assert.ok(altStep.alternatives, "g8=Q step must carry alternatives");
+  assert.equal(altStep.alternatives[0].move, "g7g8r", "alternative move shared");
+  assert.ok(altStep.alternatives[0].note.includes("rook"), "alternative note localized to English");
+});
+
+test("validateLessons flags a lesson missing English copy", () => {
+  const missing = validLesson();
+  delete missing.title_en;
+  const errors = validateLessons([missing]);
+  assert.ok(errors.some(e => e.includes("missing title_en")), errors.join("; "));
 });

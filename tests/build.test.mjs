@@ -120,7 +120,7 @@ test("app.js guards the opponent-reply window against getting stuck", async () =
   assert.ok(/if \(awaitingOpponent\) return/.test(src), "choose() must early-return while awaiting opponent");
   // 2) 对手回应用 try/catch 包裹，失败时显示提示而非静默吞错
   assert.ok(/opponent reply failed/.test(src), "opponent reply errors must be logged");
-  assert.ok(/对手回应异常/.test(src), "opponent reply failure must surface a user-visible status");
+  assert.ok(/statusOpponentError/.test(src), "opponent reply failure must surface a user-visible status");
   // 3) reset() 清理挂起的定时器，避免悬挂的对手回应污染重置后的状态
   assert.ok(/clearTimeout\(opponentTimer\)/.test(src), "reset() must clear pending opponent timer");
   // 4) 对手回应前用 legalTargets 校验合法性（防御 state 偏离）
@@ -397,4 +397,47 @@ test("homepage picks nearest past month-day when today falls between issues", ()
       "Homepage should render italian-center-plan (7/26, latest month-day <= 7/26 in real content)"
     );
   });
+});
+
+// ---- 多语言（中英）：构建必须产出英文版 en/ 子目录 -----------------------
+
+test("build generates English pages in _site/en for all lessons plus index", async () => {
+  const lessons = await loadLessons(root);
+  const enDir = path.join(root, "_site", "en");
+  const enFiles = (await readdir(enDir)).filter(f => f.endsWith(".html")).sort();
+  assert.equal(enFiles.length, lessons.length + 1, "en/ should have index + one page per lesson");
+  assert(enFiles.includes("index.html"), "en/index.html must exist");
+  for (const lesson of lessons) {
+    assert(enFiles.includes(`${lesson.slug}.html`), `Missing en page for ${lesson.slug}`);
+  }
+});
+
+test("English pages use lang=en, ../asset paths, and localized lesson copy", async () => {
+  const lessons = await loadLessons(root);
+  for (const lesson of lessons) {
+    const html = await readFile(path.join(root, "_site", "en", `${lesson.slug}.html`), "utf8");
+    assert.ok(/<html lang="en">/.test(html), `${lesson.slug}.en must be lang=en`);
+    assert.ok(html.includes('src="../assets/app.js"'), `${lesson.slug}.en must reference ../assets/app.js`);
+    assert.ok(html.includes('href="../assets/styles.css"'), `${lesson.slug}.en must reference ../assets/styles.css`);
+    // 嵌入的课程挑战数据必须是英文
+    assert.ok(
+      html.includes(`"title":${JSON.stringify(lesson.challenge_en.title)}`),
+      `${lesson.slug}.en must embed the English challenge title`
+    );
+    assert.ok(html.includes(`<h1>${lesson.title_en}</h1>`), `${lesson.slug}.en must render the English h1`);
+    // 英文 UI 文案
+    assert.ok(html.includes("Ask Coach"), `${lesson.slug}.en missing 'Ask Coach' button`);
+    assert.ok(html.includes("Restart"), `${lesson.slug}.en missing 'Restart' button`);
+  }
+});
+
+test("English pages include language auto-detect script and a toggle link", async () => {
+  const html = await readFile(path.join(root, "_site", "en", "promotion-combo.html"), "utf8");
+  assert.ok(html.includes('localStorage.getItem("chessMomentLang")'), "en page missing detect script");
+  assert.ok(html.includes('class="lang-toggle"'), "en page missing language toggle");
+  assert.ok(html.includes('data-lang="zh"'), "en toggle must point back to zh");
+  // 中文页也要有检测脚本与英文切换
+  const zhHtml = await readFile(path.join(root, "_site", "promotion-combo.html"), "utf8");
+  assert.ok(zhHtml.includes('localStorage.getItem("chessMomentLang")'), "zh page missing detect script");
+  assert.ok(zhHtml.includes('class="lang-toggle" href="en/promotion-combo.html"'), "zh toggle must point to en page");
 });

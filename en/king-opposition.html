@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="No check, no immediate capture. First give the king space, then decide from which side the pawns break through.">
+  <meta name="theme-color" content="#183c34">
+  <meta name="application-name" content="Chess Moment">
+  <meta name="apple-mobile-web-app-title" content="Chess Moment">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <title>The King Is No Spectator: Five Moves to Win the Key Square | Chess Moment</title>
+  <link rel="icon" type="image/svg+xml" href="../assets/icons/chess-moment.svg">
+  <link rel="apple-touch-icon" sizes="180x180" href="../assets/icons/apple-touch-icon.png">
+  <link rel="manifest" href="../assets/site.webmanifest">
+  <link rel="stylesheet" href="../assets/styles.css">
+    <link rel="preload" as="image" href="../assets/pieces/wk.png">
+  <link rel="preload" as="image" href="../assets/pieces/wq.png">
+  <link rel="preload" as="image" href="../assets/pieces/wr.png">
+  <link rel="preload" as="image" href="../assets/pieces/wb.png">
+  <link rel="preload" as="image" href="../assets/pieces/wn.png">
+  <link rel="preload" as="image" href="../assets/pieces/wp.png">
+  <link rel="preload" as="image" href="../assets/pieces/bk.png">
+  <link rel="preload" as="image" href="../assets/pieces/bq.png">
+  <link rel="preload" as="image" href="../assets/pieces/br.png">
+  <link rel="preload" as="image" href="../assets/pieces/bb.png">
+  <link rel="preload" as="image" href="../assets/pieces/bn.png">
+  <link rel="preload" as="image" href="../assets/pieces/bp.png">
+  <script>window.CHESS_COACH_CONFIG = {"workerUrl":""};</script>
+  <script>
+(function(){
+  var stored = null;
+  try { stored = localStorage.getItem("chessMomentLang"); } catch (e) {}
+  var nav = (navigator.language || "").toLowerCase();
+  var want = (stored === "zh" || stored === "en") ? stored : (nav.indexOf("zh") === 0 ? "zh" : (nav.indexOf("en") === 0 ? "en" : "zh"));
+  var page = "en";
+  if (want !== page) {
+    var p = location.pathname;
+    var next = page === "zh" ? p.replace(/([^/]*)\.html$/, "en/$1.html") : p.replace(/\/en\//, "/");
+    if (next !== p) location.replace(next);
+  }
+})();
+</script>
+</head>
+<body>
+  <header class="site-header"><div class="header-inner"><a class="brand" href="index.html">棋刻 <span>Chess Moment</span></a><span class="issue-mark">A full challenge every day · explained instantly</span><a class="lang-toggle" href="../king-opposition.html" data-lang="zh" hreflang="zh-CN">中文</a></div></header>
+  <main class="page">
+    <article>
+      <header class="article-header">
+        <p class="eyebrow">Jul 25 · EveningEndgame</p>
+        <h1>The King Is No Spectator: Five Moves to Win the Key Square</h1>
+        <p class="dek">No check, no immediate capture. First give the king space, then decide from which side the pawns break through.</p>
+        <div class="meta">Difficulty 3/5　·　≈ 7 min　·　5 key decisions　·　Theme：Opposition and key squares in king-and-pawn endgames</div>
+      </header>
+      <section class="story">
+        
+        <p>In the endgame the king turns from something to protect into the strongest piece at close range. Players who only push pawns often push a winning position into a draw.</p><p>The five-move goal here is not promotion but first making the white king more active, then using the pawns to fix Black&#39;s choices. What you will learn is the order of play in the endgame.</p>
+        <aside class="culture-note"><strong>Opposition is the grammar of the endgame</strong>Classical endgame manuals call it opposition when two kings face each other with one square between them. It is not a mystical pattern but a rhythm tool that forces the opponent to give way. Understanding opposition makes many king-and-pawn endgames need no memorizing.</aside>
+      </section>
+      <section class="challenge" data-puzzle="king-opposition">
+        <div class="challenge-head"><p class="challenge-kicker">Today's Challenge</p><h2>Five moves to bring the king into the fight first</h2><p>Spend the first three moves improving the king&#39;s position; only the last two push pawns. Don&#39;t advance a pawn to a point of no return at the start.</p></div>
+        <div class="challenge-body">
+          <div class="board-wrap"><div class="board" role="grid" aria-label="Interactive chess board"></div></div>
+          <div class="coach">
+            <div class="progress" aria-label="Progress"><span></span><span></span><span></span><span></span><span></span></div>
+            <div class="status" aria-live="polite"><span class="status-label"></span><p></p></div>
+            <div class="coach-actions"><button class="btn" type="button" data-hint>Hint</button><button class="btn" type="button" data-reset>Restart</button><button class="btn" type="button" data-report>Report</button></div>
+            <div class="ask-box"><div class="ask-label-row"><label for="ask-king-opposition">Something unclear?</label><a class="coach-settings-toggle" href="#" aria-expanded="false" data-coach-settings-toggle>AI Settings</a></div><div class="ask-row"><textarea id="ask-king-opposition" placeholder="Type your question about this move"></textarea><button class="btn btn-primary" type="button" data-ask>Ask Coach</button></div><div class="ai-answer" aria-live="polite"></div></div>
+          </div>
+        </div>
+      </section>
+      <section class="lesson"><h2>Review: Let the king lead, then let the pawns cash in</h2><ol class="lesson-steps"><li>Kd3, Kd4 use the king to take central space and force the black king aside.</li><li>Ke5 is the key of the whole plan: the king now supports both pawns.</li><li>f4, g4 build connected pawns under the king&#39;s protection.</li><li>No immediate captures anywhere, yet the win rate keeps climbing with the king&#39;s position.</li></ol><div class="principle">Takeaway: In king-and-pawn endgames compare the kings first, then decide on pawn moves; irreversible pawn moves should wait until the king has already improved.</div></section>
+    </article>
+    <section class="archive"><div class="archive-head"><h2>Archive</h2><span class="meta">Every issue is playable</span></div><div class="archive-grid">
+      <a class="archive-card" href="promotion-combo.html">
+        <time>7月29日 · 早报</time>
+        <h3>一步升变，决定是将杀还是和棋</h3>
+        <p>黑王已被钉死在角落，你的通路兵只差一步升变。但升成后还是车，结果天差地别。</p>
+        <span class="tag">升变残局 · 3次选择 →</span>
+        <span class="tag-row"><span class="tag-chip">残局</span><span class="tag-chip">升变</span><span class="tag-chip">战术组合</span></span>
+      </a>
+      <a class="archive-card" href="exchange-order.html">
+        <time>7月28日 · 早报</time>
+        <h3>先交换谁，最后会差一整车</h3>
+        <p>连续五次选择，不急着数眼前吃掉的棋子，而是算清整个交换序列的净收益。</p>
+        <span class="tag">子力判断 · 5次选择 →</span>
+        
+      </a>
+      <a class="archive-card" href="rook-ladder.html">
+        <time>7月27日 · 晚报</time>
+        <h3>两辆车，五步把王赶下楼梯</h3>
+        <p>不是寻找一步将杀，而是让两辆车轮流封锁横线，连续五步压缩黑王的空间。</p>
+        <span class="tag">战术组合 · 5次选择 →</span>
+        
+      </a>
+      <a class="archive-card" href="italian-center-plan.html">
+        <time>7月26日 · 早报</time>
+        <h3>意大利开局：五步准备一次 d4</h3>
+        <p>不背一串着法，而是连续完成出象、稳中心、准备兵突破和发展后翼马。</p>
+        <span class="tag">开局 · 5次选择 →</span>
+        
+      </a>
+      <a class="archive-card" href="improve-worst-piece.html">
+        <time>7月24日 · 早报</time>
+        <h3>五步救活全场最差的马</h3>
+        <p>没有直接战术时，不要乱找将军；找到最差的棋子，为它规划一条通往前哨的路线。</p>
+        <span class="tag">局面棋 · 5次选择 →</span>
+        
+      </a></div></section>
+  </main>
+  <footer class="site-footer"><div class="footer-meta">棋刻 Chess Moment · Three minutes a day to understand one move · <a class="footer-report" href="#" data-footer-report>Report a problem</a></div><div class="donate-section"><span class="donate-tag">Buy me a coffee ￥4.9</span><div class="donate-triggers"><button type="button" class="donate-trigger alipay" data-donate-alipay>Alipay</button><button type="button" class="donate-trigger wechat" data-donate-wechat>WeChat</button></div></div></footer>
+  <div class="coach-settings-panel" data-coach-settings-panel hidden>
+    <div class="coach-settings-inner">
+      <h3>AI Coach Settings</h3>
+      <p class="coach-settings-hint">Uses the site default. You can also provide your own Zhipu API key and Worker URL; the key stays in this browser.</p>
+      <label>Worker URL<input type="url" data-coach-url placeholder="https://your-worker.workers.dev"></label>
+      <label>Zhipu API Key (optional)<input type="password" data-coach-key placeholder="Leave empty to use the site default key"></label>
+      <div class="coach-settings-actions"><button class="btn btn-primary" type="button" data-coach-save>Save</button><span class="coach-saved" data-coach-saved aria-live="polite"></span></div>
+      <p class="coach-settings-help">No key? See the Zhipu open platform (open.bigmodel.cn); the GLM-4-Flash model is free.</p>
+    </div>
+  </div>
+  <script>window.CHESS_LESSON={"id":"king-opposition","challenge":{"title":"Five moves to bring the king into the fight first","instruction":"Spend the first three moves improving the king's position; only the last two push pawns. Don't advance a pawn to a point of no return at the start.","fen":"8/4kpp1/8/8/8/8/4KPP1/8 w - - 0 1","goal":"White moves five times, seizing key squares and building a two-pawn advance.","steps":[{"move":"e2d3","opponent":"e7d6","note":"First move correct: Kd3 brings the king toward the center. In the endgame, one king square is often worth more than a pawn move."},{"move":"d3d4","opponent":"d6c6","note":"Second move correct: Kd4 keeps gaining space, forcing the black king to give way to the side."},{"move":"d4e5","opponent":"c6c5","note":"Third move correct: Ke5 wins the key square. The white king can now support both pawns while the black king is pushed to the flank."},{"move":"f2f4","opponent":"g7g6","note":"Fourth move correct: f4 advances under the king's protection. Black must decide which pawn will build the block."},{"move":"g2g4","note":"Fifth move correct: g4 creates a pair of connected pawns. With the king ahead, White can later choose which side to break through."}],"odds":[{"white":46,"draw":46,"black":8},{"white":50,"draw":43,"black":7},{"white":56,"draw":38,"black":6},{"white":64,"draw":31,"black":5},{"white":69,"draw":27,"black":4},{"white":74,"draw":23,"black":3}],"success":"Five moves complete. The white king seized the key square first, then the pawns advanced; the advantage comes from the king's position, not from any single capture.","defaultAnswer":"If you push a pawn first, the black king finds it easier to step in front and blockade. After the white king reaches e5, both pawns have reliable support and Black can hardly cover both wings at once.","errors":{"f2f4":"Immediate f4 is too early. The black king is still in the center and can rush in front of the pawn; play Kd3 first and bring the strongest endgame piece into the fight.","g2g4":"Immediate g4 exposes the target just the same. Pawns cannot move backward, but the king can still improve; prefer the reversible, higher-gain king move."},"genericError":"Ask which piece most needs improving in the endgame. The answer here is not a pawn but the white king, still far from the key squares.","quick":{"为什么先走王":"Once a pawn advances it cannot retreat, while a king move gains control and keeps options open. Improving the king first usually makes the later pawn moves safer.","什么是关键格":"A key square is one that, once occupied by the king, reliably supports the pawns' advance. Here e5 helps both the f- and g-pawns.","为什么双兵一起走":"Connected pawns give each other exchange options, and the king supports them from behind. A lone pawn rushing ahead is more easily blocked by the black king."},"suggestions":[{"label":"Why do the first three moves all use the king?","key":"为什么先走王"},{"label":"What is a key square?","key":"什么是关键格"},{"label":"Why advance both pawns together?","key":"为什么双兵一起走"}]}};</script>
+  <script type="module" src="../assets/app.js"></script>
+</body>
+</html>
