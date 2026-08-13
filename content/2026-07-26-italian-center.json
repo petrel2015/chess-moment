@@ -2,20 +2,34 @@
   "slug": "italian-center-plan",
   "publishedAt": "2026-07-26T09:00:00+08:00",
   "dateLabel": "7月26日",
+  "dateLabel_en": "Jul 26",
   "edition": "早报",
+  "edition_en": "Morning",
   "category": "开局",
+  "category_en": "Opening",
   "title": "意大利开局：五步准备一次 d4",
+  "title_en": "The Italian Game: Five Moves to Prepare d4",
   "summary": "不背一串着法，而是连续完成出象、稳中心、准备兵突破和发展后翼马。",
+  "summary_en": "Don't memorize a line of moves. Instead, develop the bishop, stabilize the center, prepare a pawn break, and bring out the queenside knight.",
   "topic": "意大利开局中心计划",
+  "topic_en": "The Italian Game center plan",
   "difficulty": 2,
   "duration": 7,
   "introduction": [
     "很多人知道意大利开局要把象放到 c4，却不知道下一步做什么。真正的计划不是把棋子摆到熟悉位置，而是为中心的 d4 突破逐项准备。",
     "你将连续做五次选择。每一步都很安静，但它们共同回答一个问题：怎样让 d4 推进时不丢兵，还能顺便完成发展。"
   ],
+  "introduction_en": [
+    "Many people know the Italian Game puts a bishop on c4, but not what to do next. The real plan is not putting pieces on familiar squares; it is preparing the d4 break in the center one step at a time.",
+    "You will make five choices in a row. Each move is quiet, but together they answer one question: how to push d4 without dropping a pawn while developing at the same time."
+  ],
   "culture": {
     "title": "最古老的开放性开局之一",
     "content": "意大利开局在十六世纪棋谱中就已出现。它长期流行，不是因为只有一条强制变化，而是因为它把中心、发展和王的安全放进了一个容易理解的计划。"
+  },
+  "culture_en": {
+    "title": "One of the oldest open games",
+    "content": "The Italian Game already appears in sixteenth-century manuals. It stays popular not because it has a single forcing line, but because it folds the center, development and king safety into one easy-to-understand plan."
   },
   "challenge": {
     "title": "五步搭好中心突破的脚手架",
@@ -55,6 +69,35 @@
       { "label": "为什么第五步才走 d4？", "key": "为什么第五步才d4" }
     ]
   },
+  "challenge_en": {
+    "title": "Five moves to build the scaffold for a center break",
+    "instruction": "Develop first, then support, then push d4. The opponent develops normally; keep your plan coherent.",
+    "goal": "White moves five times, completing Italian-style development and advancing d4.",
+    "steps": [
+      { "move": "f1c4", "note": "First move correct: Bc4 puts the bishop on an active diagonal, eyeing f7." },
+      { "move": "d2d3", "note": "Second move correct: d3 first stabilizes e4, leaving a clear order for c3 and d4." },
+      { "move": "c2c3", "note": "Third move correct: c3 controls d4 and prepares a pawn chain to support the d-pawn's advance." },
+      { "move": "b1d2", "note": "Fourth move correct: Nbd2 completes the queenside knight's development without blocking the d-pawn." },
+      { "move": "d3d4", "note": "Fifth move correct: d4 finally poses the central question. The first four moves turn this push from a lone impulse into the payoff of a complete plan." }
+    ],
+    "success": "Five-move plan complete. You did not memorize mechanically; you developed an active bishop, stabilized e4, supported with c3, developed the queenside knight, and finally contested the center with d4.",
+    "defaultAnswer": "The logic of this order is that every move serves d4: Bc4 develops, d3 stabilizes e4, c3 supports d4, Nbd2 completes development, and only then does d4 have a solid foundation.",
+    "errors": {
+      "d2d4": "Immediate d4 is not unplayable, but in this position White has not yet completed the c3 support and development, so the exchange tends to simplify too early.",
+      "b1c3": "Nc3 is a natural move, but it blocks the c-pawn and changes the Italian c3-d4 plan. This lesson explores the Nbd2 division of labor."
+    },
+    "genericError": "This move may follow general opening principles, but check whether it directly serves this lesson's d4 center plan.",
+    "quick": {
+      "为什么先d3": "d3 first protects e4, ensuring the center pawn does not loosen while White prepares c3 and d4.",
+      "为什么马走d2": "Nbd2 develops the knight while keeping the c-pawn's path to c3 open. Nc3 is fine too, but it belongs to a different center structure.",
+      "为什么第五步才d4": "The first four moves lower the cost of d4: more pieces take part, the center is supported, and recaptures come naturally after exchanges."
+    },
+    "suggestions": [
+      { "label": "Why play d3 first?", "key": "为什么先d3" },
+      { "label": "Why not develop the knight to c3?", "key": "为什么马走d2" },
+      { "label": "Why push d4 only on move five?", "key": "为什么第五步才d4" }
+    ]
+  },
   "review": {
     "title": "开局着法要组成计划",
     "steps": [
@@ -64,5 +107,15 @@
       "d4 是前面四步的兑现，而不是突然想到的兵推进。"
     ],
     "principle": "学习开局时不要只记顺序，要能说出每一步为最终中心突破增加了什么条件。"
+  },
+  "review_en": {
+    "title": "Opening moves must form a plan",
+    "steps": [
+      "Bc4 develops and aims at f7, setting the Italian direction.",
+      "d3 and c3 respectively stabilize e4 and support d4.",
+      "Nbd2 completes development while keeping the c-pawn's route open.",
+      "d4 is the payoff of the previous four moves, not a sudden pawn push."
+    ],
+    "principle": "When learning an opening, don't just memorize the order — be able to say what each move adds to the final center break."
   }
 }

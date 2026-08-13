@@ -2,20 +2,34 @@
   "slug": "rook-ladder",
   "publishedAt": "2026-07-27T18:00:00+08:00",
   "dateLabel": "7月27日",
+  "dateLabel_en": "Jul 27",
   "edition": "晚报",
+  "edition_en": "Evening",
   "category": "战术组合",
+  "category_en": "Tactics",
   "title": "两辆车，五步把王赶下楼梯",
+  "title_en": "Two Rooks: Five Forcing Checks Down the Ladder",
   "summary": "不是寻找一步将杀，而是让两辆车轮流封锁横线，连续五步压缩黑王的空间。",
+  "summary_en": "Not a one-move mate. Two rooks take turns sealing the ranks, squeezing the black king down five flights.",
   "topic": "双车阶梯与连续强制着",
+  "topic_en": "Rook ladder and continuous forcing moves",
   "difficulty": 3,
   "duration": 6,
   "introduction": [
     "双车配合像两扇交替关闭的门：一辆车将军，另一辆车守住退路，然后双方交换角色。看懂这种节奏，比背诵最后的将杀格更重要。",
     "本题不要求第五步立刻结束棋局。你的目标是连续五次保持将军，把黑王从第八横线赶到第四横线，并保持两车互相错层保护。"
   ],
+  "introduction_en": [
+    "Two rooks work like a pair of alternately closing doors: one gives check, the other guards the retreat, then they swap roles. Understanding this rhythm matters more than memorizing the final mating square.",
+    "You do not need to finish the game on move five. Your goal is to give check five times in a row, driving the black king from the eighth rank down to the fourth, while keeping the rooks protected in staggered layers."
+  ],
   "culture": {
     "title": "阶梯将杀为什么适合初学者",
     "content": "欧洲儿童棋课常把双车逼王画成楼梯。每次将军都把王向下赶一层，学生能直接看到控制空间如何逐步缩小，也能理解重子为什么需要协作。"
+  },
+  "culture_en": {
+    "title": "Why the ladder mate suits beginners",
+    "content": "European kids' chess classes often draw the two-rook mate as a staircase. Each check pushes the king down one step, so students can see how control of space shrinks step by step — and how heavy pieces need to cooperate."
   },
   "challenge": {
     "title": "连续五步保持将军",
@@ -55,6 +69,35 @@
       { "label": "走完五步为什么还没结束？", "key": "为什么还没结束" }
     ]
   },
+  "challenge_en": {
+    "title": "Give check five times in a row",
+    "instruction": "Advance the rooks alternately. Every move must give check, and never place both rooks on a line where the king can easily attack them.",
+    "goal": "White moves five times, using the rook ladder to drive the black king down rank by rank.",
+    "steps": [
+      { "move": "b2b8", "note": "First move correct: Rb8+ seals the eighth rank and forces the king to h7." },
+      { "move": "a1a7", "note": "Second move correct: Ra7+ takes over the checking, while the b8 rook guards the rank above." },
+      { "move": "b8b6", "note": "Third move correct: Rb6+ advances in a fresh staggered layer — the rooks fall like alternating gates." },
+      { "move": "a7a5", "note": "Fourth move correct: Ra5+ keeps pushing the king toward the fourth rank, keeping exactly one rank between the rooks." },
+      { "move": "b6b4", "note": "Fifth move correct: Rb4+ completes the five-step ladder. The king's space keeps shrinking; next White brings the king up to seal the side." }
+    ],
+    "success": "Five-step ladder complete. You did not chase the king around; you let the two rooks take turns controlling ranks, slicing away its space layer by layer.",
+    "defaultAnswer": "The core of the ladder is rotation: the rook that checks pushes the king, while the other guards the rank behind. Swap roles each move, and the king can never come back.",
+    "errors": {
+      "b2b7": "Rb7 does not give check, so Black gets time to bring the king closer or flee toward the center. Every step of the ladder should stay forcing.",
+      "a1a8": "Ra8 crowds both rooks onto the same rank and creates no new sealed layer. Keep them one rank apart."
+    },
+    "genericError": "Work out which rook must take over the checking: it needs to stand on the king's rank while the other rook guards the retreat.",
+    "quick": {
+      "为什么不直接追王": "Chasing the king directly often leaves a rook exposed. The ladder is not about chasing — it is about cutting off whole ranks so the king is forced backward.",
+      "为什么两车错开": "When the rooks are staggered, one checks and the other blocks the way back. On the same rank they waste one rook's controlling power.",
+      "为什么还没结束": "The five-move goal is to learn the driving structure, not to cram a full ending into a single mate. Next you still bring the white king up to seal the side."
+    },
+    "suggestions": [
+      { "label": "Why not chase the king directly?", "key": "为什么不直接追王" },
+      { "label": "Why must the rooks stay staggered?", "key": "为什么两车错开" },
+      { "label": "Why isn't it over after five moves?", "key": "为什么还没结束" }
+    ]
+  },
   "review": {
     "title": "一车推王，一车封路",
     "steps": [
@@ -64,5 +107,15 @@
       "真正完成将杀前，白王还要靠近并保护最前方的车。"
     ],
     "principle": "连续强制着的价值在于重复可靠结构：一枚棋子制造威胁，另一枚棋子封住退路。"
+  },
+  "review_en": {
+    "title": "One rook pushes, one rook seals",
+    "steps": [
+      "Rb8+, Ra7+ first build the staggered seal pair.",
+      "Rb6+, Ra5+ repeat the same structure instead of reinventing a plan every move.",
+      "Rb4+ shows a combination may aim for a stable structure rather than an immediate mate.",
+      "Before the mate lands, the white king still approaches to protect the front rook."
+    ],
+    "principle": "The value of continuous forcing moves is repeating a reliable structure: one piece makes the threat, another seals the escape."
   }
 }

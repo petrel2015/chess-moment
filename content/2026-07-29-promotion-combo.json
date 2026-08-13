@@ -2,23 +2,39 @@
   "slug": "promotion-combo",
   "publishedAt": "2026-07-29T09:00:00+08:00",
   "dateLabel": "7月29日",
+  "dateLabel_en": "Jul 29",
   "edition": "早报",
+  "edition_en": "Morning",
   "category": "升变残局",
+  "category_en": "Promotion endgame",
   "title": "一步升变，决定是将杀还是和棋",
+  "title_en": "One Promotion: the Difference Between Mate and Draw",
   "summary": "黑王已被钉死在角落，你的通路兵只差一步升变。但升成后还是车，结果天差地别。",
+  "summary_en": "The black king is trapped in the corner and your passed pawn is one step from promotion. But promote to a queen or a rook — the outcome is night and day.",
   "topic": "兵的升变与升变棋子的选择",
+  "topic_en": "Pawn promotion and choosing the right piece",
   "difficulty": 3,
   "duration": 6,
   "tags": ["残局", "升变", "战术组合"],
+  "tags_en": ["Endgame", "Promotion", "Tactics"],
   "prerequisites": ["rook-ladder"],
   "introduction": [
     "当通路兵冲到对方底线，规则允许你把它换成后、车、象或马——这叫升变。绝大多数时候升后是最强的，因为后的火力覆盖横、竖、斜三条线。",
     "这个局面里黑王已经被自己的兵和棋盘边角关在 h8。你的白王正逼近保护位，通路兵在 g7 蓄势待发。关键不在于要不要升变，而在于升变成什么：升后会立刻制造将军并收网，升车却会把胜利让出去。",
     "注意走法的写法：升变用五个字符表示，例如 g7g8q 表示「兵从 g7 走到 g8 并升变成后」；末尾的 q 是后（Queen），换成 r 就是车（Rook）。"
   ],
+  "introduction_en": [
+    "When a passed pawn reaches the last rank, you may exchange it for a queen, rook, bishop or knight — this is called promotion. Most of the time promoting to a queen is strongest, because the queen attacks along ranks, files and diagonals.",
+    "In this position the black king is already boxed into h8 by its own pawns and the edge of the board. Your white king is approaching to protect, and the passed pawn on g7 is ready to strike. The question is not whether to promote, but what to promote to: a queen gives immediate check and closes the net; a rook gives the win away.",
+    "Note the notation: a promotion move is written with five characters, e.g. g7g8q means \"the pawn moves from g7 to g8 and promotes to a queen\"; the final q is Queen, change it to r for Rook."
+  ],
   "culture": {
     "title": "升变是国际象棋里最戏剧性的一刻",
     "content": "一个走了整局都只能前进一格的弱小棋子，在底线瞬间变成全场最强的后。十九世纪起就有大量「兵升变翻盘」的名局。但棋手也常常因为贪心或习惯直接升后，错过升车、升马更精确的杀法——升变的选择本身就是一道计算题。"
+  },
+  "culture_en": {
+    "title": "Promotion is chess at its most dramatic",
+    "content": "A weak pawn that has crept forward one square at a time for the whole game suddenly becomes the strongest piece on the board. Since the nineteenth century there are famous games won by promotion comebacks. But players also lose chances by habitually promoting to a queen when a rook or knight would mate more precisely — choosing the promotion piece is itself a calculation."
   },
   "challenge": {
     "title": "三步完成：到位、升变、收网",
@@ -72,6 +88,49 @@
       { "label": "升变的走法怎么记？", "key": "升变记法" }
     ]
   },
+  "challenge_en": {
+    "title": "Three moves: get into place, promote, close the net",
+    "instruction": "After each move the opponent replies automatically. First bring the white king to the protecting square, then choose the promotion piece (study the difference between queen and rook), and finally deliver mate.",
+    "goal": "White moves three times: first occupy the protecting square with the king, then promote to the correct piece, finally mate the black king.",
+    "steps": [
+      {
+        "move": "g6f7",
+        "note": "First move correct: Kf7. The white king moves from g6 to f7, controlling g8 (the square the pawn will promote onto) and sealing the black king in. Black, stuck between the pawn and the edge, can only shuffle from h8 to h7."
+      },
+      {
+        "move": "g7g8q",
+        "note": "Second move correct: g8=Q+. The g7 pawn rushes to g8 and promotes to a queen (g7g8q — the final q is Queen). The white queen stands on g8, giving instant check along the g8-h7 diagonal and taking the eighth rank to close the net. Black must keep retreating to h6. Note: the queen controls ranks, files and diagonals — that is exactly why it must be a queen.",
+        "alternatives": [
+          {
+            "move": "g7g8r",
+            "note": "Reasonable but not enough: g8=R promotes to a rook. A rook controls ranks and files but not diagonals, so it does not give check along g8-h7 and Black gains a breather. With a rook White cannot mate within the required moves — the classic \"queen vs rook\" choice in promotion."
+          }
+        ]
+      },
+      {
+        "move": "g8g6",
+        "note": "Third move correct: Qg6#. The white queen steps from g8 to g6, sealing h6 as an escape along the g6-h7 diagonal, while the f7 white king covers h7, g7 and h5. Black on h6 cannot move forward, cannot capture the queen, and has no piece to interpose — a clean mate."
+      }
+    ],
+    "success": "Three moves complete. The heart of the mate is move two: promoting to a queen lets White give check along the diagonal and control h7; a rook simply lacks that firepower. Before promoting, ask whether you need full rank-file-diagonal coverage (queen) or just one line (rook/bishop/knight).",
+    "defaultAnswer": "The key here is not \"whether to promote\" but \"what to promote to\". The queen covers ranks, files and diagonals, so g8=Q+ checks the black king along the g8-h7 diagonal; a rook only covers ranks and files, so g8=R cannot control h7 and Black gets time to shore up. First Kf7 to guard the square, then promote to a queen, then Qg6# to close the net — order and piece choice both matter.",
+    "errors": {
+      "g6g7": "Kg7 looks protective, but g7 is already occupied by your own pawn — the king cannot step onto it. Your king's job is to reach f7 to control the promotion square g8, not to crowd the pawn."
+    },
+    "genericError": "This move did not bring the white king to the protecting square. The black king is nailed down, but your promotion square g8 still needs the white king on f7 to protect the promoted piece. Ask: which square lets the king both threaten g8 and seal the black king?",
+    "quick": {
+      "为什么升后": "The queen controls ranks, files and diagonals at once. Promoted to g8, she gives check to the black king on h7 along the g8-h7 diagonal and immediately prepares Qg6#. A rook controls no diagonals, so it cannot build this series of checks.",
+      "升车为什么不行": "Promoting to a rook (g8=R) only covers ranks and files; with no diagonal firepower it does not check the king on h7. Black therefore gains a whole move to regroup, and White cannot mate in time.",
+      "为什么先走王": "The promoted piece needs protection. Once the white king reaches f7 it controls g8, so even if the black king comes to capture the promoted piece it is watched. Get into place first, then promote — that is the standard order in this ending.",
+      "升变记法": "A promotion move is written in five characters: the first four are the from-square and to-square, the fifth is the promoted piece. g7g8q means the pawn goes from g7 to g8 and promotes to a queen; change q to r (rook), b (bishop) or n (knight) for other pieces."
+    },
+    "suggestions": [
+      { "label": "Why must it be a queen?", "key": "为什么升后" },
+      { "label": "Why doesn't a rook work?", "key": "升车为什么不行" },
+      { "label": "Why move the king first?", "key": "为什么先走王" },
+      { "label": "How do I write a promotion move?", "key": "升变记法" }
+    ]
+  },
   "review": {
     "title": "升变是一道选择题",
     "steps": [
@@ -81,5 +140,15 @@
       "升变前先问自己——你需要的是横竖斜全覆盖（后），还是只挑某一条线（车/象/马）。"
     ],
     "principle": "升变不只是「把兵换成最强的棋子」，而是根据这步需要的攻击线路选棋子；多数时候升后，但永远先想清楚为什么。"
+  },
+  "review_en": {
+    "title": "Promotion is a multiple-choice question",
+    "steps": [
+      "Kf7 first: the white king controls the promotion square g8 and pins the black king in the corner.",
+      "g8=Q+ promotes to a queen: the queen's diagonal firepower keeps the checks coming — something a rook cannot do.",
+      "Qg6# closes the net: queen and king cooperate to seal the last escape squares.",
+      "Before promoting ask yourself — do you need full rank-file-diagonal coverage (queen), or just one line (rook/bishop/knight)?"
+    ],
+    "principle": "Promotion is not just \"trade the pawn for the strongest piece\"; it is choosing the piece that provides the line of attack this move needs. Usually the queen — but always know why."
   }
 }

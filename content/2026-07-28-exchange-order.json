@@ -2,20 +2,34 @@
   "slug": "exchange-order",
   "publishedAt": "2026-07-28T09:00:00+08:00",
   "dateLabel": "7月28日",
+  "dateLabel_en": "Jul 28",
   "edition": "早报",
+  "edition_en": "Morning",
   "category": "子力判断",
+  "category_en": "Material evaluation",
   "title": "先交换谁，最后会差一整车",
+  "title_en": "Whom You Trade First Decides a Whole Rook",
   "summary": "连续五次选择，不急着数眼前吃掉的棋子，而是算清整个交换序列的净收益。",
+  "summary_en": "Five straight choices. Don't rush to count what you capture now — add up the net gain of the whole exchange sequence.",
   "topic": "交换顺序与局部子力最大化",
+  "topic_en": "Exchange order and local material maximization",
   "difficulty": 4,
   "duration": 8,
   "introduction": [
     "初学者常在看到能吃的棋子时立刻动手，高手却会先把所有回吃都放进同一条账本。第一口吃得最多，不代表最后剩得最多。",
     "这个局面里，白方会暂时交出车和象，但每一步都带着强制威胁。你的目标不是马上将死，而是用正确顺序拆掉黑方防线，并在第五步兑现净收益。"
   ],
+  "introduction_en": [
+    "Beginners often grab whatever piece is capturable on sight; stronger players put every recapture on the same ledger. The first bite being the biggest does not mean you end with the most.",
+    "In this position White temporarily gives up a rook and a bishop, but every move carries a forcing threat. Your goal is not immediate mate but dismantling Black's defenses in the right order and cashing in the net gain on move five."
+  ],
   "culture": {
     "title": "先手就是交换中的货币",
     "content": "十九世纪的组合棋手很早就发现：带将军的吃子会迫使对手回应，因此可以把一次看似亏损的交换延长成完整组合。计算交换时，除了棋子分值，还要计算谁掌握下一步。"
+  },
+  "culture_en": {
+    "title": "The initiative is the currency of exchanges",
+    "content": "Nineteenth-century combinative players discovered early that a checking capture forces a reply, letting you stretch a seemingly losing exchange into a full combination. When calculating exchanges, count not only piece values but who holds the next move."
   },
   "challenge": {
     "title": "走五步，算完整本地交换",
@@ -55,6 +69,35 @@
       { "label": "这种交换怎么记账？", "key": "怎么算收益" }
     ]
   },
+  "challenge_en": {
+    "title": "Five moves to cash in the whole local exchange",
+    "instruction": "After each choice the opponent plays the most forcing reply. Don't just look at the immediate gain or loss — judge the net result after move five.",
+    "goal": "White moves five times, using a series of checks to improve the exchange result.",
+    "steps": [
+      { "move": "e1e8", "note": "First move correct: Rxe8+ removes the black rook and forces the knight to recapture. The rook leaves temporarily, but the black knight is dragged to e8." },
+      { "move": "c4f7", "note": "Second move correct: Bxf7+ drags the black king away from the back rank with check. Now the king is exposed and the white queen's diagonals begin to open." },
+      { "move": "f3g5", "note": "Third move correct: Ng5+ keeps the initiative. The king can only retreat to g8, but the defenders have lost their coordination." },
+      { "move": "d1b3", "note": "Fourth move correct: Qb3+ checks along the diagonal and forces the bishop to e6 to block. You are not chasing the king; you are dictating where the bishop stands." },
+      { "move": "b3e6", "note": "Fifth move correct: Qxe6+ captures the bishop that was forced to block. After the whole sequence White wins the rook, a pawn and the bishop, and keeps the initiative." }
+    ],
+    "success": "Five moves complete. The point is not how much you capture on move one, but keeping the initiative with checks on every move so the black bishop is finally forced onto a square you can take.",
+    "defaultAnswer": "Read this line backwards: Qxe6 is the payoff, Qb3+ is the aim, Ng5+ and Bxf7+ drag the king, and Rxe8+ first removes the back-rank defender. Change the order and Black gets time to reorganize.",
+    "errors": {
+      "d1b3": "Immediate Qb3 gives check, but Black's rook, knight and bishop are still coordinated, so blocking the queen costs no real material. Start with Rxe8+ to change the defensive structure.",
+      "c4f7": "Immediate Bxf7+ only drags the king without first removing the heavy piece on e8. One layer is missing from the combination, and the final gain drops."
+    },
+    "genericError": "This may be a reasonable move, but it does not keep the forcing rhythm. Look first for checks, captures and moves that dictate the opponent's reply.",
+    "quick": {
+      "为什么先换车": "Rxe8+ does two things at once: it takes the black rook and drags the f6 knight to e8. That opens White's diagonals for the forcing sequence to come.",
+      "为什么愿意弃象": "Bxf7+ is not a gift — it trades a bishop for a pawn and the king's position. Once the king is on f7, Ng5+ and Qb3+ can keep the initiative going.",
+      "怎么算收益": "Put the whole sequence on one ledger: don't judge any single move in isolation. Compare the final material and king safety only after the forcing replies have run out."
+    },
+    "suggestions": [
+      { "label": "Why trade the rook first?", "key": "为什么先换车" },
+      { "label": "Why give away the bishop?", "key": "为什么愿意弃象" },
+      { "label": "How do you tally this exchange?", "key": "怎么算收益" }
+    ]
+  },
   "review": {
     "title": "把五步当成一笔交易",
     "steps": [
@@ -64,5 +107,15 @@
       "局部子力最大化依靠交换顺序、先手和落点，不只是棋子标价。"
     ],
     "principle": "计算交换时一直算到强制着结束，再比较最终剩余子力；不要在第一口吃子后就停止。"
+  },
+  "review_en": {
+    "title": "Treat the five moves as one transaction",
+    "steps": [
+      "Rxe8+ first removes the most important back-rank defender and lures the knight to recapture.",
+      "Bxf7+ and Ng5+ keep using checks, leaving Black no pause to reorganize.",
+      "Qb3+ forces the bishop to e6; Qxe6+ is the final payoff.",
+      "Local material maximization comes from exchange order, the initiative and placement — not just piece prices."
+    ],
+    "principle": "When calculating exchanges, keep going until the forcing moves run out, then compare the final material; do not stop after the first capture."
   }
 }

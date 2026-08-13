@@ -2,20 +2,34 @@
   "slug": "king-opposition",
   "publishedAt": "2026-07-25T18:00:00+08:00",
   "dateLabel": "7月25日",
+  "dateLabel_en": "Jul 25",
   "edition": "晚报",
+  "edition_en": "Evening",
   "category": "残局",
+  "category_en": "Endgame",
   "title": "王不是观众：五步抢到关键格",
+  "title_en": "The King Is No Spectator: Five Moves to Win the Key Square",
   "summary": "没有将军也没有立即吃子，先用王取得空间，再决定兵从哪一侧制造突破。",
+  "summary_en": "No check, no immediate capture. First give the king space, then decide from which side the pawns break through.",
   "topic": "王兵残局的对王与关键格",
+  "topic_en": "Opposition and key squares in king-and-pawn endgames",
   "difficulty": 3,
   "duration": 7,
   "introduction": [
     "进入残局后，王从需要保护的对象变成最强的近战棋子。只会推兵的人，常常把本来能赢的局面推成和棋。",
     "这道题的五步目标不是升变，而是先让白王取得更积极的位置，再用兵固定黑王的选择。你要学习的是残局中的先后次序。"
   ],
+  "introduction_en": [
+    "In the endgame the king turns from something to protect into the strongest piece at close range. Players who only push pawns often push a winning position into a draw.",
+    "The five-move goal here is not promotion but first making the white king more active, then using the pawns to fix Black's choices. What you will learn is the order of play in the endgame."
+  ],
   "culture": {
     "title": "对王是残局的语法",
     "content": "古典残局教材把双方王隔一格相对称为 opposition。它不是神秘定式，而是一种迫使对方先让路的节奏工具。理解对王后，很多王兵残局不再需要死记。"
+  },
+  "culture_en": {
+    "title": "Opposition is the grammar of the endgame",
+    "content": "Classical endgame manuals call it opposition when two kings face each other with one square between them. It is not a mystical pattern but a rhythm tool that forces the opponent to give way. Understanding opposition makes many king-and-pawn endgames need no memorizing."
   },
   "challenge": {
     "title": "五步让王先进入战场",
@@ -55,6 +69,35 @@
       { "label": "为什么两枚兵一起推进？", "key": "为什么双兵一起走" }
     ]
   },
+  "challenge_en": {
+    "title": "Five moves to bring the king into the fight first",
+    "instruction": "Spend the first three moves improving the king's position; only the last two push pawns. Don't advance a pawn to a point of no return at the start.",
+    "goal": "White moves five times, seizing key squares and building a two-pawn advance.",
+    "steps": [
+      { "move": "e2d3", "note": "First move correct: Kd3 brings the king toward the center. In the endgame, one king square is often worth more than a pawn move." },
+      { "move": "d3d4", "note": "Second move correct: Kd4 keeps gaining space, forcing the black king to give way to the side." },
+      { "move": "d4e5", "note": "Third move correct: Ke5 wins the key square. The white king can now support both pawns while the black king is pushed to the flank." },
+      { "move": "f2f4", "note": "Fourth move correct: f4 advances under the king's protection. Black must decide which pawn will build the block." },
+      { "move": "g2g4", "note": "Fifth move correct: g4 creates a pair of connected pawns. With the king ahead, White can later choose which side to break through." }
+    ],
+    "success": "Five moves complete. The white king seized the key square first, then the pawns advanced; the advantage comes from the king's position, not from any single capture.",
+    "defaultAnswer": "If you push a pawn first, the black king finds it easier to step in front and blockade. After the white king reaches e5, both pawns have reliable support and Black can hardly cover both wings at once.",
+    "errors": {
+      "f2f4": "Immediate f4 is too early. The black king is still in the center and can rush in front of the pawn; play Kd3 first and bring the strongest endgame piece into the fight.",
+      "g2g4": "Immediate g4 exposes the target just the same. Pawns cannot move backward, but the king can still improve; prefer the reversible, higher-gain king move."
+    },
+    "genericError": "Ask which piece most needs improving in the endgame. The answer here is not a pawn but the white king, still far from the key squares.",
+    "quick": {
+      "为什么先走王": "Once a pawn advances it cannot retreat, while a king move gains control and keeps options open. Improving the king first usually makes the later pawn moves safer.",
+      "什么是关键格": "A key square is one that, once occupied by the king, reliably supports the pawns' advance. Here e5 helps both the f- and g-pawns.",
+      "为什么双兵一起走": "Connected pawns give each other exchange options, and the king supports them from behind. A lone pawn rushing ahead is more easily blocked by the black king."
+    },
+    "suggestions": [
+      { "label": "Why do the first three moves all use the king?", "key": "为什么先走王" },
+      { "label": "What is a key square?", "key": "什么是关键格" },
+      { "label": "Why advance both pawns together?", "key": "为什么双兵一起走" }
+    ]
+  },
   "review": {
     "title": "先让王领先，再让兵兑现",
     "steps": [
@@ -64,5 +107,15 @@
       "整个过程没有立即吃子，但胜率随着王的位置持续提高。"
     ],
     "principle": "王兵残局先比较王的位置，再决定兵步；不可逆的兵步应该建立在王已经改善的基础上。"
+  },
+  "review_en": {
+    "title": "Let the king lead, then let the pawns cash in",
+    "steps": [
+      "Kd3, Kd4 use the king to take central space and force the black king aside.",
+      "Ke5 is the key of the whole plan: the king now supports both pawns.",
+      "f4, g4 build connected pawns under the king's protection.",
+      "No immediate captures anywhere, yet the win rate keeps climbing with the king's position."
+    ],
+    "principle": "In king-and-pawn endgames compare the kings first, then decide on pawn moves; irreversible pawn moves should wait until the king has already improved."
   }
 }
