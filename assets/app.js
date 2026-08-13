@@ -7,7 +7,7 @@ import {
   pieceColor,
   toFen,
 } from "./chess-engine.mjs";
-import { buildCoachMessages, resolveWorkerUrl } from "./coach-ai.mjs";
+import { buildCoachMessages, buildKeylessUrl, resolveWorkerUrl } from "./coach-ai.mjs";
 
 const PIECE_NAMES = {
   K: "白王", Q: "白后", R: "白车", B: "白象", N: "白马", P: "白兵",
@@ -216,9 +216,9 @@ function buildReportMailto(opts) {
   return `mailto:${REPORT_MAILTO}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 }
 
-// ---- AI 教练（智谱 GLM-4-Flash，经 Cloudflare Worker 代理）------------------
-// Worker URL 默认为空 → 走预制答案降级。部署 Worker 后填入配置即接入真 AI。
-// 三层优先级：localStorage 覆盖 > window.CHESS_COACH_CONFIG.workerUrl > 空。
+// ---- AI 教练（经 Cloudflare Worker 代理 / 免 Key 免费中转）------------------
+// 优先级：配置了 Worker（真 AI，Key 在服务端）> 免 Key 免费中转（零配置，实验性）
+// > 预制答案（确定性兜底）。三层都不会把用户卡住。见 buildKeylessUrl / showCoachAnswer。
 function coachWorkerUrl() {
   return resolveWorkerUrl({
     storage: typeof localStorage !== "undefined" ? localStorage : null,
@@ -251,6 +251,31 @@ async function askCoachAI(workerUrl, messages, userKey) {
     if (data.error) throw new Error(data.error);
     if (typeof data.answer !== "string" || !data.answer.trim()) throw new Error("empty answer");
     return data.answer.trim();
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+/**
+ * 免 Key 免费中转路径（Pollinations 匿名 GET）。
+ * 不依赖 Worker / API Key，浏览器直连第三方免费转发，实现零配置。
+ * 风险：无 SLA、可能停用/限流/中文质量一般 → 调用方（showCoachAnswerKeyless）
+ * 必须把失败兜底到预制答案。15 秒超时，避免用户长时间等待。
+ */
+async function askCoachKeyless(question, ctx) {
+  const url = buildKeylessUrl(question, ctx);
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 15000);
+  try {
+    const res = await fetch(url, { signal: controller.signal });
+    if (!res.ok) throw new Error(`keyless HTTP ${res.status}`);
+    const text = await res.text();
+    if (!text || !text.trim()) throw new Error("empty keyless answer");
+    // 免费中转失败时可能返回 JSON 错误对象；正常时返回纯文本。
+    let parsed = null;
+    try { parsed = JSON.parse(text); } catch { /* 纯文本，正常 */ }
+    if (parsed && parsed.error) throw new Error(String(parsed.error));
+    return text.trim();
   } finally {
     clearTimeout(timer);
   }
@@ -896,32 +921,54 @@ function setupChallenge(root) {
     answer.classList.add("show");
   }
 
+  // 组装发送给 AI 的上下文（题目标题 + 当前局面 FEN + 进度）。
+  function coachContext() {
+    const titleEl = document.querySelector("main h1");
+    return {
+      title: titleEl ? titleEl.textContent.trim() : "",
+      goal: puzzle.goal,
+      startFen: puzzle.fen,
+      currentFen: toFen(state, "w"),
+      step,
+      totalSteps: puzzle.steps.length,
+    };
+  }
+
+  // 未配置 Worker 时尝试免 Key 免费中转；失败一律兜底预制答案。
+  async function showCoachAnswerKeyless(question, preferredKey) {
+    answer.innerHTML = `<strong>棋局教练：</strong><span class="ai-loading">正在思考…</span>`;
+    answer.classList.add("show", "loading");
+    try {
+      // 点快捷问题按钮时 question 可能为空，用 quick 字典里对应的 label 作为问题文本。
+      const questionForAI = question || (preferredKey ? puzzle.quick[preferredKey] : "") || "请讲讲这一步的思路。";
+      const reply = await askCoachKeyless(questionForAI, coachContext());
+      renderCoachReply(reply);
+    } catch (err) {
+      console.error("Keyless coach failed, falling back:", err);
+      renderCoachReply(prefabAnswer(question, preferredKey), { fallback: true });
+    } finally {
+      answer.classList.remove("loading");
+    }
+  }
+
   async function showCoachAnswer(question, preferredKey = "") {
     if (!question && !preferredKey) {
       renderCoachReply(prefabAnswer("", preferredKey));
       return;
     }
     const workerUrl = coachWorkerUrl();
-    // 未配置 Worker：直接走预制答案（现状行为）。
+    // 未配置 Worker：尝试免 Key 免费中转（零配置），失败兜底预制答案。
     if (!workerUrl) {
-      renderCoachReply(prefabAnswer(question, preferredKey));
+      await showCoachAnswerKeyless(question, preferredKey);
       return;
     }
     // 配置了 Worker：显示 loading，调 AI，失败降级。
     answer.innerHTML = `<strong>棋局教练：</strong><span class="ai-loading">正在思考…</span>`;
     answer.classList.add("show", "loading");
     try {
-      const titleEl = document.querySelector("main h1");
       // 点快捷问题按钮时 question 可能为空，用 quick 字典里对应的 label 作为问题文本。
       const questionForAI = question || (preferredKey ? puzzle.quick[preferredKey] : "") || "请讲讲这一步的思路。";
-      const messages = buildCoachMessages(questionForAI, {
-        title: titleEl ? titleEl.textContent.trim() : "",
-        goal: puzzle.goal,
-        startFen: puzzle.fen,
-        currentFen: toFen(state, "w"),
-        step,
-        totalSteps: puzzle.steps.length,
-      });
+      const messages = buildCoachMessages(questionForAI, coachContext());
       const reply = await askCoachAI(workerUrl, messages, coachUserKey());
       renderCoachReply(reply);
     } catch (err) {

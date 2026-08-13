@@ -45,3 +45,28 @@ export function buildCoachMessages(question, ctx = {}) {
     { role: "user", content: contextBlock ? `${contextBlock}\n\n对方的问题：${question}` : question },
   ];
 }
+
+/**
+ * 构造免 Key 免费中转（Pollinations 匿名 GET）的请求 URL（纯函数，可测）。
+ *
+ * 这是「零配置」路径：不依赖 Worker 和 API Key，浏览器直接 GET 一个第三方免费
+ * 转发（text.pollinations.ai）。系统提示走 ?system=，问题文本放路径里。
+ *
+ * 重要：第三方免费转发无 SLA，随时可能停用/限流/中文质量一般，因此调用方必须
+ * 把失败兜底到预制答案（见 app.js 的 showCoachAnswerKeyless）。这里只负责构造
+ * 请求、不碰网络。
+ *
+ * @param {string} question 用户问题
+ * @param {object} ctx 与 buildCoachMessages 相同的上下文
+ * @returns {string} 完整 GET URL
+ */
+export function buildKeylessUrl(question, ctx = {}) {
+  const messages = buildCoachMessages(question, ctx);
+  const system = messages[0].content;
+  const prompt = messages[1].content;
+  const params = new URLSearchParams();
+  if (system) params.set("system", system);
+  params.set("model", "openai");
+  params.set("seed", "chess-moment");
+  return `https://text.pollinations.ai/${encodeURIComponent(prompt)}?${params.toString()}`;
+}

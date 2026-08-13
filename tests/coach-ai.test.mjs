@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { buildCoachMessages, resolveWorkerUrl } from "../assets/coach-ai.mjs";
+import { buildCoachMessages, buildKeylessUrl, resolveWorkerUrl } from "../assets/coach-ai.mjs";
 
 // ---- buildCoachMessages ---------------------------------------------------
 
@@ -87,4 +87,29 @@ test("resolveWorkerUrl falls back to config when localStorage key is empty", () 
 test("resolveWorkerUrl trims whitespace", () => {
   const url = resolveWorkerUrl({ config: { workerUrl: "  https://w.example.dev  " } });
   assert.equal(url, "https://w.example.dev");
+});
+
+// ---- buildKeylessUrl -------------------------------------------------------
+
+test("buildKeylessUrl builds a GET to text.pollinations.ai with encoded prompt", () => {
+  const url = buildKeylessUrl("这步怎么理解", { title: "升变选择" });
+  assert.ok(url.startsWith("https://text.pollinations.ai/"), "must target the keyless relay");
+  assert.ok(decodeURIComponent(url).includes("这步怎么理解"), "question must appear in the path");
+  assert.ok(url.includes("model=openai"), "must pin a free openai model");
+  assert.ok(url.includes("seed=chess-moment"), "must set a stable seed");
+});
+
+test("buildKeylessUrl carries the system prompt and Chinese survives encoding", () => {
+  const url = buildKeylessUrl("q", {});
+  const decoded = decodeURIComponent(url);
+  assert.ok(decoded.includes("system="), "must pass the system prompt via ?system=");
+  assert.ok(decoded.includes("国际象棋教练"), "system prompt must be included verbatim");
+  // 系统提示里的硬约束不应丢失。
+  assert.ok(decoded.includes("严禁"), "system forbid-rule must survive the round trip");
+});
+
+test("buildKeylessUrl returns same URL for same input (deterministic)", () => {
+  const a = buildKeylessUrl("x", { goal: "三步将杀" });
+  const b = buildKeylessUrl("x", { goal: "三步将杀" });
+  assert.equal(a, b);
 });
