@@ -1,6 +1,9 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { buildCoachMessages, buildKeylessUrl, buildOpenRouterRequest, extractOpenRouterAnswer, resolveWorkerUrl } from "../assets/coach-ai.mjs";
+import {
+  buildCoachMessages, buildKeylessUrl, buildOpenRouterRequest, decodeKeyObfuscation,
+  embeddedOpenRouterKey, encodeKeyObfuscation, extractOpenRouterAnswer, resolveWorkerUrl,
+} from "../assets/coach-ai.mjs";
 
 // ---- buildCoachMessages ---------------------------------------------------
 
@@ -146,3 +149,20 @@ test("extractOpenRouterAnswer pulls content and throws on empty", () => {
   assert.throws(() => extractOpenRouterAnswer({}), /empty OpenRouter answer/);
   assert.throws(() => extractOpenRouterAnswer({ choices: [{ message: { content: "  " } }] }), /empty OpenRouter answer/);
 });
+
+// ---- 默认 Key 混淆（前端直连用）------------------------------------------
+
+test("obfuscation round-trips a dummy key without exposing the plaintext", () => {
+  // 注意：dummy 故意不用任何真实 Key 的前缀格式，避免触发 GitHub 密钥扫描的推送保护。
+  const dummy = "dummy-key-0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
+  const obf = encodeKeyObfuscation(dummy, "salt-123");
+  // 混淆串里不应出现明文的可读片段
+  assert.ok(!obf.includes("dummy-key"), "obfuscated string must not contain the plain key");
+  assert.equal(decodeKeyObfuscation(obf, "salt-123"), dummy);
+});
+
+test("embedded default OpenRouter key decodes to a usable-length string", () => {
+  const key = embeddedOpenRouterKey();
+  assert.ok(key.length >= 40, "embedded key should be a real-length API key");
+});
+

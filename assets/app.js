@@ -8,7 +8,8 @@ import {
   toFen,
 } from "./chess-engine.mjs";
 import {
-  buildCoachMessages, buildKeylessUrl, buildOpenRouterRequest, extractOpenRouterAnswer, resolveWorkerUrl,
+  buildCoachMessages, buildKeylessUrl, buildOpenRouterRequest, embeddedOpenRouterKey,
+  extractOpenRouterAnswer, resolveWorkerUrl,
 } from "./coach-ai.mjs";
 import { t, ui } from "./i18n.mjs";
 
@@ -996,8 +997,8 @@ function setupChallenge(root) {
       renderCoachReply(prefabAnswer("", preferredKey));
       return;
     }
-    // 优先级：OpenRouter 直连（用户自带 Key，浏览器 CORS 允许）> Worker > 免 Key 免费中转 > 预制答案。
-    const openRouterKey = coachOpenRouterKey();
+    // 优先级：OpenRouter 直连（自带 Key > 内嵌默认 Key，浏览器 CORS 允许）> Worker > 免 Key 免费中转 > 预制答案。
+    const openRouterKey = coachOpenRouterKey() || embeddedOpenRouterKey();
     if (openRouterKey) {
       answer.innerHTML = `<strong>${t("coachPrefix")}</strong><span class="ai-loading">${t("aiLoading")}</span>`;
       answer.classList.add("show", "loading");

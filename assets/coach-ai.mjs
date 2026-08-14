@@ -88,6 +88,38 @@ export function buildKeylessUrl(question, ctx = {}, locale = "zh") {
   return `https://text.pollinations.ai/${encodeURIComponent(prompt)}?${params.toString()}`;
 }
 
+// ---- 默认 OpenRouter Key（前端直连）--------------------------------------
+// 按需求把默认 Key 以「简单混淆」形式写在前端，免去 AI 设置里手动粘贴。
+// 警告：这只是混淆（XOR + Base64），不是真正的加密——任何访客都能在浏览器
+// 开发者工具里还原出明文 Key。若该 Key 关联付费额度，请改用「AI 设置」里
+// 的自带 Key 覆盖，或删除 DEFAULT_OR_KEY_OBF 常量。
+const DEFAULT_OR_KEY_SALT = "chess-moment-obf-2026";
+const DEFAULT_OR_KEY_OBF = "EANIHAEAG15ABFlNS1xbU04HU1EOV1FXQkMYWFpfAA9NFFhaUB8FUQoFVFgBQxBIX1cJVQhDS1dRBxlRAgcHU18HR0QdC15VUQ==";
+
+/** XOR + Base64 混淆（纯函数，可测；浏览器与 Node 均可用 btoa/atob）。 */
+export function encodeKeyObfuscation(plain, salt) {
+  let bin = "";
+  for (let i = 0; i < plain.length; i++) {
+    bin += String.fromCharCode(plain.charCodeAt(i) ^ salt.charCodeAt(i % salt.length));
+  }
+  return btoa(bin);
+}
+
+/** 还原被 encodeKeyObfuscation 混淆的值（纯函数，可测）。 */
+export function decodeKeyObfuscation(obf, salt) {
+  const bin = atob(obf);
+  let out = "";
+  for (let i = 0; i < bin.length; i++) {
+    out += String.fromCharCode(bin.charCodeAt(i) ^ salt.charCodeAt(i % salt.length));
+  }
+  return out;
+}
+
+/** 内嵌的默认 OpenRouter Key（运行时还原）。无内嵌 Key 时返回空串。 */
+export function embeddedOpenRouterKey() {
+  return DEFAULT_OR_KEY_OBF ? decodeKeyObfuscation(DEFAULT_OR_KEY_OBF, DEFAULT_OR_KEY_SALT) : "";
+}
+
 /**
  * 构造发给 OpenRouter（OpenAI 兼容）的请求（纯函数，可测）。
  *
