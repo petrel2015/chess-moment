@@ -9,9 +9,9 @@ import {
 } from "./chess-engine.mjs";
 import {
   buildCoachMessages, buildKeylessUrl, buildOpenRouterRequest, embeddedOpenRouterKey,
-  extractOpenRouterAnswer, resolveWorkerUrl,
+  extractOpenRouterAnswer, OPENROUTER_MODELS, resolveWorkerUrl,
 } from "./coach-ai.mjs";
-import { t, ui } from "./i18n.mjs";
+import { currentLang, t, ui } from "./i18n.mjs";
 
 // 当前语言下的棋子名（用于棋盘 aria-label 与提示）。
 function pieceName(piece) {
@@ -295,17 +295,16 @@ async function askCoachKeyless(question, ctx) {
 }
 
 /**
- * 直连 OpenRouter（OpenAI 兼容）。OpenRouter 返回 CORS 头（*），浏览器可直接调用，
- * 用户填一个免费 OpenRouter Key 即可拿到真 AI，无需 Worker。20 秒超时。
+ * 单次调用 OpenRouter 指定模型（OpenAI 兼容）。15 秒超时，失败抛错。
  */
-async function askCoachOpenRouter(question, ctx, apiKey) {
-  const referer = typeof location !== "undefined" ? location.origin + location.pathname : "";
+async function askOpenRouterOnce(model, question, ctx, apiKey, referer) {
   const { url, init } = buildOpenRouterRequest(question, ctx, apiKey, {
     locale: currentLang(),
+    model,
     referer,
   });
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 20000);
+  const timer = setTimeout(() => controller.abort(), 15000);
   try {
     const res = await fetch(url, { ...init, signal: controller.signal });
     if (!res.ok) {
@@ -320,6 +319,29 @@ async function askCoachOpenRouter(question, ctx, apiKey) {
   } finally {
     clearTimeout(timer);
   }
+}
+
+/**
+ * 直连 OpenRouter（OpenAI 兼容）。OpenRouter 返回 CORS 头（*），浏览器可直接调用，
+ * 用户填一个免费 OpenRouter Key 即可拿到真 AI，无需 Worker。
+ * 免费模型会间歇性空回答/限流（实测约 1/4 概率），故按 OPENROUTER_MODELS 链重试：
+ * 主模型连试 2 次，再依次降级到备用模型。Key 无效（401/403）立即抛出不重试。
+ */
+async function askCoachOpenRouter(question, ctx, apiKey) {
+  const referer = typeof location !== "undefined" ? location.origin + location.pathname : "";
+  const plan = [OPENROUTER_MODELS[0], OPENROUTER_MODELS[0], ...OPENROUTER_MODELS.slice(1)];
+  let lastErr = new Error("OpenRouter unavailable");
+  for (let i = 0; i < plan.length; i++) {
+    if (i > 0) await new Promise(resolve => setTimeout(resolve, 900));
+    try {
+      return await askOpenRouterOnce(plan[i], question, ctx, apiKey, referer);
+    } catch (err) {
+      lastErr = err;
+      // Key 无效/无权限：换模型也没用，直接抛给上层降级到预制答案。
+      if (/OpenRouter HTTP 40[13]/.test(err.message)) throw err;
+    }
+  }
+  throw lastErr;
 }
 
 const BUILT_IN_PUZZLES = {
@@ -953,11 +975,16 @@ function setupChallenge(root) {
     return response;
   }
 
-  function renderCoachReply(text, { fallback } = {}) {
+  function renderCoachReply(text, { fallback, detail = "" } = {}) {
     const prefix = fallback
       ? `<small class="ai-fallback-note">${t("aiFallback")}</small>`
       : "";
     answer.innerHTML = `${prefix}<strong>${t("coachPrefix")}</strong>${text}`;
+    if (fallback && detail) {
+      // 追加失败原因（textContent，避免注入），便于用户与维护者诊断。
+      const note = answer.querySelector(".ai-fallback-note");
+      note?.append(`（${detail}）`);
+    }
     enhanceNotation(answer);
     answer.classList.add("show");
   }
@@ -1009,7 +1036,7 @@ function setupChallenge(root) {
         renderCoachReply(reply);
       } catch (err) {
         console.error("OpenRouter coach failed, falling back:", err);
-        renderCoachReply(prefabAnswer(question, preferredKey), { fallback: true });
+        renderCoachReply(prefabAnswer(question, preferredKey), { fallback: true, detail: String(err.message || err) });
       } finally {
         answer.classList.remove("loading");
       }

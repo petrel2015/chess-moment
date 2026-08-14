@@ -111,6 +111,18 @@ test("shared interaction JavaScript parses", () => {
   assert.equal(result.status, 0, result.stderr);
 });
 
+// 回归保护：app.js 使用到的 i18m.mjs 助手必须全部出现在 import 行里
+// （曾因漏 import currentLang 导致浏览器里问教练全部降级）。
+test("app.js imports every i18n helper it uses", () => {
+  const src = readFileSync(path.join(root, "assets", "app.js"), "utf8");
+  const m = /import\s*\{([^}]*)\}\s*from\s*["']\.\/i18n\.mjs["']/.exec(src);
+  assert.ok(m, "app.js must import from ./i18n.mjs");
+  const imported = m[1].split(",").map(s => s.trim()).filter(Boolean);
+  for (const name of ["t", "ui", "currentLang"]) {
+    assert.ok(imported.includes(name), `app.js must import ${name} from i18n.mjs`);
+  }
+});
+
 // 架构断言：对手回应窗口必须有健壮性保护，防止用户卡在无反馈的空窗。
 // 这些守卫是针对"走完一步后对手 auto-reply 没正常执行"类 bug 的回归保护。
 test("app.js guards the opponent-reply window against getting stuck", async () => {
