@@ -103,7 +103,7 @@ export function buildKeylessUrl(question, ctx = {}, locale = "zh") {
  * @returns {{url: string, init: RequestInit}} 给 fetch 用的 {url, init}
  */
 export function buildOpenRouterRequest(question, ctx = {}, apiKey, opts = {}) {
-  const { locale = "zh", model = "google/gemma-4-31b-it:free", referer = "" } = opts;
+  const { locale = "zh", model = "nvidia/nemotron-3-ultra-550b-a55b:free", referer = "" } = opts;
   const messages = buildCoachMessages(question, ctx, locale);
   const headers = {
     "Content-Type": "application/json",

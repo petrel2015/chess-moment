@@ -28,7 +28,7 @@ OpenRouter 是一个 AI 模型聚合平台，API 返回 `Access-Control-Allow-Or
 - 免费模型有每日用量限制，偶尔会提示限流；失败时自动降级为预制答案，不会卡住。
 - Key 只存在你自己浏览器的 localStorage，不会上传到任何服务器，也不会进网站源码。
 - 想换模型？源码里 `assets/coach-ai.mjs` 的 `buildOpenRouterRequest` 默认模型
-  `google/gemma-4-31b-it:free` 可以改成任意 OpenRouter 免费模型 id。
+  `nvidia/nemotron-3-ultra-550b-a55b:free` 可以改成任意 OpenRouter 免费模型 id。
 
 整个流程约 5–10 分钟，需要：一个浏览器、两次免费注册。不需要信用卡、不需要服务器。
 
