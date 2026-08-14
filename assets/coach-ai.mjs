@@ -87,3 +87,51 @@ export function buildKeylessUrl(question, ctx = {}, locale = "zh") {
   params.set("seed", "chess-moment");
   return `https://text.pollinations.ai/${encodeURIComponent(prompt)}?${params.toString()}`;
 }
+
+/**
+ * 构造发给 OpenRouter（OpenAI 兼容）的请求（纯函数，可测）。
+ *
+ * OpenRouter 是「自带 Key、浏览器直连」路径：其 API 返回 CORS 头
+ * （Access-Control-Allow-Origin: *），且提供大量免费模型（id 以 :free 结尾）。
+ * 因此用户填一个免费 OpenRouter Key 即可在浏览器里直接拿到真 AI 回答，
+ * 不需要 Cloudflare Worker。Key 只存在用户自己的 localStorage，不进源码。
+ *
+ * @param {string} question 用户问题
+ * @param {object} ctx 与 buildCoachMessages 相同的上下文
+ * @param {string} apiKey OpenRouter API Key
+ * @param {object} [opts] { locale, model, referer }
+ * @returns {{url: string, init: RequestInit}} 给 fetch 用的 {url, init}
+ */
+export function buildOpenRouterRequest(question, ctx = {}, apiKey, opts = {}) {
+  const { locale = "zh", model = "google/gemma-4-31b-it:free", referer = "" } = opts;
+  const messages = buildCoachMessages(question, ctx, locale);
+  const headers = {
+    "Content-Type": "application/json",
+    "Authorization": `Bearer ${apiKey}`,
+  };
+  if (referer) {
+    // OpenRouter 要求标识来源站点，用于模型提供方统计与限流。
+    headers["HTTP-Referer"] = referer;
+    headers["X-Title"] = "Chess Moment";
+  }
+  return {
+    url: "https://openrouter.ai/api/v1/chat/completions",
+    init: {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ model, messages, temperature: 0.7, max_tokens: 800 }),
+    },
+  };
+}
+
+/**
+ * 从 OpenRouter 响应里抽出回答文本（纯函数，可测）。
+ * OpenRouter 返回 OpenAI 兼容格式：{ choices: [{ message: { content } }] }。
+ */
+export function extractOpenRouterAnswer(json) {
+  const content = json?.choices?.[0]?.message?.content;
+  if (typeof content !== "string" || !content.trim()) {
+    throw new Error("empty OpenRouter answer");
+  }
+  return content;
+}

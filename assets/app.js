@@ -7,7 +7,9 @@ import {
   pieceColor,
   toFen,
 } from "./chess-engine.mjs";
-import { buildCoachMessages, buildKeylessUrl, resolveWorkerUrl } from "./coach-ai.mjs";
+import {
+  buildCoachMessages, buildKeylessUrl, buildOpenRouterRequest, extractOpenRouterAnswer, resolveWorkerUrl,
+} from "./coach-ai.mjs";
 import { t, ui } from "./i18n.mjs";
 
 // 当前语言下的棋子名（用于棋盘 aria-label 与提示）。
@@ -236,6 +238,10 @@ function coachUserKey() {
   return typeof localStorage !== "undefined" ? (localStorage.getItem("chessCoachUserKey") || "").trim() : "";
 }
 
+function coachOpenRouterKey() {
+  return typeof localStorage !== "undefined" ? (localStorage.getItem("chessCoachOpenRouterKey") || "").trim() : "";
+}
+
 /**
  * 调用 Worker 请求 AI 回答。成功返回文本，失败抛错（调用方降级）。
  * 15 秒超时，避免用户长时间等待。
@@ -282,6 +288,34 @@ async function askCoachKeyless(question, ctx) {
     try { parsed = JSON.parse(text); } catch { /* 纯文本，正常 */ }
     if (parsed && parsed.error) throw new Error(String(parsed.error));
     return text.trim();
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+/**
+ * 直连 OpenRouter（OpenAI 兼容）。OpenRouter 返回 CORS 头（*），浏览器可直接调用，
+ * 用户填一个免费 OpenRouter Key 即可拿到真 AI，无需 Worker。20 秒超时。
+ */
+async function askCoachOpenRouter(question, ctx, apiKey) {
+  const referer = typeof location !== "undefined" ? location.origin + location.pathname : "";
+  const { url, init } = buildOpenRouterRequest(question, ctx, apiKey, {
+    locale: currentLang(),
+    referer,
+  });
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 20000);
+  try {
+    const res = await fetch(url, { ...init, signal: controller.signal });
+    if (!res.ok) {
+      let detail = `OpenRouter HTTP ${res.status}`;
+      try {
+        const j = await res.json();
+        if (j?.error?.message) detail += `: ${j.error.message}`;
+      } catch { /* 忽略无法解析的错误体 */ }
+      throw new Error(detail);
+    }
+    return extractOpenRouterAnswer(await res.json());
   } finally {
     clearTimeout(timer);
   }
@@ -962,6 +996,24 @@ function setupChallenge(root) {
       renderCoachReply(prefabAnswer("", preferredKey));
       return;
     }
+    // 优先级：OpenRouter 直连（用户自带 Key，浏览器 CORS 允许）> Worker > 免 Key 免费中转 > 预制答案。
+    const openRouterKey = coachOpenRouterKey();
+    if (openRouterKey) {
+      answer.innerHTML = `<strong>${t("coachPrefix")}</strong><span class="ai-loading">${t("aiLoading")}</span>`;
+      answer.classList.add("show", "loading");
+      try {
+        // 点快捷问题按钮时 question 可能为空，用 quick 字典里对应的 label 作为问题文本。
+        const questionForAI = question || (preferredKey ? puzzle.quick[preferredKey] : "") || t("askDefaultQuestion");
+        const reply = await askCoachOpenRouter(questionForAI, coachContext(), openRouterKey);
+        renderCoachReply(reply);
+      } catch (err) {
+        console.error("OpenRouter coach failed, falling back:", err);
+        renderCoachReply(prefabAnswer(question, preferredKey), { fallback: true });
+      } finally {
+        answer.classList.remove("loading");
+      }
+      return;
+    }
     const workerUrl = coachWorkerUrl();
     // 未配置 Worker：尝试免 Key 免费中转（零配置），失败兜底预制答案。
     if (!workerUrl) {
@@ -1029,8 +1081,10 @@ document.querySelectorAll("[data-coach-settings-toggle]").forEach(toggle => {
     if (open) {
       const urlInput = panel.querySelector("[data-coach-url]");
       const keyInput = panel.querySelector("[data-coach-key]");
+      const orKeyInput = panel.querySelector("[data-coach-openrouter-key]");
       if (urlInput) urlInput.value = localStorage.getItem("chessCoachWorkerUrl") || "";
       if (keyInput) keyInput.value = localStorage.getItem("chessCoachUserKey") || "";
+      if (orKeyInput) orKeyInput.value = localStorage.getItem("chessCoachOpenRouterKey") || "";
     }
   });
 });
@@ -1041,10 +1095,13 @@ document.querySelectorAll("[data-coach-settings-panel]").forEach(panel => {
   saveBtn.addEventListener("click", () => {
     const url = panel.querySelector("[data-coach-url]")?.value.trim() || "";
     const key = panel.querySelector("[data-coach-key]")?.value.trim() || "";
+    const orKey = panel.querySelector("[data-coach-openrouter-key]")?.value.trim() || "";
     if (url) localStorage.setItem("chessCoachWorkerUrl", url);
     else localStorage.removeItem("chessCoachWorkerUrl");
     if (key) localStorage.setItem("chessCoachUserKey", key);
     else localStorage.removeItem("chessCoachUserKey");
+    if (orKey) localStorage.setItem("chessCoachOpenRouterKey", orKey);
+    else localStorage.removeItem("chessCoachOpenRouterKey");
     const note = panel.querySelector("[data-coach-saved]");
     if (note) {
       note.textContent = t("aiSettingSaved");

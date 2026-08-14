@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { buildCoachMessages, buildKeylessUrl, resolveWorkerUrl } from "../assets/coach-ai.mjs";
+import { buildCoachMessages, buildKeylessUrl, buildOpenRouterRequest, extractOpenRouterAnswer, resolveWorkerUrl } from "../assets/coach-ai.mjs";
 
 // ---- buildCoachMessages ---------------------------------------------------
 
@@ -112,4 +112,37 @@ test("buildKeylessUrl returns same URL for same input (deterministic)", () => {
   const a = buildKeylessUrl("x", { goal: "三步将杀" });
   const b = buildKeylessUrl("x", { goal: "三步将杀" });
   assert.equal(a, b);
+});
+
+// ---- buildOpenRouterRequest（自带 Key 浏览器直连路径）----------------------
+
+test("buildOpenRouterRequest targets OpenAI-compatible chat completions with bearer auth", () => {
+  const { url, init } = buildOpenRouterRequest("q", {}, "sk-or-test", {});
+  assert.equal(url, "https://openrouter.ai/api/v1/chat/completions");
+  assert.equal(init.method, "POST");
+  assert.equal(init.headers.Authorization, "Bearer sk-or-test");
+  assert.equal(init.headers["Content-Type"], "application/json");
+});
+
+test("buildOpenRouterRequest defaults to a free model and includes referer headers", () => {
+  const { init } = buildOpenRouterRequest("q", {}, "sk-or", {
+    referer: "https://petrel2015.github.io/chess-moment/promotion-combo.html",
+  });
+  const body = JSON.parse(init.body);
+  assert.ok(body.model.endsWith(":free"), "default model should be a free OpenRouter model");
+  assert.equal(init.headers["HTTP-Referer"], "https://petrel2015.github.io/chess-moment/promotion-combo.html");
+  assert.equal(init.headers["X-Title"], "Chess Moment");
+});
+
+test("buildOpenRouterRequest carries localized system prompt and question", () => {
+  const zh = buildOpenRouterRequest("q", { goal: "目标" }, "sk-or", { locale: "zh" });
+  assert.ok(JSON.parse(zh.init.body).messages[0].content.includes("国际象棋教练"), "zh system prompt");
+  const en = buildOpenRouterRequest("q", {}, "sk-or", { locale: "en" });
+  assert.ok(JSON.parse(en.init.body).messages[0].content.includes("chess coach"), "en system prompt");
+});
+
+test("extractOpenRouterAnswer pulls content and throws on empty", () => {
+  assert.equal(extractOpenRouterAnswer({ choices: [{ message: { content: "好" } }] }), "好");
+  assert.throws(() => extractOpenRouterAnswer({}), /empty OpenRouter answer/);
+  assert.throws(() => extractOpenRouterAnswer({ choices: [{ message: { content: "  " } }] }), /empty OpenRouter answer/);
 });

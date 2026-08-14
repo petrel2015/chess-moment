@@ -181,6 +181,7 @@ function renderLesson(lesson, { locale = "zh", homepage = false } = {}) {
     <div class="coach-settings-inner">
       <h3>${u.settingsTitle}</h3>
       <p class="coach-settings-hint">${u.settingsHint}</p>
+      <label>${u.settingsOpenRouterKey}<input type="password" data-coach-openrouter-key placeholder="${u.settingsOpenRouterPlaceholder}"></label>
       <label>${u.settingsWorkerUrl}<input type="url" data-coach-url placeholder="https://your-worker.workers.dev"></label>
       <label>${u.settingsKey}<input type="password" data-coach-key placeholder="${u.settingsKeyPlaceholder}"></label>
       <div class="coach-settings-actions"><button class="btn btn-primary" type="button" data-coach-save>${u.settingsSave}</button><span class="coach-saved" data-coach-saved aria-live="polite"></span></div>

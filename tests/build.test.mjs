@@ -441,3 +441,13 @@ test("English pages include language auto-detect script and a toggle link", asyn
   assert.ok(zhHtml.includes('localStorage.getItem("chessMomentLang")'), "zh page missing detect script");
   assert.ok(zhHtml.includes('class="lang-toggle" href="en/promotion-combo.html"'), "zh toggle must point to en page");
 });
+
+test("AI settings panel includes the OpenRouter key input in both languages", async () => {
+  const lessons = await loadLessons(root);
+  for (const lesson of lessons) {
+    for (const [locale, dir] of [["zh", ""], ["en", "en/"]]) {
+      const html = await readFile(path.join(root, "_site", dir, `${lesson.slug}.html`), "utf8");
+      assert.ok(html.includes("data-coach-openrouter-key"), `${dir}${lesson.slug}.html missing OpenRouter key input`);
+    }
+  }
+});
