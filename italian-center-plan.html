@@ -65,7 +65,7 @@
             <div class="progress" aria-label="进度"><span></span><span></span><span></span><span></span><span></span></div>
             <div class="status" aria-live="polite"><span class="status-label"></span><p></p></div>
             <div class="coach-actions"><button class="btn" type="button" data-hint>给一点提示</button><button class="btn" type="button" data-reset>重新挑战</button><button class="btn" type="button" data-report>反馈问题</button></div>
-            <div class="ask-box"><div class="ask-label-row"><label for="ask-italian-center-plan">有哪里没想通？</label><a class="coach-settings-toggle" href="#" aria-expanded="false" data-coach-settings-toggle>AI 设置</a></div><div class="ask-row"><textarea id="ask-italian-center-plan" placeholder="写下你对这一步的疑问"></textarea><button class="btn btn-primary" type="button" data-ask>问教练</button></div><div class="ai-answer" aria-live="polite"></div></div>
+            <div class="ask-box"><div class="ask-label-row"><label for="ask-italian-center-plan">有哪里没想通？</label></div><div class="ask-row"><textarea id="ask-italian-center-plan" placeholder="写下你对这一步的疑问"></textarea><button class="btn btn-primary" type="button" data-ask>问教练</button></div><div class="ai-answer" aria-live="polite"></div></div>
           </div>
         </div>
       </section>
@@ -109,17 +109,6 @@
       </a></div></section>
   </main>
   <footer class="site-footer"><div class="footer-meta">棋刻 Chess Moment · 每天三分钟，想明白一步棋 · <a class="footer-report" href="#" data-footer-report>反馈问题</a></div><div class="donate-section"><span class="donate-tag">请我喝杯咖啡 ￥4.9</span><div class="donate-triggers"><button type="button" class="donate-trigger alipay" data-donate-alipay>支付宝</button><button type="button" class="donate-trigger wechat" data-donate-wechat>微信</button></div></div></footer>
-  <div class="coach-settings-panel" data-coach-settings-panel hidden>
-    <div class="coach-settings-inner">
-      <h3>AI 教练设置</h3>
-      <p class="coach-settings-hint">默认使用站点配置。你也可以填自己的智谱 API Key 和 Worker URL，Key 只存在本浏览器里。</p>
-      <label>OpenRouter API Key（可选）<input type="password" data-coach-openrouter-key placeholder="填入后直连 OpenRouter 免费模型，无需 Worker"></label>
-      <label>Worker URL<input type="url" data-coach-url placeholder="https://your-worker.workers.dev"></label>
-      <label>智谱 API Key（可选）<input type="password" data-coach-key placeholder="留空则用站点默认 Key"></label>
-      <div class="coach-settings-actions"><button class="btn btn-primary" type="button" data-coach-save>保存</button><span class="coach-saved" data-coach-saved aria-live="polite"></span></div>
-      <p class="coach-settings-help">没有 Key？看智谱开放平台（open.bigmodel.cn），GLM-4-Flash 模型免费。</p>
-    </div>
-  </div>
   <script>window.CHESS_LESSON={"id":"italian-center-plan","challenge":{"title":"五步搭好中心突破的脚手架","instruction":"先发展，再支撑，最后推进 d4。对手会正常发展，你要保持计划连贯。","fen":"r1bqkbnr/pppp1ppp/2n5/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 2 3","goal":"白方走五步，完成意大利式发展并推进 d4。","steps":[{"move":"f1c4","opponent":"g8f6","note":"第一步正确：Bc4 把象放到活跃对角线，同时关注 f7。"},{"move":"d2d3","opponent":"f8c5","note":"第二步正确：d3 先稳住 e4，为 c3 与 d4 留出清晰次序。"},{"move":"c2c3","opponent":"d7d6","note":"第三步正确：c3 控制 d4，并准备让 d 兵前进后仍有兵链支持。"},{"move":"b1d2","opponent":"a7a6","note":"第四步正确：Nbd2 完成后翼马发展，同时不给 d 兵造成阻挡。"},{"move":"d3d4","note":"第五步正确：d4 终于提出中心问题。前四步让这次推进不再是孤立冲动，而是完整计划的兑现。"}],"odds":[{"white":39,"draw":48,"black":13},{"white":40,"draw":48,"black":12},{"white":41,"draw":48,"black":11},{"white":42,"draw":47,"black":11},{"white":43,"draw":47,"black":10},{"white":45,"draw":46,"black":9}],"success":"五步计划完成。你没有机械背谱，而是依次完成活跃出象、稳住 e4、用 c3 支撑、发展后翼马，最后用 d4 争夺中心。","defaultAnswer":"这套次序的逻辑是让每一步都服务于 d4：Bc4 发展，d3 稳 e4，c3 支撑 d4，Nbd2 完成发展，最后 d4 才有足够基础。","errors":{"d2d4":"立即 d4 不是不可下，但在本课局面中白方还没完成 c3 支撑与子力发展，交换后容易过早简化。","b1c3":"Nc3 是自然棋，却会挡住 c 兵，改变 c3-d4 的意大利式计划。本题要体验 Nbd2 的分工。"},"genericError":"这步可能符合一般开局原则，但请检查它是否直接服务于本课的 d4 中心计划。","quick":{"为什么先d3":"d3 先保护 e4，确保白方准备 c3 和 d4 时中心兵不会松动。","为什么马走d2":"Nbd2 既发展马，又保留 c 兵走到 c3 的通道。Nc3 并不坏，但对应另一套中心结构。","为什么第五步才d4":"前四步是在降低 d4 的成本：更多子力参与、中心有支撑、交换后也能自然回吃。"},"suggestions":[{"label":"为什么要先走 d3？","key":"为什么先d3"},{"label":"马为什么不去 c3？","key":"为什么马走d2"},{"label":"为什么第五步才走 d4？","key":"为什么第五步才d4"}]}};</script>
   <script type="module" src="assets/app.js"></script>
 </body>

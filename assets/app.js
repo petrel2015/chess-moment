@@ -1097,47 +1097,6 @@ document.querySelectorAll("[data-footer-report]").forEach(link => {
   });
 });
 
-// ---- AI 设置面板（全局）--------------------------------------------------
-// 让用户填自己的 Worker URL 和智谱 Key（存 localStorage），覆盖站点默认配置。
-// 默认折叠，不影响普通访客。触发器：[data-coach-settings-toggle]。
-document.querySelectorAll("[data-coach-settings-toggle]").forEach(toggle => {
-  toggle.addEventListener("click", () => {
-    const panel = document.querySelector("[data-coach-settings-panel]");
-    if (!panel) return;
-    const open = panel.classList.toggle("open");
-    toggle.setAttribute("aria-expanded", String(open));
-    if (open) {
-      const urlInput = panel.querySelector("[data-coach-url]");
-      const keyInput = panel.querySelector("[data-coach-key]");
-      const orKeyInput = panel.querySelector("[data-coach-openrouter-key]");
-      if (urlInput) urlInput.value = localStorage.getItem("chessCoachWorkerUrl") || "";
-      if (keyInput) keyInput.value = localStorage.getItem("chessCoachUserKey") || "";
-      if (orKeyInput) orKeyInput.value = localStorage.getItem("chessCoachOpenRouterKey") || "";
-    }
-  });
-});
-
-document.querySelectorAll("[data-coach-settings-panel]").forEach(panel => {
-  const saveBtn = panel.querySelector("[data-coach-save]");
-  if (!saveBtn) return;
-  saveBtn.addEventListener("click", () => {
-    const url = panel.querySelector("[data-coach-url]")?.value.trim() || "";
-    const key = panel.querySelector("[data-coach-key]")?.value.trim() || "";
-    const orKey = panel.querySelector("[data-coach-openrouter-key]")?.value.trim() || "";
-    if (url) localStorage.setItem("chessCoachWorkerUrl", url);
-    else localStorage.removeItem("chessCoachWorkerUrl");
-    if (key) localStorage.setItem("chessCoachUserKey", key);
-    else localStorage.removeItem("chessCoachUserKey");
-    if (orKey) localStorage.setItem("chessCoachOpenRouterKey", orKey);
-    else localStorage.removeItem("chessCoachOpenRouterKey");
-    const note = panel.querySelector("[data-coach-saved]");
-    if (note) {
-      note.textContent = t("aiSettingSaved");
-      window.setTimeout(() => { note.textContent = ""; }, 2000);
-    }
-  });
-});
-
 // ---- 语言切换（全局）----------------------------------------------------
 // 记住用户手动选择（localStorage），让目标页的自动检测脚本不再跳回当前语言。
 document.querySelectorAll(".lang-toggle").forEach(link => {

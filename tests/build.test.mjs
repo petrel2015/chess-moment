@@ -454,12 +454,18 @@ test("English pages include language auto-detect script and a toggle link", asyn
   assert.ok(zhHtml.includes('class="lang-toggle" href="en/promotion-combo.html"'), "zh toggle must point to en page");
 });
 
-test("AI settings panel includes the OpenRouter key input in both languages", async () => {
+test("AI settings panel is fully removed from all pages (embedded key works out of the box)", async () => {
   const lessons = await loadLessons(root);
   for (const lesson of lessons) {
-    for (const [locale, dir] of [["zh", ""], ["en", "en/"]]) {
+    for (const dir of ["", "en/"]) {
       const html = await readFile(path.join(root, "_site", dir, `${lesson.slug}.html`), "utf8");
-      assert.ok(html.includes("data-coach-openrouter-key"), `${dir}${lesson.slug}.html missing OpenRouter key input`);
+      assert.ok(!html.includes("data-coach-settings-toggle"), `${dir}${lesson.slug}.html must not have the AI settings toggle`);
+      assert.ok(!html.includes("data-coach-settings-panel"), `${dir}${lesson.slug}.html must not have the AI settings panel`);
+      assert.ok(!html.includes("coach-settings"), `${dir}${lesson.slug}.html must not reference coach-settings styles`);
     }
   }
+  // app.js 不再包含面板处理器（防止残留死代码回来）
+  const src = readFileSync(path.join(root, "assets", "app.js"), "utf8");
+  assert.ok(!src.includes("data-coach-settings"), "app.js must not contain settings panel handlers");
+  assert.ok(!src.includes("data-coach-save"), "app.js must not contain the settings save handler");
 });

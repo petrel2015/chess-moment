@@ -2,35 +2,46 @@
 
 本网站的"问教练"功能有四档，按配置程度从低到高：
 
-1. **OpenRouter 自带 Key（零部署，推荐新手）**：去 openrouter.ai 免费注册拿一个 Key，
-   在页面右下角「AI 设置」里粘贴保存。OpenRouter 的 API 允许浏览器直连（带 CORS 头），
-   并提供大量免费模型，**不需要 Worker、不需要智谱**。Key 只存在你自己的浏览器里。
-2. **免 Key 免费中转（零配置，默认）**：什么都不配，浏览器直连一个第三方免费
-   转发（Pollinations 匿名层）拿真 AI 回答。**实验性**——第三方免费转发无 SLA，
+1. **OpenRouter 内嵌 Key（零部署，当前默认，开箱即用）**：站点已在
+   `assets/coach-ai.mjs` 内嵌一个经混淆存储的 OpenRouter Key，浏览器直连
+   OpenRouter 的免费模型（其 API 带 CORS 头），**访客无需任何操作**。
+2. **免 Key 免费中转（零配置备选）**：浏览器直连一个第三方免费转发
+   （Pollinations 匿名层）拿真 AI 回答。**实验性**——第三方免费转发无 SLA，
    可能停用/限流/中文质量一般；失败时自动退回预制答案，不会卡住用户。
 3. **预制答案（确定性兜底）**：每道题预先写好的解答。上面两档都不可用时的兜底。
 4. **智谱 GLM-4-Flash（稳定）**：配一个 Cloudflare Worker 代理，走智谱官方
    免费模型。需要约 5–10 分钟、两次免费注册，之后访客零配置即用真 AI。
 
-按本指南接入第 1 档（OpenRouter）最快：约 2 分钟、一次免费注册，且不需要部署任何东西。
+当前第 1 档已生效：任何页面点「问教练 / Ask Coach」即为真 AI 回答（中英文随页面语言）。
 
-## 方式 0（最快）：OpenRouter 自带 Key，浏览器直连
+## 方式 0（当前默认）：OpenRouter 内嵌 Key，浏览器直连
 
 OpenRouter 是一个 AI 模型聚合平台，API 返回 `Access-Control-Allow-Origin: *`，
 所以网页可以直接从浏览器调用它（大多数 API 会因 CORS 被浏览器拦截，OpenRouter 不会）。
-它还提供大量 `:free` 结尾的免费模型（如 Gemma、Nemotron、Liquid 等）。
+它还提供大量 `:free` 结尾的免费模型（如 Nemotron、Laguna、Cohere 等）。
 
-1. 打开 https://openrouter.ai/ ，用邮箱或 Google/GitHub 账号免费注册（不用绑卡）。
-2. 登录后点右上角头像 → **Keys** → **Create Key**，复制那串 `sk-or-...` 的 Key。
-3. 打开本站任一挑战页，点右下角「AI 设置」，在 **OpenRouter API Key** 一栏粘贴并保存。
-4. 回到「问教练」框输入问题，点发送——就会直接拿到真 AI 回答（默认用免费模型）。
+站点默认在 `assets/coach-ai.mjs` 内嵌了一个站点 Key（XOR + Base64 混淆存储，
+见 `DEFAULT_OR_KEY_OBF`），访问者零操作即可使用。
 
-- 免费模型有每日用量限制，偶尔会提示限流；失败时自动降级为预制答案，不会卡住。
-- Key 只存在你自己浏览器的 localStorage，不会上传到任何服务器，也不会进网站源码。
-- 想换模型？源码里 `assets/coach-ai.mjs` 的 `buildOpenRouterRequest` 默认模型
-  `nvidia/nemotron-3-ultra-550b-a55b:free` 可以改成任意 OpenRouter 免费模型 id。
+**更换成你自己的 Key**（不要把站点 Key 充值，见下方安全说明）：
 
-整个流程约 5–10 分钟，需要：一个浏览器、两次免费注册。不需要信用卡、不需要服务器。
+1. 打开 https://openrouter.ai/ ，免费注册（不用绑卡），头像 → **Keys** → **Create Key**。
+2. 用仓库里的纯函数生成混淆串（明文不落盘）：
+   ```bash
+   node -e 'import("./assets/coach-ai.mjs").then(m => console.log(m.encodeKeyObfuscation("你的Key", "chess-moment-obf-2026")))'
+   ```
+3. 把输出的 Base64 串替换 `assets/coach-ai.mjs` 里的 `DEFAULT_OR_KEY_OBF`，重新构建部署。
+
+- 免费模型会间歇性空回答/限流，前端已做「主模型重试 + 备用模型降级」
+  （见 `OPENROUTER_MODELS`），全部失败才降级为预制答案。
+- 想换模型？改 `OPENROUTER_MODELS` 数组（第一项为主模型）即可。
+
+### ⚠️ 安全边界（必读）
+
+内嵌 Key 只是**混淆，不是加密**——任何访客都能用浏览器开发者工具还原出明文。
+当前 Key 只使用免费模型（费用 $0），风险仅限于他人消耗每日免费额度。
+**如果给 Key 充了值，请立刻移除内嵌 Key**（清空 `DEFAULT_OR_KEY_OBF`），
+或改用第 4 档的 Worker 方案把 Key 放在服务端。
 
 ## 为什么需要一个 Worker（不能直接调 API）
 
@@ -103,9 +114,14 @@ curl -X POST https://chess-coach.<你的子域>.workers.dev \
 
 ## 用户自带 Key（可选，进一步降额度风险）
 
-即使不配上面的任何东西，访客也可以在网页右下角的「AI 设置」里填自己的智谱 Key：
-填了之后，该访客的请求会用他自己的 Key 调用，不走你的额度。
-Key 只存在该访客自己的浏览器 localStorage 里，不会上传。
+页面右下角的「AI 设置」面板已移除（内嵌 Key 已开箱即用）。如需让某个浏览器
+改用自己的 Key，可在该浏览器控制台手动写入 localStorage：
+
+```js
+localStorage.setItem("chessCoachOpenRouterKey", "sk-or-...");
+```
+
+写入后该浏览器的请求会优先用自己的 Key（优先级：自带 Key > 内嵌 Key > Worker > 中转 > 预制答案）。
 
 ## 故障排查
 

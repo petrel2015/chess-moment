@@ -168,7 +168,7 @@ function renderLesson(lesson, { locale = "zh", homepage = false } = {}) {
             <div class="progress" aria-label="${u.progressAria}">${progress}</div>
             <div class="status" aria-live="polite"><span class="status-label"></span><p></p></div>
             <div class="coach-actions"><button class="btn" type="button" data-hint>${u.hintBtn}</button><button class="btn" type="button" data-reset>${u.resetBtn}</button><button class="btn" type="button" data-report>${u.reportBtn}</button></div>
-            <div class="ask-box"><div class="ask-label-row"><label for="ask-${lesson.slug}">${u.askLabel}</label><a class="coach-settings-toggle" href="#" aria-expanded="false" data-coach-settings-toggle>${u.aiSettings}</a></div><div class="ask-row"><textarea id="ask-${lesson.slug}" placeholder="${u.askPlaceholder}"></textarea><button class="btn btn-primary" type="button" data-ask>${u.askCoach}</button></div><div class="ai-answer" aria-live="polite"></div></div>
+            <div class="ask-box"><div class="ask-label-row"><label for="ask-${lesson.slug}">${u.askLabel}</label></div><div class="ask-row"><textarea id="ask-${lesson.slug}" placeholder="${u.askPlaceholder}"></textarea><button class="btn btn-primary" type="button" data-ask>${u.askCoach}</button></div><div class="ai-answer" aria-live="polite"></div></div>
           </div>
         </div>
       </section>
@@ -177,17 +177,6 @@ function renderLesson(lesson, { locale = "zh", homepage = false } = {}) {
     <section class="archive"><div class="archive-head"><h2>${u.archiveTitle}</h2><span class="meta">${u.archiveMeta}</span></div><div class="archive-grid">${archiveCards(lesson.slug)}</div></section>
   </main>
   <footer class="site-footer"><div class="footer-meta">${u.brandZh} ${u.brandEn} · ${u.footerMeta} · <a class="footer-report" href="#" data-footer-report>${u.footerReport}</a></div><div class="donate-section"><span class="donate-tag">${u.donateTag}</span><div class="donate-triggers"><button type="button" class="donate-trigger alipay" data-donate-alipay>${u.donateAlipay}</button><button type="button" class="donate-trigger wechat" data-donate-wechat>${u.donateWechat}</button></div></div></footer>
-  <div class="coach-settings-panel" data-coach-settings-panel hidden>
-    <div class="coach-settings-inner">
-      <h3>${u.settingsTitle}</h3>
-      <p class="coach-settings-hint">${u.settingsHint}</p>
-      <label>${u.settingsOpenRouterKey}<input type="password" data-coach-openrouter-key placeholder="${u.settingsOpenRouterPlaceholder}"></label>
-      <label>${u.settingsWorkerUrl}<input type="url" data-coach-url placeholder="https://your-worker.workers.dev"></label>
-      <label>${u.settingsKey}<input type="password" data-coach-key placeholder="${u.settingsKeyPlaceholder}"></label>
-      <div class="coach-settings-actions"><button class="btn btn-primary" type="button" data-coach-save>${u.settingsSave}</button><span class="coach-saved" data-coach-saved aria-live="polite"></span></div>
-      <p class="coach-settings-help">${u.settingsHelp}</p>
-    </div>
-  </div>
   <script>window.CHESS_LESSON=${JSON.stringify(lessonPayload).replaceAll("<", "\\u003c")};</script>
   <script type="module" src="${assetPrefix}assets/app.js"></script>
 </body>
