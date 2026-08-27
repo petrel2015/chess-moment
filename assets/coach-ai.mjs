@@ -121,6 +121,90 @@ export function embeddedOpenRouterKey() {
 }
 
 /**
+ * OpenRouter 免费模型链：主模型 + 备用。免费模型会间歇性返回空回答或
+ * 429 限流（实测约 1/4 概率），调用方（app.js 的 askCoachOpenRouter）
+ * 按此列表重试并降级换模型。全部经实测可用（2026-08）。
+ */
+export const OPENROUTER_MODELS = [
+  "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "poolside/laguna-s-2.1:free",
+  "cohere/north-mini-code:free",
+];
+
+/**
+ * 支持的 AI 平台（均为 OpenAI 兼容端点；CORS 预检均放行浏览器直连，2026-08 实测）：
+ *   - openrouter: 免费模型链（站点内嵌默认 Key 走这里）
+ *   - deepseek:   deepseek-chat（便宜）
+ *   - glm:        智谱 glm-4-flash（免费）
+ * 用户可在页面「AI 设置」里选平台 + 填自己的 Key 覆盖默认。
+ */
+export const AI_PROVIDERS = {
+  openrouter: {
+    chatUrl: "https://openrouter.ai/api/v1/chat/completions",
+    models: OPENROUTER_MODELS,
+    withRefererHeaders: true,
+  },
+  deepseek: {
+    chatUrl: "https://api.deepseek.com/chat/completions",
+    models: ["deepseek-chat"],
+    withRefererHeaders: false,
+  },
+  glm: {
+    chatUrl: "https://open.bigmodel.cn/api/paas/v4/chat/completions",
+    models: ["glm-4-flash"],
+    withRefererHeaders: false,
+  },
+};
+
+/** 全部平台 id（设置面板下拉用）。 */
+export function providerIds() {
+  return Object.keys(AI_PROVIDERS);
+}
+
+/**
+ * 构造发给任意支持平台的 chat 请求（纯函数，可测）。
+ * 请求体为 OpenAI 兼容格式；OpenRouter 额外带 HTTP-Referer/X-Title 来源头。
+ * @param {"openrouter"|"deepseek"|"glm"} providerId 平台 id
+ * @param {string} question 用户问题
+ * @param {object} ctx 与 buildCoachMessages 相同的上下文
+ * @param {string} apiKey 该平台的 API Key
+ * @param {object} [opts] { locale, model, referer }
+ */
+export function buildProviderChatRequest(providerId, question, ctx = {}, apiKey, opts = {}) {
+  const provider = AI_PROVIDERS[providerId];
+  if (!provider) throw new Error(`unknown AI provider: ${providerId}`);
+  const { locale = "zh", model = provider.models[0], referer = "" } = opts;
+  const messages = buildCoachMessages(question, ctx, locale);
+  const headers = {
+    "Content-Type": "application/json",
+    "Authorization": `Bearer ${apiKey}`,
+  };
+  if (provider.withRefererHeaders && referer) {
+    headers["HTTP-Referer"] = referer;
+    headers["X-Title"] = "Chess Moment";
+  }
+  return {
+    url: provider.chatUrl,
+    init: {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ model, messages, temperature: 0.7, max_tokens: 800 }),
+    },
+  };
+}
+
+/**
+ * 从平台的 OpenAI 兼容响应里抽出回答文本（三家平台响应结构一致，纯函数，可测）。
+ */
+export function extractProviderAnswer(json) {
+  const content = json?.choices?.[0]?.message?.content;
+  if (typeof content !== "string" || !content.trim()) {
+    throw new Error("empty AI answer");
+  }
+  return content;
+}
+
+/**
  * 构造发给 OpenRouter（OpenAI 兼容）的请求（纯函数，可测）。
  *
  * OpenRouter 是「自带 Key、浏览器直连」路径：其 API 返回 CORS 头

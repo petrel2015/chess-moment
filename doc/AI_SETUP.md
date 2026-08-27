@@ -112,16 +112,19 @@ curl -X POST https://chess-coach.<你的子域>.workers.dev \
 - 仍然秒回预制答案 → Worker URL 没生效，检查第五步。
 - 显示「AI 暂时不可用，已显示预设参考」→ Worker 报错，回到第四步用 curl 测试。
 
-## 用户自带 Key（可选，进一步降额度风险）
+## 用户自带 Key / 换平台（可选）
 
-页面右下角的「AI 设置」面板已移除（内嵌 Key 已开箱即用）。如需让某个浏览器
-改用自己的 Key，可在该浏览器控制台手动写入 localStorage：
+页面提问区旁有「AI 设置」入口，可在这里选择平台并填入自己的 API Key：
 
-```js
-localStorage.setItem("chessCoachOpenRouterKey", "sk-or-...");
-```
+- **OpenRouter**（默认）：`sk-or-...`，免费模型，站点内嵌 Key 走的也是它
+- **DeepSeek**：`sk-...`，模型 `deepseek-chat`（低价）
+- **智谱 GLM**：`xxxxxxxx.xxxxxxxx`，模型 `glm-4-flash`（免费）
 
-写入后该浏览器的请求会优先用自己的 Key（优先级：自带 Key > 内嵌 Key > Worker > 中转 > 预制答案）。
+三家平台的 API 均**允许浏览器直连**（CORS 预检放行，2026-08 实测），不需要 Worker。
+填了之后该浏览器优先用你选的平台；清空保存即恢复站点默认（内嵌 OpenRouter Key）。
+Key 只存在该浏览器 localStorage，不会上传、不进源码。
+
+优先级：用户所选平台+Key > 内嵌 OpenRouter Key > Worker（若配置）> 免费中转 > 预制答案。
 
 ## 故障排查
 

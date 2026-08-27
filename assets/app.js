@@ -8,8 +8,9 @@ import {
   toFen,
 } from "./chess-engine.mjs";
 import {
-  buildCoachMessages, buildKeylessUrl, buildOpenRouterRequest, embeddedOpenRouterKey,
-  extractOpenRouterAnswer, OPENROUTER_MODELS, resolveWorkerUrl,
+  AI_PROVIDERS, buildCoachMessages, buildKeylessUrl, buildOpenRouterRequest,
+  buildProviderChatRequest, embeddedOpenRouterKey, extractOpenRouterAnswer,
+  extractProviderAnswer, OPENROUTER_MODELS, providerIds, resolveWorkerUrl,
 } from "./coach-ai.mjs";
 import { currentLang, t, ui } from "./i18n.mjs";
 
@@ -243,6 +244,18 @@ function coachOpenRouterKey() {
   return typeof localStorage !== "undefined" ? (localStorage.getItem("chessCoachOpenRouterKey") || "").trim() : "";
 }
 
+/** 用户在「AI 设置」里选择的平台（openrouter/deepseek/glm），未配置返回空串。 */
+function coachUserProvider() {
+  if (typeof localStorage === "undefined") return "";
+  const value = (localStorage.getItem("chessCoachProvider") || "").trim();
+  return providerIds().includes(value) ? value : "";
+}
+
+/** 用户为所选平台填的 API Key（localStorage）。 */
+function coachUserApiKey() {
+  return typeof localStorage !== "undefined" ? (localStorage.getItem("chessCoachApiKey") || "").trim() : "";
+}
+
 /**
  * 调用 Worker 请求 AI 回答。成功返回文本，失败抛错（调用方降级）。
  * 15 秒超时，避免用户长时间等待。
@@ -295,10 +308,10 @@ async function askCoachKeyless(question, ctx) {
 }
 
 /**
- * 单次调用 OpenRouter 指定模型（OpenAI 兼容）。15 秒超时，失败抛错。
+ * 单次调用指定平台的指定模型（OpenAI 兼容）。15 秒超时，失败抛错。
  */
-async function askOpenRouterOnce(model, question, ctx, apiKey, referer) {
-  const { url, init } = buildOpenRouterRequest(question, ctx, apiKey, {
+async function askProviderOnce(providerId, model, question, ctx, apiKey, referer) {
+  const { url, init } = buildProviderChatRequest(providerId, question, ctx, apiKey, {
     locale: currentLang(),
     model,
     referer,
@@ -308,37 +321,39 @@ async function askOpenRouterOnce(model, question, ctx, apiKey, referer) {
   try {
     const res = await fetch(url, { ...init, signal: controller.signal });
     if (!res.ok) {
-      let detail = `OpenRouter HTTP ${res.status}`;
+      let detail = `AI HTTP ${res.status}`;
       try {
         const j = await res.json();
         if (j?.error?.message) detail += `: ${j.error.message}`;
+        else if (j?.message) detail += `: ${j.message}`;
       } catch { /* 忽略无法解析的错误体 */ }
       throw new Error(detail);
     }
-    return extractOpenRouterAnswer(await res.json());
+    return extractProviderAnswer(await res.json());
   } finally {
     clearTimeout(timer);
   }
 }
 
 /**
- * 直连 OpenRouter（OpenAI 兼容）。OpenRouter 返回 CORS 头（*），浏览器可直接调用，
- * 用户填一个免费 OpenRouter Key 即可拿到真 AI，无需 Worker。
- * 免费模型会间歇性空回答/限流（实测约 1/4 概率），故按 OPENROUTER_MODELS 链重试：
- * 主模型连试 2 次，再依次降级到备用模型。Key 无效（401/403）立即抛出不重试。
+ * 调用指定平台的 AI（openrouter / deepseek / glm）。三家平台 API 均允许浏览器
+ * 直连（CORS 预检放行，2026-08 实测）。免费/低价模型会间歇性空回答或限流，
+ * 故按平台模型链重试：主模型连试 2 次，再依次降级到备用模型。
+ * Key 无效（401/403）立即抛出不重试。
  */
-async function askCoachOpenRouter(question, ctx, apiKey) {
+async function askProviderAI(providerId, question, ctx, apiKey) {
   const referer = typeof location !== "undefined" ? location.origin + location.pathname : "";
-  const plan = [OPENROUTER_MODELS[0], OPENROUTER_MODELS[0], ...OPENROUTER_MODELS.slice(1)];
-  let lastErr = new Error("OpenRouter unavailable");
+  const models = AI_PROVIDERS[providerId].models;
+  const plan = [models[0], models[0], ...models.slice(1)];
+  let lastErr = new Error("AI provider unavailable");
   for (let i = 0; i < plan.length; i++) {
     if (i > 0) await new Promise(resolve => setTimeout(resolve, 900));
     try {
-      return await askOpenRouterOnce(plan[i], question, ctx, apiKey, referer);
+      return await askProviderOnce(providerId, plan[i], question, ctx, apiKey, referer);
     } catch (err) {
       lastErr = err;
       // Key 无效/无权限：换模型也没用，直接抛给上层降级到预制答案。
-      if (/OpenRouter HTTP 40[13]/.test(err.message)) throw err;
+      if (/AI HTTP 40[13]/.test(err.message)) throw err;
     }
   }
   throw lastErr;
@@ -1024,15 +1039,34 @@ function setupChallenge(root) {
       renderCoachReply(prefabAnswer("", preferredKey));
       return;
     }
-    // 优先级：OpenRouter 直连（自带 Key > 内嵌默认 Key，浏览器 CORS 允许）> Worker > 免 Key 免费中转 > 预制答案。
+    // 优先级：用户在「AI 设置」选的平台+Key（DeepSeek/GLM/OpenRouter）
+    // > 内嵌默认 OpenRouter Key > Worker > 免 Key 免费中转 > 预制答案。
+    const userProvider = coachUserProvider();
+    const userKey = coachUserApiKey();
     const openRouterKey = coachOpenRouterKey() || embeddedOpenRouterKey();
+    if (userProvider && userKey) {
+      answer.innerHTML = `<strong>${t("coachPrefix")}</strong><span class="ai-loading">${t("aiLoading")}</span>`;
+      answer.classList.add("show", "loading");
+      try {
+        // 点快捷问题按钮时 question 可能为空，用 quick 字典里对应的 label 作为问题文本。
+        const questionForAI = question || (preferredKey ? puzzle.quick[preferredKey] : "") || t("askDefaultQuestion");
+        const reply = await askProviderAI(userProvider, questionForAI, coachContext(), userKey);
+        renderCoachReply(reply);
+      } catch (err) {
+        console.error(`${userProvider} coach failed, falling back:`, err);
+        renderCoachReply(prefabAnswer(question, preferredKey), { fallback: true, detail: String(err.message || err) });
+      } finally {
+        answer.classList.remove("loading");
+      }
+      return;
+    }
     if (openRouterKey) {
       answer.innerHTML = `<strong>${t("coachPrefix")}</strong><span class="ai-loading">${t("aiLoading")}</span>`;
       answer.classList.add("show", "loading");
       try {
         // 点快捷问题按钮时 question 可能为空，用 quick 字典里对应的 label 作为问题文本。
         const questionForAI = question || (preferredKey ? puzzle.quick[preferredKey] : "") || t("askDefaultQuestion");
-        const reply = await askCoachOpenRouter(questionForAI, coachContext(), openRouterKey);
+        const reply = await askProviderAI("openrouter", questionForAI, coachContext(), openRouterKey);
         renderCoachReply(reply);
       } catch (err) {
         console.error("OpenRouter coach failed, falling back:", err);
@@ -1094,6 +1128,46 @@ document.querySelectorAll("[data-footer-report]").forEach(link => {
       url: location.href,
       userAgent: navigator.userAgent,
     });
+  });
+});
+
+// ---- AI 设置面板（全局）--------------------------------------------------
+// 用户可选择 AI 平台（OpenRouter / DeepSeek / 智谱 GLM）并填自己的 API Key，
+// 存 localStorage 覆盖站点默认（内嵌 OpenRouter Key）。默认折叠，不影响访客。
+document.querySelectorAll("[data-coach-settings-toggle]").forEach(toggle => {
+  toggle.addEventListener("click", () => {
+    const panel = document.querySelector("[data-coach-settings-panel]");
+    if (!panel) return;
+    const open = panel.classList.toggle("open");
+    toggle.setAttribute("aria-expanded", String(open));
+    if (open) {
+      const providerSelect = panel.querySelector("[data-coach-provider]");
+      const keyInput = panel.querySelector("[data-coach-api-key]");
+      if (providerSelect) providerSelect.value = localStorage.getItem("chessCoachProvider") || "openrouter";
+      if (keyInput) keyInput.value = localStorage.getItem("chessCoachApiKey") || "";
+    }
+  });
+});
+
+document.querySelectorAll("[data-coach-settings-panel]").forEach(panel => {
+  const saveBtn = panel.querySelector("[data-coach-save]");
+  if (!saveBtn) return;
+  saveBtn.addEventListener("click", () => {
+    const provider = panel.querySelector("[data-coach-provider]")?.value.trim() || "";
+    const key = panel.querySelector("[data-coach-api-key]")?.value.trim() || "";
+    if (key && providerIds().includes(provider)) {
+      localStorage.setItem("chessCoachProvider", provider);
+      localStorage.setItem("chessCoachApiKey", key);
+    } else {
+      // 清空即恢复站点默认（内嵌 Key）。
+      localStorage.removeItem("chessCoachProvider");
+      localStorage.removeItem("chessCoachApiKey");
+    }
+    const note = panel.querySelector("[data-coach-saved]");
+    if (note) {
+      note.textContent = t("aiSettingSaved");
+      window.setTimeout(() => { note.textContent = ""; }, 2000);
+    }
   });
 });
 

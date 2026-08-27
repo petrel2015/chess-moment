@@ -65,7 +65,7 @@
             <div class="progress" aria-label="进度"><span></span><span></span><span></span><span></span><span></span></div>
             <div class="status" aria-live="polite"><span class="status-label"></span><p></p></div>
             <div class="coach-actions"><button class="btn" type="button" data-hint>给一点提示</button><button class="btn" type="button" data-reset>重新挑战</button><button class="btn" type="button" data-report>反馈问题</button></div>
-            <div class="ask-box"><div class="ask-label-row"><label for="ask-improve-worst-piece">有哪里没想通？</label></div><div class="ask-row"><textarea id="ask-improve-worst-piece" placeholder="写下你对这一步的疑问"></textarea><button class="btn btn-primary" type="button" data-ask>问教练</button></div><div class="ai-answer" aria-live="polite"></div></div>
+            <div class="ask-box"><div class="ask-label-row"><label for="ask-improve-worst-piece">有哪里没想通？</label><a class="coach-settings-toggle" href="#" aria-expanded="false" data-coach-settings-toggle>AI 设置</a></div><div class="ask-row"><textarea id="ask-improve-worst-piece" placeholder="写下你对这一步的疑问"></textarea><button class="btn btn-primary" type="button" data-ask>问教练</button></div><div class="ai-answer" aria-live="polite"></div></div>
           </div>
         </div>
       </section>
@@ -109,6 +109,15 @@
       </a></div></section>
   </main>
   <footer class="site-footer"><div class="footer-meta">棋刻 Chess Moment · 每天三分钟，想明白一步棋 · <a class="footer-report" href="#" data-footer-report>反馈问题</a></div><div class="donate-section"><span class="donate-tag">请我喝杯咖啡 ￥4.9</span><div class="donate-triggers"><button type="button" class="donate-trigger alipay" data-donate-alipay>支付宝</button><button type="button" class="donate-trigger wechat" data-donate-wechat>微信</button></div></div></footer>
+  <div class="coach-settings-panel" data-coach-settings-panel hidden>
+    <div class="coach-settings-inner">
+      <h3>AI 教练设置</h3>
+      <p class="coach-settings-hint">选择平台并填入自己的 API Key，即可用该平台的模型回答；留空则使用站点默认（OpenRouter 免费模型）。Key 只保存在本浏览器。</p>
+      <label>AI 平台<select data-coach-provider><option value="openrouter">OpenRouter（免费模型）</option><option value="deepseek">DeepSeek</option><option value="glm">智谱 GLM（glm-4-flash 免费）</option></select></label>
+      <label>API Key<input type="password" data-coach-api-key placeholder="留空则用站点默认"></label>
+      <div class="coach-settings-actions"><button class="btn btn-primary" type="button" data-coach-save>保存</button><span class="coach-saved" data-coach-saved aria-live="polite"></span></div>
+    </div>
+  </div>
   <script>window.CHESS_LESSON={"id":"improve-worst-piece","challenge":{"title":"为 b1 的马规划五步路线","instruction":"沿 d2、f1、g3、f5 改善白马，最后用 d4 加固中心。每一步都要服务于同一计划。","fen":"r1bq1rk1/ppp2ppp/2np1n2/2b1p3/4P3/2PP1N2/PP3PPP/RNBQR1K1 w - - 0 8","goal":"白方走五步，把最差的马送到前哨并巩固中心。","steps":[{"move":"b1d2","opponent":"a7a6","note":"第一步正确：Nbd2 让马离开后排，并保留去 f1、f5 的路线。"},{"move":"d2f1","opponent":"b7b5","note":"第二步正确：Nf1 看似后退，实际是在转向 g3。位置棋允许为了更好路线暂时远离中心。"},{"move":"f1g3","opponent":"c8e6","note":"第三步正确：Ng3 开始瞄准 f5 和 h5，马已经从旁观者变成潜在进攻子。"},{"move":"g3f5","opponent":"d8d7","note":"第四步正确：Nf5 占据前哨，直接靠近黑王，并让黑方很难用兵驱赶。"},{"move":"d3d4","note":"第五步正确：d4 加固中心并限制黑方 e5 兵，让 f5 的马拥有更稳定的支点。"}],"odds":[{"white":38,"draw":50,"black":12},{"white":39,"draw":50,"black":11},{"white":41,"draw":49,"black":10},{"white":44,"draw":47,"black":9},{"white":48,"draw":44,"black":8},{"white":51,"draw":42,"black":7}],"success":"五步完成。白马从 b1 绕到 f5，最后用 d4 稳住中心。没有任何一步直接赢子，但全队协调与进攻潜力明显提高。","defaultAnswer":"这套计划用路线而不是单步评价棋子：Nd2 和 Nf1 看起来慢，只有看到 Ng3-f5 的终点才知道它们的意义。d4 则让前哨更稳定。","errors":{"b1c3":"Nc3 是自然发展，但 c3 已被白兵占据，而且本局马的理想路线是 d2-f1-g3-f5。","h2h3":"h3 是有用的等待着，却没有改善全场最差的 b1 马。没有战术时，优先解决最差棋子。"},"genericError":"这步可能改善了局面的一部分，但请回到本题目标：为 b1 的马规划一条完整路线。","quick":{"为什么马要后退":"Nf1 是路线中的转弯，不是退缩。马从 f1 能去 g3，再进入 f5 前哨。","什么是前哨":"前哨是深入对方阵地、又难被敌兵驱赶的稳定格。f5 的马靠近黑王，并限制多枚黑子。","为什么最后走d4":"马到 f5 后，d4 加强中心控制并限制 e5，让黑方更难通过中心反击赶走白马。"},"suggestions":[{"label":"为什么马还要先后退？","key":"为什么马要后退"},{"label":"什么叫前哨？","key":"什么是前哨"},{"label":"为什么最后才走 d4？","key":"为什么最后走d4"}]}};</script>
   <script type="module" src="assets/app.js"></script>
 </body>

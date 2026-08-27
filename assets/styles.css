@@ -750,13 +750,74 @@ h1 {
 }
 @keyframes ai-spin { to { transform: rotate(360deg); } }
 
-/* ask-box 标签行 */
+/* ask-box 标签行：label 与「AI 设置」入口并排 */
 .ask-label-row {
   display: flex;
   justify-content: space-between;
   align-items: baseline;
   margin-bottom: 8px;
 }
+.coach-settings-toggle {
+  font-size: 11px;
+  color: var(--muted);
+  text-decoration: underline;
+}
+.coach-settings-toggle:hover { color: var(--forest); }
+
+/* AI 设置面板（全局，默认折叠）*/
+.coach-settings-panel { display: none; }
+.coach-settings-panel.open {
+  display: block;
+  position: fixed;
+  z-index: 100;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: min(92vw, 420px);
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  box-shadow: 0 16px 40px rgba(7,20,36,.28);
+}
+.coach-settings-panel.open::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background: rgba(7,20,36,.32);
+}
+.coach-settings-inner { padding: 22px 24px; }
+.coach-settings-inner h3 { margin: 0 0 6px; font-size: 17px; }
+.coach-settings-hint { margin: 0 0 14px; font-size: 12px; color: var(--muted); line-height: 1.5; }
+.coach-settings-panel label {
+  display: block;
+  margin-bottom: 10px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ink);
+}
+.coach-settings-panel input,
+.coach-settings-panel select {
+  display: block;
+  width: 100%;
+  margin-top: 4px;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  font: inherit;
+  font-size: 13px;
+  box-sizing: border-box;
+  background: #fff;
+  color: var(--ink);
+}
+.coach-settings-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 6px;
+}
+.coach-settings-actions .btn { min-height: 36px; }
+.coach-saved { font-size: 12px; color: var(--forest); }
 
 .lesson {
   max-width: 720px;

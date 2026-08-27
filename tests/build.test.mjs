@@ -454,18 +454,21 @@ test("English pages include language auto-detect script and a toggle link", asyn
   assert.ok(zhHtml.includes('class="lang-toggle" href="en/promotion-combo.html"'), "zh toggle must point to en page");
 });
 
-test("AI settings panel is fully removed from all pages (embedded key works out of the box)", async () => {
+test("AI settings panel offers provider choice (OpenRouter/DeepSeek/GLM) plus one key field", async () => {
   const lessons = await loadLessons(root);
   for (const lesson of lessons) {
     for (const dir of ["", "en/"]) {
       const html = await readFile(path.join(root, "_site", dir, `${lesson.slug}.html`), "utf8");
-      assert.ok(!html.includes("data-coach-settings-toggle"), `${dir}${lesson.slug}.html must not have the AI settings toggle`);
-      assert.ok(!html.includes("data-coach-settings-panel"), `${dir}${lesson.slug}.html must not have the AI settings panel`);
-      assert.ok(!html.includes("coach-settings"), `${dir}${lesson.slug}.html must not reference coach-settings styles`);
+      assert.ok(html.includes("data-coach-settings-toggle"), `${dir}${lesson.slug}.html must have the settings toggle`);
+      assert.ok(html.includes('data-coach-provider'), `${dir}${lesson.slug}.html must have the provider select`);
+      assert.ok(html.includes('value="openrouter"') && html.includes('value="deepseek"') && html.includes('value="glm"'), `${dir}${lesson.slug}.html must offer all three providers`);
+      assert.ok(html.includes("data-coach-api-key"), `${dir}${lesson.slug}.html must have the API key input`);
+      // 旧版单平台字段不应存在
+      assert.ok(!html.includes("data-coach-openrouter-key") && !html.includes("data-coach-url") && !html.includes("data-coach-key "), `${dir}${lesson.slug}.html must not keep legacy single-provider fields`);
     }
   }
-  // app.js 不再包含面板处理器（防止残留死代码回来）
+  // app.js 必须包含面板处理器与新优先级
   const src = readFileSync(path.join(root, "assets", "app.js"), "utf8");
-  assert.ok(!src.includes("data-coach-settings"), "app.js must not contain settings panel handlers");
-  assert.ok(!src.includes("data-coach-save"), "app.js must not contain the settings save handler");
+  assert.ok(src.includes("data-coach-settings-toggle"), "app.js must wire the settings toggle");
+  assert.ok(src.includes("coachUserProvider") && src.includes("askProviderAI"), "app.js must route through provider config");
 });

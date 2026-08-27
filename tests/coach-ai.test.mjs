@@ -1,8 +1,10 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
-  buildCoachMessages, buildKeylessUrl, buildOpenRouterRequest, decodeKeyObfuscation,
-  embeddedOpenRouterKey, encodeKeyObfuscation, extractOpenRouterAnswer, resolveWorkerUrl,
+  AI_PROVIDERS, buildCoachMessages, buildKeylessUrl, buildOpenRouterRequest,
+  buildProviderChatRequest, decodeKeyObfuscation, embeddedOpenRouterKey,
+  encodeKeyObfuscation, extractOpenRouterAnswer, extractProviderAnswer,
+  OPENROUTER_MODELS, providerIds, resolveWorkerUrl,
 } from "../assets/coach-ai.mjs";
 
 // ---- buildCoachMessages ---------------------------------------------------
@@ -165,4 +167,61 @@ test("embedded default OpenRouter key decodes to a usable-length string", () => 
   const key = embeddedOpenRouterKey();
   assert.ok(key.length >= 40, "embedded key should be a real-length API key");
 });
+
+test("OPENROUTER_MODELS is a non-empty chain of free models led by the default", () => {
+  assert.ok(Array.isArray(OPENROUTER_MODELS) && OPENROUTER_MODELS.length >= 2, "model chain should have a primary plus backups");
+  for (const model of OPENROUTER_MODELS) {
+    assert.ok(model.endsWith(":free"), `model ${model} should be a free tier model`);
+  }
+  // 链首必须等于 buildOpenRouterRequest 的默认模型
+  const { init } = buildOpenRouterRequest("q", {}, "k", {});
+  assert.equal(JSON.parse(init.body).model, OPENROUTER_MODELS[0], "chain head must match the request default model");
+});
+
+// ---- 多平台（OpenRouter / DeepSeek / GLM）----------------------------------
+
+test("AI_PROVIDERS exposes openrouter, deepseek and glm with chat URLs and models", () => {
+  assert.deepEqual(providerIds().sort(), ["deepseek", "glm", "openrouter"]);
+  assert.equal(AI_PROVIDERS.openrouter.chatUrl, "https://openrouter.ai/api/v1/chat/completions");
+  assert.equal(AI_PROVIDERS.deepseek.chatUrl, "https://api.deepseek.com/chat/completions");
+  assert.equal(AI_PROVIDERS.glm.chatUrl, "https://open.bigmodel.cn/api/paas/v4/chat/completions");
+  for (const id of providerIds()) {
+    assert.ok(AI_PROVIDERS[id].models.length >= 1, `${id} must declare at least one model`);
+  }
+});
+
+test("buildProviderChatRequest targets the right endpoint per provider with bearer auth", () => {
+  for (const id of providerIds()) {
+    const { url, init } = buildProviderChatRequest(id, "q", {}, "k-" + id, {});
+    assert.equal(url, AI_PROVIDERS[id].chatUrl, `${id} endpoint`);
+    assert.equal(init.headers.Authorization, `Bearer k-${id}`, `${id} bearer auth`);
+    assert.equal(JSON.parse(init.body).model, AI_PROVIDERS[id].models[0], `${id} default model`);
+    assert.equal(init.body.includes("messages"), true);
+  }
+});
+
+test("buildProviderChatRequest adds referer headers only for OpenRouter", () => {
+  const or = buildProviderChatRequest("openrouter", "q", {}, "k", { referer: "https://x.example/" });
+  assert.equal(or.init.headers["HTTP-Referer"], "https://x.example/");
+  assert.equal(or.init.headers["X-Title"], "Chess Moment");
+  const ds = buildProviderChatRequest("deepseek", "q", {}, "k", { referer: "https://x.example/" });
+  const glm = buildProviderChatRequest("glm", "q", {}, "k", { referer: "https://x.example/" });
+  assert.equal(ds.init.headers["HTTP-Referer"], undefined, "deepseek must not carry referer headers");
+  assert.equal(glm.init.headers["HTTP-Referer"], undefined, "glm must not carry referer headers");
+});
+
+test("buildProviderChatRequest carries localized system prompt and rejects unknown providers", () => {
+  const zh = buildProviderChatRequest("deepseek", "q", { goal: "目标" }, "k", { locale: "zh" });
+  assert.ok(JSON.parse(zh.init.body).messages[0].content.includes("国际象棋教练"));
+  const en = buildProviderChatRequest("glm", "q", {}, "k", { locale: "en" });
+  assert.ok(JSON.parse(en.init.body).messages[0].content.includes("chess coach"));
+  assert.throws(() => buildProviderChatRequest("nope", "q", {}, "k", {}), /unknown AI provider/);
+});
+
+test("extractProviderAnswer pulls content and throws on empty", () => {
+  assert.equal(extractProviderAnswer({ choices: [{ message: { content: "好" } }] }), "好");
+  assert.throws(() => extractProviderAnswer({}), /empty AI answer/);
+  assert.throws(() => extractProviderAnswer({ choices: [{ message: { content: "" } }] }), /empty AI answer/);
+});
+
 
