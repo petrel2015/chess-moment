@@ -8,9 +8,9 @@ import {
   toFen,
 } from "./chess-engine.mjs";
 import {
-  AI_PROVIDERS, buildCoachMessages, buildKeylessUrl, buildOpenRouterRequest,
-  buildProviderChatRequest, embeddedOpenRouterKey, extractOpenRouterAnswer,
-  extractProviderAnswer, OPENROUTER_MODELS, providerIds, resolveWorkerUrl,
+  AI_PROVIDERS, buildPromptGateRequest, buildProviderChatRequest,
+  extractProviderAnswer, normalizePromptGateError, PROMPTGATE_TIMEOUT_MS,
+  providerIds,
 } from "./coach-ai.mjs";
 import { currentLang, t, ui } from "./i18n.mjs";
 
@@ -226,24 +226,11 @@ function buildReportMailto(opts) {
   return `mailto:${REPORT_MAILTO}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 }
 
-// ---- AI 教练（经 Cloudflare Worker 代理 / 免 Key 免费中转）------------------
-// 优先级：配置了 Worker（真 AI，Key 在服务端）> 免 Key 免费中转（零配置，实验性）
-// > 预制答案（确定性兜底）。三层都不会把用户卡住。见 buildKeylessUrl / showCoachAnswer。
-function coachWorkerUrl() {
-  return resolveWorkerUrl({
-    storage: typeof localStorage !== "undefined" ? localStorage : null,
-    config: typeof window !== "undefined" ? window.CHESS_COACH_CONFIG : null,
-  });
-}
-
-function coachUserKey() {
-  return typeof localStorage !== "undefined" ? (localStorage.getItem("chessCoachUserKey") || "").trim() : "";
-}
-
-function coachOpenRouterKey() {
-  return typeof localStorage !== "undefined" ? (localStorage.getItem("chessCoachOpenRouterKey") || "").trim() : "";
-}
-
+// ---- AI 教练（站点默认走自建 PromptGate 网关，可选自带 Key 直连）------------
+// 优先级：用户在「AI 设置」选的平台+Key（openrouter/deepseek/glm，自带 Key
+// 浏览器直连）> 站点默认 PromptGate 网关（内嵌公开 key，开箱即用）。
+// 网关路径失败时明确提示「AI 设置不可用，请检查配置」，不静默换源、不自动
+// 重试（失败的请求同样消耗网关的限流令牌与每日额度）。见 coach-ai.mjs。
 /** 用户在「AI 设置」里选择的平台（openrouter/deepseek/glm），未配置返回空串。 */
 function coachUserProvider() {
   if (typeof localStorage === "undefined") return "";
@@ -257,51 +244,26 @@ function coachUserApiKey() {
 }
 
 /**
- * 调用 Worker 请求 AI 回答。成功返回文本，失败抛错（调用方降级）。
- * 15 秒超时，避免用户长时间等待。
+ * 调用站点默认 AI（PromptGate 网关，OpenAI 兼容非流式）。成功返回文本。
+ * 失败抛带 status/code 的错误，由 normalizePromptGateError 归类成 UI 文案；
+ * 不做自动重试。上游超时 120s，前端取 125s，避免过早放弃。
  */
-async function askCoachAI(workerUrl, messages, userKey) {
-  const headers = { "Content-Type": "application/json" };
-  if (userKey) headers["X-User-Key"] = userKey;
+async function askPromptGateAI(question, ctx) {
+  const { url, init } = buildPromptGateRequest(question, ctx, currentLang());
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 15000);
+  const timer = setTimeout(() => controller.abort(), PROMPTGATE_TIMEOUT_MS);
   try {
-    const res = await fetch(workerUrl, {
-      method: "POST",
-      headers,
-      body: JSON.stringify({ messages, temperature: 0.7, max_tokens: 800 }),
-      signal: controller.signal,
-    });
-    if (!res.ok) throw new Error(`worker HTTP ${res.status}`);
-    const data = await res.json();
-    if (data.error) throw new Error(data.error);
-    if (typeof data.answer !== "string" || !data.answer.trim()) throw new Error("empty answer");
-    return data.answer.trim();
-  } finally {
-    clearTimeout(timer);
-  }
-}
-
-/**
- * 免 Key 免费中转路径（Pollinations 匿名 GET）。
- * 不依赖 Worker / API Key，浏览器直连第三方免费转发，实现零配置。
- * 风险：无 SLA、可能停用/限流/中文质量一般 → 调用方（showCoachAnswerKeyless）
- * 必须把失败兜底到预制答案。15 秒超时，避免用户长时间等待。
- */
-async function askCoachKeyless(question, ctx) {
-  const url = buildKeylessUrl(question, ctx, currentLang());
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 15000);
-  try {
-    const res = await fetch(url, { signal: controller.signal });
-    if (!res.ok) throw new Error(`keyless HTTP ${res.status}`);
-    const text = await res.text();
-    if (!text || !text.trim()) throw new Error("empty keyless answer");
-    // 免费中转失败时可能返回 JSON 错误对象；正常时返回纯文本。
-    let parsed = null;
-    try { parsed = JSON.parse(text); } catch { /* 纯文本，正常 */ }
-    if (parsed && parsed.error) throw new Error(String(parsed.error));
-    return text.trim();
+    const res = await fetch(url, { ...init, signal: controller.signal });
+    if (!res.ok) {
+      let payload = {};
+      try { payload = await res.json(); } catch { /* 忽略无法解析的错误体 */ }
+      const err = new Error(payload?.error?.message || `AI HTTP ${res.status}`);
+      err.status = res.status;
+      err.code = payload?.error?.code || "";
+      err.retryAfter = Number(res.headers.get("Retry-After")) || 0;
+      throw err;
+    }
+    return extractProviderAnswer(await res.json());
   } finally {
     clearTimeout(timer);
   }
@@ -1017,21 +979,29 @@ function setupChallenge(root) {
     };
   }
 
-  // 未配置 Worker 时尝试免 Key 免费中转；失败一律兜底预制答案。
-  async function showCoachAnswerKeyless(question, preferredKey) {
-    answer.innerHTML = `<strong>${t("coachPrefix")}</strong><span class="ai-loading">${t("aiLoading")}</span>`;
-    answer.classList.add("show", "loading");
-    try {
-      // 点快捷问题按钮时 question 可能为空，用 quick 字典里对应的 label 作为问题文本。
-      const questionForAI = question || (preferredKey ? puzzle.quick[preferredKey] : "") || t("askDefaultQuestion");
-      const reply = await askCoachKeyless(questionForAI, coachContext());
-      renderCoachReply(reply);
-    } catch (err) {
-      console.error("Keyless coach failed, falling back:", err);
-      renderCoachReply(prefabAnswer(question, preferredKey), { fallback: true });
-    } finally {
-      answer.classList.remove("loading");
-    }
+  // 网关路径失败的明确提示（不降级到预制答案）：正文用 i18n 文案，诊断
+  // 详情用 textContent 追加，避免把上游错误文本注入 HTML。
+  function renderCoachNotice(messageKey, detail = "") {
+    answer.innerHTML = `<strong>${t("coachPrefix")}</strong>`;
+    const note = document.createElement("small");
+    note.className = "ai-fallback-note";
+    note.textContent = t(messageKey);
+    if (detail) note.append(`（${detail}）`);
+    answer.append(note);
+    answer.classList.add("show");
+  }
+
+  // 组装发送给 AI 的上下文（题目标题 + 当前局面 FEN + 进度）。
+  function coachContext() {
+    const titleEl = document.querySelector("main h1");
+    return {
+      title: titleEl ? titleEl.textContent.trim() : "",
+      goal: puzzle.goal,
+      startFen: puzzle.fen,
+      currentFen: toFen(state, "w"),
+      step,
+      totalSteps: puzzle.steps.length,
+    };
   }
 
   async function showCoachAnswer(question, preferredKey = "") {
@@ -1040,60 +1010,28 @@ function setupChallenge(root) {
       return;
     }
     // 优先级：用户在「AI 设置」选的平台+Key（DeepSeek/GLM/OpenRouter）
-    // > 内嵌默认 OpenRouter Key > Worker > 免 Key 免费中转 > 预制答案。
+    // > 站点默认 PromptGate 网关。
     const userProvider = coachUserProvider();
     const userKey = coachUserApiKey();
-    const openRouterKey = coachOpenRouterKey() || embeddedOpenRouterKey();
-    if (userProvider && userKey) {
-      answer.innerHTML = `<strong>${t("coachPrefix")}</strong><span class="ai-loading">${t("aiLoading")}</span>`;
-      answer.classList.add("show", "loading");
-      try {
-        // 点快捷问题按钮时 question 可能为空，用 quick 字典里对应的 label 作为问题文本。
-        const questionForAI = question || (preferredKey ? puzzle.quick[preferredKey] : "") || t("askDefaultQuestion");
-        const reply = await askProviderAI(userProvider, questionForAI, coachContext(), userKey);
-        renderCoachReply(reply);
-      } catch (err) {
-        console.error(`${userProvider} coach failed, falling back:`, err);
-        renderCoachReply(prefabAnswer(question, preferredKey), { fallback: true, detail: String(err.message || err) });
-      } finally {
-        answer.classList.remove("loading");
-      }
-      return;
-    }
-    if (openRouterKey) {
-      answer.innerHTML = `<strong>${t("coachPrefix")}</strong><span class="ai-loading">${t("aiLoading")}</span>`;
-      answer.classList.add("show", "loading");
-      try {
-        // 点快捷问题按钮时 question 可能为空，用 quick 字典里对应的 label 作为问题文本。
-        const questionForAI = question || (preferredKey ? puzzle.quick[preferredKey] : "") || t("askDefaultQuestion");
-        const reply = await askProviderAI("openrouter", questionForAI, coachContext(), openRouterKey);
-        renderCoachReply(reply);
-      } catch (err) {
-        console.error("OpenRouter coach failed, falling back:", err);
-        renderCoachReply(prefabAnswer(question, preferredKey), { fallback: true, detail: String(err.message || err) });
-      } finally {
-        answer.classList.remove("loading");
-      }
-      return;
-    }
-    const workerUrl = coachWorkerUrl();
-    // 未配置 Worker：尝试免 Key 免费中转（零配置），失败兜底预制答案。
-    if (!workerUrl) {
-      await showCoachAnswerKeyless(question, preferredKey);
-      return;
-    }
-    // 配置了 Worker：显示 loading，调 AI，失败降级。
+    // 点快捷问题按钮时 question 可能为空，用 quick 字典里对应的 label 作为问题文本。
+    const questionForAI = question || (preferredKey ? puzzle.quick[preferredKey] : "") || t("askDefaultQuestion");
     answer.innerHTML = `<strong>${t("coachPrefix")}</strong><span class="ai-loading">${t("aiLoading")}</span>`;
     answer.classList.add("show", "loading");
     try {
-      // 点快捷问题按钮时 question 可能为空，用 quick 字典里对应的 label 作为问题文本。
-      const questionForAI = question || (preferredKey ? puzzle.quick[preferredKey] : "") || t("askDefaultQuestion");
-      const messages = buildCoachMessages(questionForAI, coachContext(), currentLang());
-      const reply = await askCoachAI(workerUrl, messages, coachUserKey());
+      const reply = userProvider && userKey
+        ? await askProviderAI(userProvider, questionForAI, coachContext(), userKey)
+        : await askPromptGateAI(questionForAI, coachContext());
       renderCoachReply(reply);
     } catch (err) {
-      console.error("AI coach failed, falling back:", err);
-      renderCoachReply(prefabAnswer(question, preferredKey), { fallback: true });
+      console.error("AI coach failed:", err);
+      if (userProvider && userKey) {
+        // 自带 Key 路径沿用预制答案兜底，不打断学习。
+        renderCoachReply(prefabAnswer(question, preferredKey), { fallback: true, detail: String(err.message || err) });
+      } else {
+        // 网关路径：按错误类型给明确提示（不可用/当日额度/限流/上游故障）。
+        const { messageKey, detail } = normalizePromptGateError(err);
+        renderCoachNotice(messageKey, detail);
+      }
     } finally {
       answer.classList.remove("loading");
     }
@@ -1133,7 +1071,7 @@ document.querySelectorAll("[data-footer-report]").forEach(link => {
 
 // ---- AI 设置面板（全局）--------------------------------------------------
 // 用户可选择 AI 平台（OpenRouter / DeepSeek / 智谱 GLM）并填自己的 API Key，
-// 存 localStorage 覆盖站点默认（内嵌 OpenRouter Key）。默认折叠，不影响访客。
+// 存 localStorage 覆盖站点默认（PromptGate 网关）。默认折叠，不影响访客。
 document.querySelectorAll("[data-coach-settings-toggle]").forEach(toggle => {
   toggle.addEventListener("click", () => {
     const panel = document.querySelector("[data-coach-settings-panel]");
@@ -1143,7 +1081,8 @@ document.querySelectorAll("[data-coach-settings-toggle]").forEach(toggle => {
     if (open) {
       const providerSelect = panel.querySelector("[data-coach-provider]");
       const keyInput = panel.querySelector("[data-coach-api-key]");
-      if (providerSelect) providerSelect.value = localStorage.getItem("chessCoachProvider") || "openrouter";
+      // 无覆盖时默认选中「站点默认」（网关），而不是某个自带 Key 平台。
+      if (providerSelect) providerSelect.value = localStorage.getItem("chessCoachProvider") || "default";
       if (keyInput) keyInput.value = localStorage.getItem("chessCoachApiKey") || "";
     }
   });
@@ -1159,7 +1098,7 @@ document.querySelectorAll("[data-coach-settings-panel]").forEach(panel => {
       localStorage.setItem("chessCoachProvider", provider);
       localStorage.setItem("chessCoachApiKey", key);
     } else {
-      // 清空即恢复站点默认（内嵌 Key）。
+      // 清空或选「站点默认」即恢复站点默认（PromptGate 网关）。
       localStorage.removeItem("chessCoachProvider");
       localStorage.removeItem("chessCoachApiKey");
     }
@@ -1179,89 +1118,5 @@ document.querySelectorAll(".lang-toggle").forEach(link => {
   });
 });
 
-// ---- 赞赏支持（全局）----------------------------------------------------
-// 页脚「请我喝杯咖啡 ￥4.9」：支付宝优先智能唤起 alipays://，唤起失败或桌面端
-// 兜底弹二维码；微信始终弹二维码（微信无 URL scheme 直接付款）。
-// 模态框按需构建，ESC / 点遮罩 / × 关闭。二维码在页面就绪后预加载，
-// 模态框打开时瞬间显示。
-const DONATE_ALIPAY_URL = "https://qr.alipay.com/fkx16432isyyhmx9ttwpi79";
-const DONATE_ALIPAY_SCHEME = `alipays://platformapi/startapp?saId=10000007&qrcode=${encodeURIComponent(DONATE_ALIPAY_URL)}`;
-const DONATE_QR = {
-  alipay: `${assetBase()}/donate/alipay-qr.png`,
-  wechat: `${assetBase()}/donate/wechat-qr.png`,
-};
-const DONATE_LABEL = () => ({ alipay: t("donateAlipay"), wechat: t("donateWechat") });
-const DONATE_HINT = () => ({
-  alipay: t("donateHintAlipay"),
-  wechat: t("donateHintWechat"),
-});
-
-function donateIsMobile() {
-  return /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-}
-
-// 预加载两张二维码到浏览器缓存，避免首次打开模态框时的"反应一下"。
-[DONATE_QR.alipay, DONATE_QR.wechat].forEach(src => {
-  const img = new Image();
-  img.src = src;
-});
-
-function closeDonateModal() {
-  const overlay = document.querySelector("[data-donate-overlay]");
-  if (!overlay) return;
-  overlay.remove();
-  document.removeEventListener("keydown", donateKeydown);
-}
-
-function donateKeydown(event) {
-  if (event.key === "Escape") closeDonateModal();
-}
-
-function openDonateModal(channel) {
-  // 同一时刻只保留一个模态框
-  closeDonateModal();
-
-  const overlay = document.createElement("div");
-  overlay.className = "donate-modal-overlay";
-  overlay.dataset.donateOverlay = "";
-  overlay.setAttribute("role", "dialog");
-  overlay.setAttribute("aria-modal", "true");
-  overlay.setAttribute("aria-label", t("donateModalAria", { channel: DONATE_LABEL()[channel] }));
-
-  const modal = document.createElement("div");
-  modal.className = "donate-modal";
-  modal.innerHTML = `
-    <button type="button" class="donate-close" aria-label="${t("donateClose")}">×</button>
-    <h3>${t("donateTag")}</h3>
-    <img class="donate-qr" src="${DONATE_QR[channel]}" alt="${t("donateQrAlt", { channel: DONATE_LABEL()[channel] })}">
-    <small>${DONATE_HINT()[channel]}</small>`;
-
-  overlay.appendChild(modal);
-  overlay.addEventListener("click", event => {
-    if (event.target === overlay) closeDonateModal();
-  });
-  modal.querySelector(".donate-close").addEventListener("click", closeDonateModal);
-
-  document.body.appendChild(overlay);
-  document.addEventListener("keydown", donateKeydown);
-}
-
-document.querySelectorAll("[data-donate-alipay]").forEach(btn => {
-  btn.addEventListener("click", () => {
-    if (donateIsMobile()) {
-      // 记录可见性：1.5s 内未切走说明 alipays:// 唤起失败 → 兜底弹二维码。
-      const before = document.visibilityState;
-      window.location.href = DONATE_ALIPAY_SCHEME;
-      window.setTimeout(() => {
-        if (document.visibilityState === before) openDonateModal("alipay");
-      }, 1500);
-    } else {
-      // 桌面端无 alipays scheme，直接弹二维码。
-      openDonateModal("alipay");
-    }
-  });
-});
-
-document.querySelectorAll("[data-donate-wechat]").forEach(btn => {
-  btn.addEventListener("click", () => openDonateModal("wechat"));
-});
+// 赞赏功能已独立为 assets/donation.js（buy-me-coffee 统一规范）：
+// 页脚入口 + 弹窗 + 客户端实时生成二维码，由 build-site.mjs 单独引入。

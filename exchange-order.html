@@ -14,6 +14,7 @@
   <link rel="apple-touch-icon" sizes="180x180" href="assets/icons/apple-touch-icon.png">
   <link rel="manifest" href="assets/site.webmanifest">
   <link rel="stylesheet" href="assets/styles.css">
+  <link rel="stylesheet" href="assets/donation.css">
     <link rel="preload" as="image" href="assets/pieces/wk.png">
   <link rel="preload" as="image" href="assets/pieces/wq.png">
   <link rel="preload" as="image" href="assets/pieces/wr.png">
@@ -26,7 +27,6 @@
   <link rel="preload" as="image" href="assets/pieces/bb.png">
   <link rel="preload" as="image" href="assets/pieces/bn.png">
   <link rel="preload" as="image" href="assets/pieces/bp.png">
-  <script>window.CHESS_COACH_CONFIG = {"workerUrl":""};</script>
   <script>
 (function(){
   var stored = null;
@@ -108,17 +108,19 @@
         
       </a></div></section>
   </main>
-  <footer class="site-footer"><div class="footer-meta">棋刻 Chess Moment · 每天三分钟，想明白一步棋 · <a class="footer-report" href="#" data-footer-report>反馈问题</a></div><div class="donate-section"><span class="donate-tag">请我喝杯咖啡 ￥4.9</span><div class="donate-triggers"><button type="button" class="donate-trigger alipay" data-donate-alipay>支付宝</button><button type="button" class="donate-trigger wechat" data-donate-wechat>微信</button></div></div></footer>
+  <footer class="site-footer">棋刻 Chess Moment · 每天三分钟，想明白一步棋 · <a class="footer-report" href="#" data-footer-report>反馈问题</a> · <button type="button" class="donate-entry" id="donate-entry">☕ 请作者喝杯咖啡</button></footer>
+  <div class="donation-overlay" id="donation-dialog" hidden role="dialog" aria-modal="true" aria-label="请作者喝杯咖啡 ☕" data-scan-alipay="打开支付宝扫一扫" data-scan-wechat="打开微信扫一扫" data-fallback-hint="没有自动打开？请使用支付宝 / 微信扫码" data-qr-error="二维码生成失败，请重试"><div class="donation-dialog"><button type="button" class="donation-close" id="donation-close" aria-label="关闭">×</button><h3 class="donation-title">请作者喝杯咖啡 ☕</h3><p class="donation-subtitle">如果这个小工具帮到了你，可以请作者喝杯咖啡。</p><div class="donation-tabs"><button type="button" class="donation-tab" id="donation-tab-alipay" aria-pressed="true">支付宝</button><button type="button" class="donation-tab" id="donation-tab-wechat" aria-pressed="false">微信支付</button></div><canvas class="donation-qr" id="donation-qr" width="220" height="220"></canvas><p class="donation-hint" id="donation-hint"></p></div></div>
   <div class="coach-settings-panel" data-coach-settings-panel hidden>
     <div class="coach-settings-inner">
       <h3>AI 教练设置</h3>
-      <p class="coach-settings-hint">选择平台并填入自己的 API Key，即可用该平台的模型回答；留空则使用站点默认（OpenRouter 免费模型）。Key 只保存在本浏览器。</p>
-      <label>AI 平台<select data-coach-provider><option value="openrouter">OpenRouter（免费模型）</option><option value="deepseek">DeepSeek</option><option value="glm">智谱 GLM（glm-4-flash 免费）</option></select></label>
+      <p class="coach-settings-hint">站点已内置 AI 网关，默认开箱即用；也可以选择平台并填入自己的 API Key 覆盖。Key 只保存在本浏览器。</p>
+      <label>AI 平台<select data-coach-provider><option value="default">站点默认（棋刻 AI）</option><option value="openrouter">OpenRouter（免费模型）</option><option value="deepseek">DeepSeek</option><option value="glm">智谱 GLM（glm-4-flash 免费）</option></select></label>
       <label>API Key<input type="password" data-coach-api-key placeholder="留空则用站点默认"></label>
       <div class="coach-settings-actions"><button class="btn btn-primary" type="button" data-coach-save>保存</button><span class="coach-saved" data-coach-saved aria-live="polite"></span></div>
     </div>
   </div>
   <script>window.CHESS_LESSON={"id":"exchange-order","challenge":{"title":"走五步，算完整本地交换","instruction":"每次选择后，对手会自动走最强制的回应。不要只看当前得失，要看第五步结束后的净值。","fen":"r1bqr1k1/5ppp/5n2/8/2B5/5N2/8/3QR1K1 w - - 0 1","goal":"白方走五步，用连续将军改善交换结果。","steps":[{"move":"e1e8","opponent":"f6e8","note":"第一步正确：Rxe8+ 先消除黑车，并迫使黑马回吃。车暂时离场，但黑马被引到了 e8。"},{"move":"c4f7","opponent":"g8f7","note":"第二步正确：Bxf7+ 再用将军把黑王引离后排。现在黑王暴露，白后的线路开始出现。"},{"move":"f3g5","opponent":"f7g8","note":"第三步正确：Ng5+ 继续保持先手。黑王只能退回 g8，但防守子已经失去原来的协调。"},{"move":"d1b3","opponent":"c8e6","note":"第四步正确：Qb3+ 沿对角线将军，逼迫黑象去 e6 挡线。你不是追王，而是在指定黑象的位置。"},{"move":"b3e6","note":"第五步正确：Qxe6+ 吃掉被迫挡线的象。整段交换后白方拿到黑车、兵和象，并保留主动。"}],"odds":[{"white":58,"draw":28,"black":14},{"white":61,"draw":27,"black":12},{"white":65,"draw":25,"black":10},{"white":70,"draw":22,"black":8},{"white":77,"draw":18,"black":5},{"white":84,"draw":13,"black":3}],"success":"五步完成。关键不是第一步吃到多少，而是每一步都用将军维持先手，最终让黑象被迫站到可吃的位置。","defaultAnswer":"这条变化要从最后往前看：Qxe6 是兑现，Qb3+ 是定位，Ng5+ 与 Bxf7+ 是引王，Rxe8+ 则先移除后排防守者。顺序改变，黑方就会获得整理防线的时间。","errors":{"d1b3":"立即 Qb3 虽然将军，但黑方的车、马和象仍然协调，挡住后不会丢掉足够子力。先用 Rxe8+ 改变防守结构。","c4f7":"立即 Bxf7+ 只能引王，却没有先移除 e8 的重子。组合顺序少了一层，最终收益会下降。"},"genericError":"这步可能是合理棋，但没有保持强制节奏。优先寻找将军、吃子和能指定对方回应的着法。","quick":{"为什么先换车":"Rxe8+ 同时完成两件事：拿掉黑车，并把 f6 的马引到 e8。这样后续白后的对角线更容易制造强制变化。","为什么愿意弃象":"Bxf7+ 不是白送象，而是用象换兵和王的位置。黑王被引到 f7 后，Ng5+ 与 Qb3+ 才能连续获得先手。","怎么算收益":"把整个序列列成账本：不要在每一步单独下结论，而要等强制回应结束后，再比较双方剩余子力与王的安全。"},"suggestions":[{"label":"为什么第一步先换车？","key":"为什么先换车"},{"label":"为什么愿意交出白象？","key":"为什么愿意弃象"},{"label":"这种交换怎么记账？","key":"怎么算收益"}]}};</script>
+  <script defer src="assets/donation.js"></script>
   <script type="module" src="assets/app.js"></script>
 </body>
 </html>

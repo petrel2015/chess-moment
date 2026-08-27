@@ -892,20 +892,12 @@ h1 {
 .prereq a:hover { text-decoration: underline; }
 
 .site-footer {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 16px;
   padding: 28px 0 50px;
   border-top: 1px solid var(--line);
   color: var(--muted);
   font-family: ui-sans-serif, system-ui, sans-serif;
   font-size: 12px;
   text-align: center;
-}
-
-.site-footer .footer-meta {
-  color: var(--muted);
 }
 
 .site-footer .footer-report {
@@ -917,131 +909,7 @@ h1 {
   color: #245239;
 }
 
-/* 赞赏支持区域 —— 浅色主题：淡金渐变 + 金描边 */
-.donate-section {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: 12px;
-  width: 100%;
-  max-width: 460px;
-  padding: 12px 16px;
-  border-radius: 14px;
-  background: linear-gradient(135deg, rgba(183, 122, 42, 0.10), rgba(183, 122, 42, 0.03));
-  border: 1px solid rgba(183, 122, 42, 0.25);
-}
-
-.donate-tag {
-  color: var(--gold);
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-}
-
-.donate-triggers {
-  display: flex;
-  gap: 8px;
-}
-
-.donate-trigger {
-  min-height: 40px;
-  padding: 0 16px;
-  border-radius: 10px;
-  border: 1px solid transparent;
-  font-family: ui-sans-serif, system-ui, sans-serif;
-  font-size: 13px;
-  font-weight: 600;
-  white-space: nowrap;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: transform 0.12s ease, background 0.12s ease;
-}
-
-.donate-trigger:hover { transform: translateY(-1px); }
-
-.donate-trigger.alipay { background: #1677ff; color: #fff; }
-.donate-trigger.alipay:hover { background: #0e6ae8; }
-
-.donate-trigger.wechat { background: #07c160; color: #fff; }
-.donate-trigger.wechat:hover { background: #06a852; }
-
-/* 赞赏二维码模态框 —— 米/白底 + 金边 + 圆角，由 app.js 按需构建 */
-.donate-modal-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 1000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 16px;
-  background: rgba(23, 33, 28, 0.55);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-}
-
-.donate-modal {
-  position: relative;
-  width: min(320px, calc(100vw - 32px));
-  padding: 28px 22px 22px;
-  border-radius: 18px;
-  background: var(--paper);
-  border: 1px solid rgba(183, 122, 42, 0.45);
-  box-shadow: 0 24px 60px rgba(31, 43, 36, 0.28);
-  text-align: center;
-  color: var(--ink);
-}
-
-.donate-modal h3 {
-  margin: 0 0 16px;
-  color: var(--forest);
-  font-family: ui-sans-serif, system-ui, sans-serif;
-  font-size: 16px;
-  font-weight: 700;
-}
-
-.donate-close {
-  position: absolute;
-  top: 10px;
-  right: 12px;
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  border: none;
-  background: rgba(23, 33, 28, 0.06);
-  color: var(--muted);
-  font-size: 20px;
-  line-height: 1;
-  cursor: pointer;
-}
-
-.donate-close:hover {
-  background: rgba(23, 33, 28, 0.12);
-  color: var(--ink);
-}
-
-.donate-qr {
-  display: block;
-  width: 100%;
-  max-width: 240px;
-  height: auto;
-  margin: 0 auto 12px;
-  border-radius: 12px;
-  border: 1px solid rgba(183, 122, 42, 0.3);
-}
-
-.donate-modal small {
-  display: block;
-  color: var(--muted);
-  font-family: ui-sans-serif, system-ui, sans-serif;
-  font-size: 12px;
-  line-height: 1.5;
-}
+/* 赞赏入口与弹窗样式独立在 assets/donation.css（buy-me-coffee 统一规范） */
 
 @media (max-width: 760px) {
   .page { padding-top: 34px; }
@@ -1051,10 +919,6 @@ h1 {
   .coach { padding: 22px 18px; }
   .archive-grid { grid-template-columns: 1fr; }
   .archive-card { min-height: 0; }
-  /* 赞赏区在窄屏纵向堆叠，按钮拉满宽度，触摸目标 ≥40px */
-  .donate-section { flex-direction: column; gap: 10px; padding: 14px 12px; }
-  .donate-triggers { width: 100%; }
-  .donate-trigger { flex: 1; width: 100%; }
 }
 
 @media (max-width: 420px) {

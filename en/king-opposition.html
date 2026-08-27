@@ -14,6 +14,7 @@
   <link rel="apple-touch-icon" sizes="180x180" href="../assets/icons/apple-touch-icon.png">
   <link rel="manifest" href="../assets/site.webmanifest">
   <link rel="stylesheet" href="../assets/styles.css">
+  <link rel="stylesheet" href="../assets/donation.css">
     <link rel="preload" as="image" href="../assets/pieces/wk.png">
   <link rel="preload" as="image" href="../assets/pieces/wq.png">
   <link rel="preload" as="image" href="../assets/pieces/wr.png">
@@ -26,7 +27,6 @@
   <link rel="preload" as="image" href="../assets/pieces/bb.png">
   <link rel="preload" as="image" href="../assets/pieces/bn.png">
   <link rel="preload" as="image" href="../assets/pieces/bp.png">
-  <script>window.CHESS_COACH_CONFIG = {"workerUrl":""};</script>
   <script>
 (function(){
   var stored = null;
@@ -108,17 +108,19 @@
         
       </a></div></section>
   </main>
-  <footer class="site-footer"><div class="footer-meta">棋刻 Chess Moment · Three minutes a day to understand one move · <a class="footer-report" href="#" data-footer-report>Report a problem</a></div><div class="donate-section"><span class="donate-tag">Buy me a coffee ￥4.9</span><div class="donate-triggers"><button type="button" class="donate-trigger alipay" data-donate-alipay>Alipay</button><button type="button" class="donate-trigger wechat" data-donate-wechat>WeChat</button></div></div></footer>
+  <footer class="site-footer">棋刻 Chess Moment · Three minutes a day to understand one move · <a class="footer-report" href="#" data-footer-report>Report a problem</a> · <button type="button" class="donate-entry" id="donate-entry">☕ Buy me a coffee</button></footer>
+  <div class="donation-overlay" id="donation-dialog" hidden role="dialog" aria-modal="true" aria-label="Buy me a coffee ☕" data-scan-alipay="Scan with Alipay" data-scan-wechat="Scan with WeChat" data-fallback-hint="Didn't open automatically? Scan the QR code instead." data-qr-error="QR code failed to render, please retry."><div class="donation-dialog"><button type="button" class="donation-close" id="donation-close" aria-label="Close">×</button><h3 class="donation-title">Buy me a coffee ☕</h3><p class="donation-subtitle">If this little tool helped you, you can buy the author a coffee.</p><div class="donation-tabs"><button type="button" class="donation-tab" id="donation-tab-alipay" aria-pressed="true">Alipay</button><button type="button" class="donation-tab" id="donation-tab-wechat" aria-pressed="false">WeChat Pay</button></div><canvas class="donation-qr" id="donation-qr" width="220" height="220"></canvas><p class="donation-hint" id="donation-hint"></p></div></div>
   <div class="coach-settings-panel" data-coach-settings-panel hidden>
     <div class="coach-settings-inner">
       <h3>AI Coach Settings</h3>
-      <p class="coach-settings-hint">Pick a provider and paste your own API key to use its models; leave empty for the site default (OpenRouter free models). The key stays in this browser only.</p>
-      <label>AI provider<select data-coach-provider><option value="openrouter">OpenRouter (free models)</option><option value="deepseek">DeepSeek</option><option value="glm">Zhipu GLM (glm-4-flash, free)</option></select></label>
+      <p class="coach-settings-hint">The built-in AI gateway works out of the box; you can also pick a provider and paste your own API key to override it. The key stays in this browser only.</p>
+      <label>AI provider<select data-coach-provider><option value="default">Site default (Chess Moment AI)</option><option value="openrouter">OpenRouter (free models)</option><option value="deepseek">DeepSeek</option><option value="glm">Zhipu GLM (glm-4-flash, free)</option></select></label>
       <label>API Key<input type="password" data-coach-api-key placeholder="Leave empty for the site default"></label>
       <div class="coach-settings-actions"><button class="btn btn-primary" type="button" data-coach-save>Save</button><span class="coach-saved" data-coach-saved aria-live="polite"></span></div>
     </div>
   </div>
   <script>window.CHESS_LESSON={"id":"king-opposition","challenge":{"title":"Five moves to bring the king into the fight first","instruction":"Spend the first three moves improving the king's position; only the last two push pawns. Don't advance a pawn to a point of no return at the start.","fen":"8/4kpp1/8/8/8/8/4KPP1/8 w - - 0 1","goal":"White moves five times, seizing key squares and building a two-pawn advance.","steps":[{"move":"e2d3","opponent":"e7d6","note":"First move correct: Kd3 brings the king toward the center. In the endgame, one king square is often worth more than a pawn move."},{"move":"d3d4","opponent":"d6c6","note":"Second move correct: Kd4 keeps gaining space, forcing the black king to give way to the side."},{"move":"d4e5","opponent":"c6c5","note":"Third move correct: Ke5 wins the key square. The white king can now support both pawns while the black king is pushed to the flank."},{"move":"f2f4","opponent":"g7g6","note":"Fourth move correct: f4 advances under the king's protection. Black must decide which pawn will build the block."},{"move":"g2g4","note":"Fifth move correct: g4 creates a pair of connected pawns. With the king ahead, White can later choose which side to break through."}],"odds":[{"white":46,"draw":46,"black":8},{"white":50,"draw":43,"black":7},{"white":56,"draw":38,"black":6},{"white":64,"draw":31,"black":5},{"white":69,"draw":27,"black":4},{"white":74,"draw":23,"black":3}],"success":"Five moves complete. The white king seized the key square first, then the pawns advanced; the advantage comes from the king's position, not from any single capture.","defaultAnswer":"If you push a pawn first, the black king finds it easier to step in front and blockade. After the white king reaches e5, both pawns have reliable support and Black can hardly cover both wings at once.","errors":{"f2f4":"Immediate f4 is too early. The black king is still in the center and can rush in front of the pawn; play Kd3 first and bring the strongest endgame piece into the fight.","g2g4":"Immediate g4 exposes the target just the same. Pawns cannot move backward, but the king can still improve; prefer the reversible, higher-gain king move."},"genericError":"Ask which piece most needs improving in the endgame. The answer here is not a pawn but the white king, still far from the key squares.","quick":{"为什么先走王":"Once a pawn advances it cannot retreat, while a king move gains control and keeps options open. Improving the king first usually makes the later pawn moves safer.","什么是关键格":"A key square is one that, once occupied by the king, reliably supports the pawns' advance. Here e5 helps both the f- and g-pawns.","为什么双兵一起走":"Connected pawns give each other exchange options, and the king supports them from behind. A lone pawn rushing ahead is more easily blocked by the black king."},"suggestions":[{"label":"Why do the first three moves all use the king?","key":"为什么先走王"},{"label":"What is a key square?","key":"什么是关键格"},{"label":"Why advance both pawns together?","key":"为什么双兵一起走"}]}};</script>
+  <script defer src="../assets/donation.js"></script>
   <script type="module" src="../assets/app.js"></script>
 </body>
 </html>

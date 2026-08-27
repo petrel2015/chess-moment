@@ -1,21 +1,31 @@
 /**
  * AI 教练的纯逻辑层（无 DOM 依赖，可在 Node 测试）。
- * app.js 从这里 import buildCoachMessages；测试直接 import 验证。
+ * app.js 从这里 import 请求构造与错误归类函数；测试直接 import 验证。
+ *
+ * 两条请求路径：
+ *   - promptgate：站点默认 AI（自建 PromptGate 网关，OpenAI 兼容、非流式）。
+ *     网关的 key 是公开调用方标识而非机密——模型、提示词、限流与熔断全部
+ *     由服务端固定，前端硬编码符合网关设计（见 integrations/chess.md）。
+ *   - 自带 Key：用户在「AI 设置」选平台（openrouter/deepseek/glm）并填自己
+ *     的 Key，浏览器直连，覆盖站点默认。
  */
 
-/**
- * 解析 Worker URL：localStorage 覆盖 > window 配置 > 空。
- * 传入 storage 和 config 以便测试注入（避免直接依赖全局 localStorage/window）。
- */
-export function resolveWorkerUrl({ storage = null, config = null } = {}) {
-  const stored = storage ? storage.getItem("chessCoachWorkerUrl") : null;
-  if (stored && stored.trim()) return stored.trim();
-  const fromConfig = config && typeof config.workerUrl === "string" ? config.workerUrl : "";
-  return fromConfig.trim();
-}
+// ---- 站点默认：PromptGate 网关 ---------------------------------------------
+// 集中成常量方便轮换：换 key / 换地址只改这里。
+export const PROMPTGATE_BASE_URL = "https://api.fluffyeti.com:61234/v1";
+export const PROMPTGATE_API_KEY = "pk_chess_cb1ace3431bf8be5987b48d2d5bdd9ee";
+export const PROMPTGATE_MODEL = "chess-assistant"; // 任意值均可，服务端忽略并固定
+
+// 网关硬限：所有消息 content 字符数合计 ≤ 4000，超限返回 input_too_long；
+// 前端裁剪时留出余量。
+export const PROMPTGATE_MAX_INPUT_CHARS = 4000;
+export const PROMPTGATE_INPUT_BUDGET = 3600;
+
+// 上游超时 120s（网关侧），前端 fetch 超时不得低于它，取 125s。
+export const PROMPTGATE_TIMEOUT_MS = 125000;
 
 /**
- * 构造发给智谱 GLM 的 messages（纯函数）。
+ * 构造发给 AI 的 messages（纯函数）。
  *
  * 关键设计：系统提示词硬约束 AI「不直接给出当前题目的标准走法序列」，
  * 只讲解思路、规则、记号、通用原则——保留挑战的教学价值。
@@ -63,66 +73,99 @@ export function buildCoachMessages(question, ctx = {}, locale = "zh") {
 }
 
 /**
- * 构造免 Key 免费中转（Pollinations 匿名 GET）的请求 URL（纯函数，可测）。
- *
- * 这是「零配置」路径：不依赖 Worker 和 API Key，浏览器直接 GET 一个第三方免费
- * 转发（text.pollinations.ai）。系统提示走 ?system=，问题文本放路径里。
- *
- * 重要：第三方免费转发无 SLA，随时可能停用/限流/中文质量一般，因此调用方必须
- * 把失败兜底到预制答案（见 app.js 的 showCoachAnswerKeyless）。这里只负责构造
- * 请求、不碰网络。
- *
- * @param {string} question 用户问题
- * @param {object} ctx 与 buildCoachMessages 相同的上下文
- * @param {"zh"|"en"} locale 教练回答语言
- * @returns {string} 完整 GET URL
+ * 把消息列表裁到字符预算内（纯函数，可测）。
+ * 网关按所有消息 content 的字符数总和限流（≤ 4000），超限直接 400。
+ * 超预算时从最后一条消息的末尾截断（问题在末尾、教学约束在开头，优先保住
+ * 开头），并追加省略号标记。返回新数组，不改入参。
  */
-export function buildKeylessUrl(question, ctx = {}, locale = "zh") {
-  const messages = buildCoachMessages(question, ctx, locale);
-  const system = messages[0].content;
-  const prompt = messages[1].content;
-  const params = new URLSearchParams();
-  if (system) params.set("system", system);
-  params.set("model", "openai");
-  params.set("seed", "chess-moment");
-  return `https://text.pollinations.ai/${encodeURIComponent(prompt)}?${params.toString()}`;
-}
-
-// ---- 默认 OpenRouter Key（前端直连）--------------------------------------
-// 按需求把默认 Key 以「简单混淆」形式写在前端，免去 AI 设置里手动粘贴。
-// 警告：这只是混淆（XOR + Base64），不是真正的加密——任何访客都能在浏览器
-// 开发者工具里还原出明文 Key。若该 Key 关联付费额度，请改用「AI 设置」里
-// 的自带 Key 覆盖，或删除 DEFAULT_OR_KEY_OBF 常量。
-const DEFAULT_OR_KEY_SALT = "chess-moment-obf-2026";
-const DEFAULT_OR_KEY_OBF = "EANIHAEAG15ABFlNS1xbU04HU1EOV1FXQkMYWFpfAA9NFFhaUB8FUQoFVFgBQxBIX1cJVQhDS1dRBxlRAgcHU18HR0QdC15VUQ==";
-
-/** XOR + Base64 混淆（纯函数，可测；浏览器与 Node 均可用 btoa/atob）。 */
-export function encodeKeyObfuscation(plain, salt) {
-  let bin = "";
-  for (let i = 0; i < plain.length; i++) {
-    bin += String.fromCharCode(plain.charCodeAt(i) ^ salt.charCodeAt(i % salt.length));
-  }
-  return btoa(bin);
-}
-
-/** 还原被 encodeKeyObfuscation 混淆的值（纯函数，可测）。 */
-export function decodeKeyObfuscation(obf, salt) {
-  const bin = atob(obf);
-  let out = "";
-  for (let i = 0; i < bin.length; i++) {
-    out += String.fromCharCode(bin.charCodeAt(i) ^ salt.charCodeAt(i % salt.length));
+export function clampMessagesToCharBudget(messages, budget = PROMPTGATE_INPUT_BUDGET) {
+  const total = messages.reduce((n, m) => n + m.content.length, 0);
+  if (total <= budget) return messages.map(m => ({ ...m }));
+  const out = messages.map(m => ({ ...m }));
+  let overflow = total - budget;
+  for (let i = out.length - 1; i >= 0 && overflow > 0; i--) {
+    const content = out[i].content;
+    // -1 给省略号腾位；预算极小时保底只剩省略号。
+    const keep = Math.max(0, content.length - overflow - 1);
+    out[i].content = content.slice(0, keep) + "…";
+    overflow -= content.length - keep;
   }
   return out;
 }
 
-/** 内嵌的默认 OpenRouter Key（运行时还原）。无内嵌 Key 时返回空串。 */
-export function embeddedOpenRouterKey() {
-  return DEFAULT_OR_KEY_OBF ? decodeKeyObfuscation(DEFAULT_OR_KEY_OBF, DEFAULT_OR_KEY_SALT) : "";
+/**
+ * 构造发给 PromptGate 网关的 messages（纯函数，可测）。
+ *
+ * 网关会剥离前端发的 system 消息并注入自己的固定人设，因此这里把教练的
+ * 教学硬约束（不直接给答案）折进 user 内容开头——既保住约束，也不浪费
+ * 4000 字符配额。最终只有一条 user 消息，并裁剪到预算内。
+ */
+export function buildPromptGateMessages(question, ctx = {}, locale = "zh") {
+  const [system, user] = buildCoachMessages(question, ctx, locale);
+  return clampMessagesToCharBudget([{ role: "user", content: `${system.content}\n\n${user.content}` }]);
 }
 
 /**
+ * 构造发给 PromptGate 网关的 chat 请求（纯函数，可测）。
+ * 网关只读取 messages（和 stream），model 等其余参数一律忽略——所以请求体
+ * 保持最小，不带 temperature/max_tokens（非流式，不带 stream）。
+ * @param {string} question 用户问题
+ * @param {object} ctx 与 buildCoachMessages 相同的上下文
+ * @param {"zh"|"en"} locale 教练回答语言
+ * @returns {{url: string, init: RequestInit}} 给 fetch 用的 {url, init}
+ */
+export function buildPromptGateRequest(question, ctx = {}, locale = "zh") {
+  return {
+    url: `${PROMPTGATE_BASE_URL}/chat/completions`,
+    init: {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${PROMPTGATE_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: PROMPTGATE_MODEL,
+        messages: buildPromptGateMessages(question, ctx, locale),
+      }),
+    },
+  };
+}
+
+/**
+ * 把网关路径的任意失败归类成 UI 文案 key（纯函数，可测）。
+ *
+ * 归类规则（对应接入文档的错误表）：
+ *   - 网络层失败（域名未解析/CORS/断网/超时中止）与 401/403/400/413 →
+ *     aiUnavailable「当前 AI 设置不可用，请检查配置」。
+ *   - 429 且 code 为 daily_* → aiDailyQuota「今日额度已用完，明天再试」。
+ *   - 其余 429 → aiRateLimited「请求太频繁，稍后再试」。
+ *   - 5xx → aiUpstreamError「AI 服务暂时不可用，稍后重试」。
+ * detail 附原始错误信息供诊断，调用方必须用 textContent 渲染（防注入）。
+ *
+ * @param {{name?: string, message?: string, status?: number, code?: string}} err
+ * @returns {{messageKey: string, detail: string}}
+ */
+export function normalizePromptGateError(err) {
+  const message = String(err?.message || "unknown error");
+  const detail = err?.code ? `${message}（${err.code}）` : message;
+  if (err?.name === "AbortError") return { messageKey: "aiUnavailable", detail: "请求超时" };
+  if (!err?.status) return { messageKey: "aiUnavailable", detail };
+  if (err.status === 401 || err.status === 403) return { messageKey: "aiUnavailable", detail };
+  if (err.status === 429) {
+    if (err.code === "daily_requests_exceeded" || err.code === "daily_tokens_exceeded") {
+      return { messageKey: "aiDailyQuota", detail };
+    }
+    return { messageKey: "aiRateLimited", detail };
+  }
+  if (err.status >= 500) return { messageKey: "aiUpstreamError", detail };
+  return { messageKey: "aiUnavailable", detail };
+}
+
+// ---- 用户自带 Key 的可选平台 ------------------------------------------------
+
+/**
  * OpenRouter 免费模型链：主模型 + 备用。免费模型会间歇性返回空回答或
- * 429 限流（实测约 1/4 概率），调用方（app.js 的 askCoachOpenRouter）
+ * 429 限流（实测约 1/4 概率），调用方（app.js 的 askProviderAI）
  * 按此列表重试并降级换模型。全部经实测可用（2026-08）。
  */
 export const OPENROUTER_MODELS = [
@@ -133,10 +176,10 @@ export const OPENROUTER_MODELS = [
 
 /**
  * 支持的 AI 平台（均为 OpenAI 兼容端点；CORS 预检均放行浏览器直连，2026-08 实测）：
- *   - openrouter: 免费模型链（站点内嵌默认 Key 走这里）
+ *   - openrouter: 免费模型链（自带 Key）
  *   - deepseek:   deepseek-chat（便宜）
  *   - glm:        智谱 glm-4-flash（免费）
- * 用户可在页面「AI 设置」里选平台 + 填自己的 Key 覆盖默认。
+ * 用户可在页面「AI 设置」里选平台 + 填自己的 Key 覆盖站点默认（PromptGate 网关）。
  */
 export const AI_PROVIDERS = {
   openrouter: {
@@ -194,60 +237,12 @@ export function buildProviderChatRequest(providerId, question, ctx = {}, apiKey,
 }
 
 /**
- * 从平台的 OpenAI 兼容响应里抽出回答文本（三家平台响应结构一致，纯函数，可测）。
+ * 从 OpenAI 兼容响应里抽出回答文本（网关与三家平台响应结构一致，纯函数，可测）。
  */
 export function extractProviderAnswer(json) {
   const content = json?.choices?.[0]?.message?.content;
   if (typeof content !== "string" || !content.trim()) {
     throw new Error("empty AI answer");
-  }
-  return content;
-}
-
-/**
- * 构造发给 OpenRouter（OpenAI 兼容）的请求（纯函数，可测）。
- *
- * OpenRouter 是「自带 Key、浏览器直连」路径：其 API 返回 CORS 头
- * （Access-Control-Allow-Origin: *），且提供大量免费模型（id 以 :free 结尾）。
- * 因此用户填一个免费 OpenRouter Key 即可在浏览器里直接拿到真 AI 回答，
- * 不需要 Cloudflare Worker。Key 只存在用户自己的 localStorage，不进源码。
- *
- * @param {string} question 用户问题
- * @param {object} ctx 与 buildCoachMessages 相同的上下文
- * @param {string} apiKey OpenRouter API Key
- * @param {object} [opts] { locale, model, referer }
- * @returns {{url: string, init: RequestInit}} 给 fetch 用的 {url, init}
- */
-export function buildOpenRouterRequest(question, ctx = {}, apiKey, opts = {}) {
-  const { locale = "zh", model = "nvidia/nemotron-3-ultra-550b-a55b:free", referer = "" } = opts;
-  const messages = buildCoachMessages(question, ctx, locale);
-  const headers = {
-    "Content-Type": "application/json",
-    "Authorization": `Bearer ${apiKey}`,
-  };
-  if (referer) {
-    // OpenRouter 要求标识来源站点，用于模型提供方统计与限流。
-    headers["HTTP-Referer"] = referer;
-    headers["X-Title"] = "Chess Moment";
-  }
-  return {
-    url: "https://openrouter.ai/api/v1/chat/completions",
-    init: {
-      method: "POST",
-      headers,
-      body: JSON.stringify({ model, messages, temperature: 0.7, max_tokens: 800 }),
-    },
-  };
-}
-
-/**
- * 从 OpenRouter 响应里抽出回答文本（纯函数，可测）。
- * OpenRouter 返回 OpenAI 兼容格式：{ choices: [{ message: { content } }] }。
- */
-export function extractOpenRouterAnswer(json) {
-  const content = json?.choices?.[0]?.message?.content;
-  if (typeof content !== "string" || !content.trim()) {
-    throw new Error("empty OpenRouter answer");
   }
   return content;
 }

@@ -63,45 +63,8 @@ test("interactive pages include feedback buttons in coach-actions and footer", a
   }
 });
 
-// 每个交互页页脚都有「请我喝杯咖啡」赞赏区，含支付宝/微信两个触发按钮。
-test("interactive pages include donate section with alipay and wechat triggers", async () => {
-  const lessons = await loadLessons(root);
-  for (const lesson of lessons) {
-    const html = await readFile(path.join(root, "_site", `${lesson.slug}.html`), "utf8");
-    assert.ok(html.includes("请我喝杯咖啡 ￥4.9"), `${lesson.slug}.html missing donate copy`);
-    assert.ok(html.includes("支付宝"), `${lesson.slug}.html missing alipay trigger`);
-    assert.ok(html.includes("微信"), `${lesson.slug}.html missing wechat trigger`);
-    assert.ok(
-      html.includes('data-donate-alipay>支付宝</button>'),
-      `${lesson.slug}.html missing data-donate-alipay button`
-    );
-    assert.ok(
-      html.includes('data-donate-wechat>微信</button>'),
-      `${lesson.slug}.html missing data-donate-wechat button`
-    );
-  }
-});
-
-// 赞赏二维码必须是真实 PNG，并被构建复制到 _site/assets/donate/。
-test("donate QR PNGs exist and are real images", async () => {
-  const { stat } = await import("node:fs/promises");
-  for (const name of ["alipay-qr.png", "wechat-qr.png"]) {
-    const source = await stat(path.join(root, "assets", "donate", name));
-    assert.ok(source.size > 2000, `${name} should be a real PNG (source)`);
-    const built = await stat(path.join(root, "_site", "assets", "donate", name));
-    assert.ok(built.size > 2000, `${name} should be copied into _site/assets/donate`);
-  }
-});
-
-// app.js 必须包含赞赏装配：预加载二维码、alipays scheme 唤起、ESC 关闭模态框。
-test("app.js wires the donate modal with preload, alipay scheme, and ESC close", () => {
-  const src = readFileSync(path.join(root, "assets", "app.js"), "utf8");
-  assert.ok(/new Image\(\)/.test(src), "missing QR preload via new Image()");
-  assert.ok(/alipays:\/\//.test(src), "missing alipays:// scheme");
-  assert.ok(/data-donate-alipay/.test(src), "missing [data-donate-alipay] binding");
-  assert.ok(/data-donate-wechat/.test(src), "missing [data-donate-wechat] binding");
-  assert.ok(/key === "Escape"/.test(src), "missing ESC-to-close handler");
-});
+// 赞赏功能的断言（buy-me-coffee 规范：无静态码、无自定义 scheme）统一在
+// tests/donation.test.mjs 里维护。
 
 test("shared interaction JavaScript parses", () => {
   const result = spawnSync(process.execPath, ["--check", "assets/app.js"], {
@@ -142,32 +105,17 @@ test("app.js guards the opponent-reply window against getting stuck", async () =
   );
 });
 
-// AI 教练配置注入：每个交互页 <head> 必须含 window.CHESS_COACH_CONFIG。
-// 未设置环境变量时 workerUrl 为空（前端走预制答案降级）；设置后自动注入。
-test("interactive pages inject CHESS_COACH_CONFIG in head", async () => {
+// AI 教练默认走自建 PromptGate 网关（前端零配置直连），构建期不再注入
+// window.CHESS_COACH_CONFIG；产物中不应残留旧配置脚本。
+test("interactive pages no longer inject the legacy CHESS_COACH_CONFIG", async () => {
   const lessons = await loadLessons(root);
   for (const lesson of lessons) {
     const html = await readFile(path.join(root, "_site", `${lesson.slug}.html`), "utf8");
     assert.ok(
-      /window\.CHESS_COACH_CONFIG\s*=\s*\{/.test(html),
-      `${lesson.slug}.html missing window.CHESS_COACH_CONFIG`
+      !html.includes("CHESS_COACH_CONFIG"),
+      `${lesson.slug}.html must not carry the legacy coach config script`
     );
   }
-});
-
-test("CHESS_COACH_WORKER_URL env var injects workerUrl into built HTML", () => {
-  // 单独跑一次 build，注入环境变量，验证 URL 出现在产物里。
-  const result = spawnSync(process.execPath, ["scripts/build-site.mjs"], {
-    cwd: root,
-    encoding: "utf8",
-    env: { ...process.env, CHESS_COACH_WORKER_URL: "https://test-coach.example.workers.dev" },
-  });
-  assert.equal(result.status, 0, result.stderr);
-  const idx = readFileSync(path.join(root, "_site", "index.html"), "utf8");
-  assert.ok(
-    idx.includes('"workerUrl":"https://test-coach.example.workers.dev"'),
-    "workerUrl env var must appear in built HTML"
-  );
 });
 
 test("build generates wechat preview pages for all lessons", async () => {
@@ -454,21 +402,23 @@ test("English pages include language auto-detect script and a toggle link", asyn
   assert.ok(zhHtml.includes('class="lang-toggle" href="en/promotion-combo.html"'), "zh toggle must point to en page");
 });
 
-test("AI settings panel offers provider choice (OpenRouter/DeepSeek/GLM) plus one key field", async () => {
+test("AI settings panel offers the site default gateway plus provider choice (OpenRouter/DeepSeek/GLM)", async () => {
   const lessons = await loadLessons(root);
   for (const lesson of lessons) {
     for (const dir of ["", "en/"]) {
       const html = await readFile(path.join(root, "_site", dir, `${lesson.slug}.html`), "utf8");
       assert.ok(html.includes("data-coach-settings-toggle"), `${dir}${lesson.slug}.html must have the settings toggle`);
       assert.ok(html.includes('data-coach-provider'), `${dir}${lesson.slug}.html must have the provider select`);
+      assert.ok(html.includes('value="default"'), `${dir}${lesson.slug}.html must offer the site default (gateway)`);
       assert.ok(html.includes('value="openrouter"') && html.includes('value="deepseek"') && html.includes('value="glm"'), `${dir}${lesson.slug}.html must offer all three providers`);
       assert.ok(html.includes("data-coach-api-key"), `${dir}${lesson.slug}.html must have the API key input`);
       // 旧版单平台字段不应存在
       assert.ok(!html.includes("data-coach-openrouter-key") && !html.includes("data-coach-url") && !html.includes("data-coach-key "), `${dir}${lesson.slug}.html must not keep legacy single-provider fields`);
     }
   }
-  // app.js 必须包含面板处理器与新优先级
+  // app.js 必须包含面板处理器与新优先级（自带 Key 覆盖 > PromptGate 网关默认）
   const src = readFileSync(path.join(root, "assets", "app.js"), "utf8");
   assert.ok(src.includes("data-coach-settings-toggle"), "app.js must wire the settings toggle");
   assert.ok(src.includes("coachUserProvider") && src.includes("askProviderAI"), "app.js must route through provider config");
+  assert.ok(src.includes("askPromptGateAI") && src.includes("normalizePromptGateError"), "app.js must route the site default through the gateway");
 });

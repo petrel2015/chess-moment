@@ -14,6 +14,7 @@
   <link rel="apple-touch-icon" sizes="180x180" href="assets/icons/apple-touch-icon.png">
   <link rel="manifest" href="assets/site.webmanifest">
   <link rel="stylesheet" href="assets/styles.css">
+  <link rel="stylesheet" href="assets/donation.css">
     <link rel="preload" as="image" href="assets/pieces/wk.png">
   <link rel="preload" as="image" href="assets/pieces/wq.png">
   <link rel="preload" as="image" href="assets/pieces/wr.png">
@@ -26,7 +27,6 @@
   <link rel="preload" as="image" href="assets/pieces/bb.png">
   <link rel="preload" as="image" href="assets/pieces/bn.png">
   <link rel="preload" as="image" href="assets/pieces/bp.png">
-  <script>window.CHESS_COACH_CONFIG = {"workerUrl":""};</script>
   <script>
 (function(){
   var stored = null;
@@ -108,17 +108,19 @@
         
       </a></div></section>
   </main>
-  <footer class="site-footer"><div class="footer-meta">棋刻 Chess Moment · 每天三分钟，想明白一步棋 · <a class="footer-report" href="#" data-footer-report>反馈问题</a></div><div class="donate-section"><span class="donate-tag">请我喝杯咖啡 ￥4.9</span><div class="donate-triggers"><button type="button" class="donate-trigger alipay" data-donate-alipay>支付宝</button><button type="button" class="donate-trigger wechat" data-donate-wechat>微信</button></div></div></footer>
+  <footer class="site-footer">棋刻 Chess Moment · 每天三分钟，想明白一步棋 · <a class="footer-report" href="#" data-footer-report>反馈问题</a> · <button type="button" class="donate-entry" id="donate-entry">☕ 请作者喝杯咖啡</button></footer>
+  <div class="donation-overlay" id="donation-dialog" hidden role="dialog" aria-modal="true" aria-label="请作者喝杯咖啡 ☕" data-scan-alipay="打开支付宝扫一扫" data-scan-wechat="打开微信扫一扫" data-fallback-hint="没有自动打开？请使用支付宝 / 微信扫码" data-qr-error="二维码生成失败，请重试"><div class="donation-dialog"><button type="button" class="donation-close" id="donation-close" aria-label="关闭">×</button><h3 class="donation-title">请作者喝杯咖啡 ☕</h3><p class="donation-subtitle">如果这个小工具帮到了你，可以请作者喝杯咖啡。</p><div class="donation-tabs"><button type="button" class="donation-tab" id="donation-tab-alipay" aria-pressed="true">支付宝</button><button type="button" class="donation-tab" id="donation-tab-wechat" aria-pressed="false">微信支付</button></div><canvas class="donation-qr" id="donation-qr" width="220" height="220"></canvas><p class="donation-hint" id="donation-hint"></p></div></div>
   <div class="coach-settings-panel" data-coach-settings-panel hidden>
     <div class="coach-settings-inner">
       <h3>AI 教练设置</h3>
-      <p class="coach-settings-hint">选择平台并填入自己的 API Key，即可用该平台的模型回答；留空则使用站点默认（OpenRouter 免费模型）。Key 只保存在本浏览器。</p>
-      <label>AI 平台<select data-coach-provider><option value="openrouter">OpenRouter（免费模型）</option><option value="deepseek">DeepSeek</option><option value="glm">智谱 GLM（glm-4-flash 免费）</option></select></label>
+      <p class="coach-settings-hint">站点已内置 AI 网关，默认开箱即用；也可以选择平台并填入自己的 API Key 覆盖。Key 只保存在本浏览器。</p>
+      <label>AI 平台<select data-coach-provider><option value="default">站点默认（棋刻 AI）</option><option value="openrouter">OpenRouter（免费模型）</option><option value="deepseek">DeepSeek</option><option value="glm">智谱 GLM（glm-4-flash 免费）</option></select></label>
       <label>API Key<input type="password" data-coach-api-key placeholder="留空则用站点默认"></label>
       <div class="coach-settings-actions"><button class="btn btn-primary" type="button" data-coach-save>保存</button><span class="coach-saved" data-coach-saved aria-live="polite"></span></div>
     </div>
   </div>
   <script>window.CHESS_LESSON={"id":"king-opposition","challenge":{"title":"五步让王先进入战场","instruction":"前三步优先改善王的位置，后两步才推进兵。不要一开始就把兵推到无法回头的位置。","fen":"8/4kpp1/8/8/8/8/4KPP1/8 w - - 0 1","goal":"白方走五步，抢占关键格并建立双兵推进。","steps":[{"move":"e2d3","opponent":"e7d6","note":"第一步正确：Kd3 让王向中心靠近。残局里，王的一个格子常比兵的一步更值钱。"},{"move":"d3d4","opponent":"d6c6","note":"第二步正确：Kd4 继续取得空间，迫使黑王向侧面让路。"},{"move":"d4e5","opponent":"c6c5","note":"第三步正确：Ke5 抢到关键格。白王现在能支持两枚兵，而黑王被挤到侧翼。"},{"move":"f2f4","opponent":"g7g6","note":"第四步正确：f4 在王的保护下推进。黑方必须决定用哪枚兵建立阻挡。"},{"move":"g2g4","note":"第五步正确：g4 建立并排双兵。白王位置领先，后续可以根据黑方交换选择制造通路兵。"}],"odds":[{"white":46,"draw":46,"black":8},{"white":50,"draw":43,"black":7},{"white":56,"draw":38,"black":6},{"white":64,"draw":31,"black":5},{"white":69,"draw":27,"black":4},{"white":74,"draw":23,"black":3}],"success":"五步完成。白王先抢关键格，再让双兵前进；局面优势来自王的位置，而不是某一次吃子。","defaultAnswer":"如果先推兵，黑王会更容易站到兵前形成封锁。白王先走到 e5 后，两枚兵才有可靠支撑，黑方也更难同时阻挡两翼。","errors":{"f2f4":"立即 f4 太早。黑王还在中心，能迅速靠近兵前；先走 Kd3，把最强残局棋子带进来。","g2g4":"立即 g4 同样暴露推进目标。兵不能后退，王却还能改善；优先走可逆、增益更大的王步。"},"genericError":"先问残局里哪枚棋子最需要改善。当前答案不是兵，而是仍然离关键格较远的白王。","quick":{"为什么先走王":"兵一旦推进不能后退，王步却能增加控制格并保留选择。先改善王，通常能让后续兵步更安全。","什么是关键格":"关键格是王一旦占据，就能可靠支持兵继续前进的格子。这里 e5 同时帮助 f、g 两兵。","为什么双兵一起走":"并排兵可以互相制造交换选择，王则从后方支持。单兵过早冲刺更容易被黑王封锁。"},"suggestions":[{"label":"为什么前三步都走王？","key":"为什么先走王"},{"label":"什么叫关键格？","key":"什么是关键格"},{"label":"为什么两枚兵一起推进？","key":"为什么双兵一起走"}]}};</script>
+  <script defer src="assets/donation.js"></script>
   <script type="module" src="assets/app.js"></script>
 </body>
 </html>

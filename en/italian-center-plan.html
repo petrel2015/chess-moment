@@ -14,6 +14,7 @@
   <link rel="apple-touch-icon" sizes="180x180" href="../assets/icons/apple-touch-icon.png">
   <link rel="manifest" href="../assets/site.webmanifest">
   <link rel="stylesheet" href="../assets/styles.css">
+  <link rel="stylesheet" href="../assets/donation.css">
     <link rel="preload" as="image" href="../assets/pieces/wk.png">
   <link rel="preload" as="image" href="../assets/pieces/wq.png">
   <link rel="preload" as="image" href="../assets/pieces/wr.png">
@@ -26,7 +27,6 @@
   <link rel="preload" as="image" href="../assets/pieces/bb.png">
   <link rel="preload" as="image" href="../assets/pieces/bn.png">
   <link rel="preload" as="image" href="../assets/pieces/bp.png">
-  <script>window.CHESS_COACH_CONFIG = {"workerUrl":""};</script>
   <script>
 (function(){
   var stored = null;
@@ -108,17 +108,19 @@
         
       </a></div></section>
   </main>
-  <footer class="site-footer"><div class="footer-meta">棋刻 Chess Moment · Three minutes a day to understand one move · <a class="footer-report" href="#" data-footer-report>Report a problem</a></div><div class="donate-section"><span class="donate-tag">Buy me a coffee ￥4.9</span><div class="donate-triggers"><button type="button" class="donate-trigger alipay" data-donate-alipay>Alipay</button><button type="button" class="donate-trigger wechat" data-donate-wechat>WeChat</button></div></div></footer>
+  <footer class="site-footer">棋刻 Chess Moment · Three minutes a day to understand one move · <a class="footer-report" href="#" data-footer-report>Report a problem</a> · <button type="button" class="donate-entry" id="donate-entry">☕ Buy me a coffee</button></footer>
+  <div class="donation-overlay" id="donation-dialog" hidden role="dialog" aria-modal="true" aria-label="Buy me a coffee ☕" data-scan-alipay="Scan with Alipay" data-scan-wechat="Scan with WeChat" data-fallback-hint="Didn't open automatically? Scan the QR code instead." data-qr-error="QR code failed to render, please retry."><div class="donation-dialog"><button type="button" class="donation-close" id="donation-close" aria-label="Close">×</button><h3 class="donation-title">Buy me a coffee ☕</h3><p class="donation-subtitle">If this little tool helped you, you can buy the author a coffee.</p><div class="donation-tabs"><button type="button" class="donation-tab" id="donation-tab-alipay" aria-pressed="true">Alipay</button><button type="button" class="donation-tab" id="donation-tab-wechat" aria-pressed="false">WeChat Pay</button></div><canvas class="donation-qr" id="donation-qr" width="220" height="220"></canvas><p class="donation-hint" id="donation-hint"></p></div></div>
   <div class="coach-settings-panel" data-coach-settings-panel hidden>
     <div class="coach-settings-inner">
       <h3>AI Coach Settings</h3>
-      <p class="coach-settings-hint">Pick a provider and paste your own API key to use its models; leave empty for the site default (OpenRouter free models). The key stays in this browser only.</p>
-      <label>AI provider<select data-coach-provider><option value="openrouter">OpenRouter (free models)</option><option value="deepseek">DeepSeek</option><option value="glm">Zhipu GLM (glm-4-flash, free)</option></select></label>
+      <p class="coach-settings-hint">The built-in AI gateway works out of the box; you can also pick a provider and paste your own API key to override it. The key stays in this browser only.</p>
+      <label>AI provider<select data-coach-provider><option value="default">Site default (Chess Moment AI)</option><option value="openrouter">OpenRouter (free models)</option><option value="deepseek">DeepSeek</option><option value="glm">Zhipu GLM (glm-4-flash, free)</option></select></label>
       <label>API Key<input type="password" data-coach-api-key placeholder="Leave empty for the site default"></label>
       <div class="coach-settings-actions"><button class="btn btn-primary" type="button" data-coach-save>Save</button><span class="coach-saved" data-coach-saved aria-live="polite"></span></div>
     </div>
   </div>
   <script>window.CHESS_LESSON={"id":"italian-center-plan","challenge":{"title":"Five moves to build the scaffold for a center break","instruction":"Develop first, then support, then push d4. The opponent develops normally; keep your plan coherent.","fen":"r1bqkbnr/pppp1ppp/2n5/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 2 3","goal":"White moves five times, completing Italian-style development and advancing d4.","steps":[{"move":"f1c4","opponent":"g8f6","note":"First move correct: Bc4 puts the bishop on an active diagonal, eyeing f7."},{"move":"d2d3","opponent":"f8c5","note":"Second move correct: d3 first stabilizes e4, leaving a clear order for c3 and d4."},{"move":"c2c3","opponent":"d7d6","note":"Third move correct: c3 controls d4 and prepares a pawn chain to support the d-pawn's advance."},{"move":"b1d2","opponent":"a7a6","note":"Fourth move correct: Nbd2 completes the queenside knight's development without blocking the d-pawn."},{"move":"d3d4","note":"Fifth move correct: d4 finally poses the central question. The first four moves turn this push from a lone impulse into the payoff of a complete plan."}],"odds":[{"white":39,"draw":48,"black":13},{"white":40,"draw":48,"black":12},{"white":41,"draw":48,"black":11},{"white":42,"draw":47,"black":11},{"white":43,"draw":47,"black":10},{"white":45,"draw":46,"black":9}],"success":"Five-move plan complete. You did not memorize mechanically; you developed an active bishop, stabilized e4, supported with c3, developed the queenside knight, and finally contested the center with d4.","defaultAnswer":"The logic of this order is that every move serves d4: Bc4 develops, d3 stabilizes e4, c3 supports d4, Nbd2 completes development, and only then does d4 have a solid foundation.","errors":{"d2d4":"Immediate d4 is not unplayable, but in this position White has not yet completed the c3 support and development, so the exchange tends to simplify too early.","b1c3":"Nc3 is a natural move, but it blocks the c-pawn and changes the Italian c3-d4 plan. This lesson explores the Nbd2 division of labor."},"genericError":"This move may follow general opening principles, but check whether it directly serves this lesson's d4 center plan.","quick":{"为什么先d3":"d3 first protects e4, ensuring the center pawn does not loosen while White prepares c3 and d4.","为什么马走d2":"Nbd2 develops the knight while keeping the c-pawn's path to c3 open. Nc3 is fine too, but it belongs to a different center structure.","为什么第五步才d4":"The first four moves lower the cost of d4: more pieces take part, the center is supported, and recaptures come naturally after exchanges."},"suggestions":[{"label":"Why play d3 first?","key":"为什么先d3"},{"label":"Why not develop the knight to c3?","key":"为什么马走d2"},{"label":"Why push d4 only on move five?","key":"为什么第五步才d4"}]}};</script>
+  <script defer src="../assets/donation.js"></script>
   <script type="module" src="../assets/app.js"></script>
 </body>
 </html>

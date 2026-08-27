@@ -14,6 +14,7 @@
   <link rel="apple-touch-icon" sizes="180x180" href="../assets/icons/apple-touch-icon.png">
   <link rel="manifest" href="../assets/site.webmanifest">
   <link rel="stylesheet" href="../assets/styles.css">
+  <link rel="stylesheet" href="../assets/donation.css">
     <link rel="preload" as="image" href="../assets/pieces/wk.png">
   <link rel="preload" as="image" href="../assets/pieces/wq.png">
   <link rel="preload" as="image" href="../assets/pieces/wr.png">
@@ -26,7 +27,6 @@
   <link rel="preload" as="image" href="../assets/pieces/bb.png">
   <link rel="preload" as="image" href="../assets/pieces/bn.png">
   <link rel="preload" as="image" href="../assets/pieces/bp.png">
-  <script>window.CHESS_COACH_CONFIG = {"workerUrl":""};</script>
   <script>
 (function(){
   var stored = null;
@@ -108,17 +108,19 @@
         
       </a></div></section>
   </main>
-  <footer class="site-footer"><div class="footer-meta">棋刻 Chess Moment · Three minutes a day to understand one move · <a class="footer-report" href="#" data-footer-report>Report a problem</a></div><div class="donate-section"><span class="donate-tag">Buy me a coffee ￥4.9</span><div class="donate-triggers"><button type="button" class="donate-trigger alipay" data-donate-alipay>Alipay</button><button type="button" class="donate-trigger wechat" data-donate-wechat>WeChat</button></div></div></footer>
+  <footer class="site-footer">棋刻 Chess Moment · Three minutes a day to understand one move · <a class="footer-report" href="#" data-footer-report>Report a problem</a> · <button type="button" class="donate-entry" id="donate-entry">☕ Buy me a coffee</button></footer>
+  <div class="donation-overlay" id="donation-dialog" hidden role="dialog" aria-modal="true" aria-label="Buy me a coffee ☕" data-scan-alipay="Scan with Alipay" data-scan-wechat="Scan with WeChat" data-fallback-hint="Didn't open automatically? Scan the QR code instead." data-qr-error="QR code failed to render, please retry."><div class="donation-dialog"><button type="button" class="donation-close" id="donation-close" aria-label="Close">×</button><h3 class="donation-title">Buy me a coffee ☕</h3><p class="donation-subtitle">If this little tool helped you, you can buy the author a coffee.</p><div class="donation-tabs"><button type="button" class="donation-tab" id="donation-tab-alipay" aria-pressed="true">Alipay</button><button type="button" class="donation-tab" id="donation-tab-wechat" aria-pressed="false">WeChat Pay</button></div><canvas class="donation-qr" id="donation-qr" width="220" height="220"></canvas><p class="donation-hint" id="donation-hint"></p></div></div>
   <div class="coach-settings-panel" data-coach-settings-panel hidden>
     <div class="coach-settings-inner">
       <h3>AI Coach Settings</h3>
-      <p class="coach-settings-hint">Pick a provider and paste your own API key to use its models; leave empty for the site default (OpenRouter free models). The key stays in this browser only.</p>
-      <label>AI provider<select data-coach-provider><option value="openrouter">OpenRouter (free models)</option><option value="deepseek">DeepSeek</option><option value="glm">Zhipu GLM (glm-4-flash, free)</option></select></label>
+      <p class="coach-settings-hint">The built-in AI gateway works out of the box; you can also pick a provider and paste your own API key to override it. The key stays in this browser only.</p>
+      <label>AI provider<select data-coach-provider><option value="default">Site default (Chess Moment AI)</option><option value="openrouter">OpenRouter (free models)</option><option value="deepseek">DeepSeek</option><option value="glm">Zhipu GLM (glm-4-flash, free)</option></select></label>
       <label>API Key<input type="password" data-coach-api-key placeholder="Leave empty for the site default"></label>
       <div class="coach-settings-actions"><button class="btn btn-primary" type="button" data-coach-save>Save</button><span class="coach-saved" data-coach-saved aria-live="polite"></span></div>
     </div>
   </div>
   <script>window.CHESS_LESSON={"id":"improve-worst-piece","challenge":{"title":"Plan a five-move route for the b1 knight","instruction":"Improve the white knight along d2, f1, g3, f5, then reinforce the center with d4. Every move serves the same plan.","fen":"r1bq1rk1/ppp2ppp/2np1n2/2b1p3/4P3/2PP1N2/PP3PPP/RNBQR1K1 w - - 0 8","goal":"White moves five times, delivering the worst knight to an outpost and consolidating the center.","steps":[{"move":"b1d2","opponent":"a7a6","note":"First move correct: Nbd2 lifts the knight off the back rank while keeping the route to f1 and f5 open."},{"move":"d2f1","opponent":"b7b5","note":"Second move correct: Nf1 looks like a retreat but is actually a turn toward g3. Positional play may move away from the center temporarily for a better route."},{"move":"f1g3","opponent":"c8e6","note":"Third move correct: Ng3 begins aiming at f5 and h5; the knight is turning from an onlooker into a potential attacker."},{"move":"g3f5","opponent":"d8d7","note":"Fourth move correct: Nf5 occupies the outpost, directly approaching the black king and becoming hard to drive away with pawns."},{"move":"d3d4","note":"Fifth move correct: d4 reinforces the center and restricts Black's e5 pawn, giving the f5 knight a steadier base."}],"odds":[{"white":38,"draw":50,"black":12},{"white":39,"draw":50,"black":11},{"white":41,"draw":49,"black":10},{"white":44,"draw":47,"black":9},{"white":48,"draw":44,"black":8},{"white":51,"draw":42,"black":7}],"success":"Five moves complete. The white knight traveled from b1 to f5, then d4 stabilized the center. No single move wins material, yet the whole army's coordination and attacking potential clearly improved.","defaultAnswer":"This plan judges pieces by routes rather than single moves: Nd2 and Nf1 look slow, and only by seeing the Ng3-f5 destination do they make sense. d4 then makes the outpost more stable.","errors":{"b1c3":"Nc3 is natural development, but c3 is already occupied by a white pawn, and this knight's ideal route is d2-f1-g3-f5.","h2h3":"h3 is a useful waiting move, but it does not improve the worst piece on the board, the b1 knight. With no tactics, fix the worst piece first."},"genericError":"This move may improve part of the position, but return to the lesson's goal: plan a complete route for the b1 knight.","quick":{"为什么马要后退":"Nf1 is a turn in the route, not a retreat. From f1 the knight reaches g3, then enters the f5 outpost.","什么是前哨":"An outpost is a stable square deep in enemy territory that is hard for enemy pawns to chase away. The knight on f5 sits near the black king and restricts several black pieces.","为什么最后走d4":"Once the knight is on f5, d4 strengthens central control and restricts e5, making it harder for Black to counter in the center and drive the knight back."},"suggestions":[{"label":"Why does the knight step backward first?","key":"为什么马要后退"},{"label":"What is an outpost?","key":"什么是前哨"},{"label":"Why push d4 last?","key":"为什么最后走d4"}]}};</script>
+  <script defer src="../assets/donation.js"></script>
   <script type="module" src="../assets/app.js"></script>
 </body>
 </html>

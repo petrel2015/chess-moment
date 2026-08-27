@@ -14,6 +14,7 @@
   <link rel="apple-touch-icon" sizes="180x180" href="../assets/icons/apple-touch-icon.png">
   <link rel="manifest" href="../assets/site.webmanifest">
   <link rel="stylesheet" href="../assets/styles.css">
+  <link rel="stylesheet" href="../assets/donation.css">
     <link rel="preload" as="image" href="../assets/pieces/wk.png">
   <link rel="preload" as="image" href="../assets/pieces/wq.png">
   <link rel="preload" as="image" href="../assets/pieces/wr.png">
@@ -26,7 +27,6 @@
   <link rel="preload" as="image" href="../assets/pieces/bb.png">
   <link rel="preload" as="image" href="../assets/pieces/bn.png">
   <link rel="preload" as="image" href="../assets/pieces/bp.png">
-  <script>window.CHESS_COACH_CONFIG = {"workerUrl":""};</script>
   <script>
 (function(){
   var stored = null;
@@ -108,17 +108,19 @@
         
       </a></div></section>
   </main>
-  <footer class="site-footer"><div class="footer-meta">棋刻 Chess Moment · Three minutes a day to understand one move · <a class="footer-report" href="#" data-footer-report>Report a problem</a></div><div class="donate-section"><span class="donate-tag">Buy me a coffee ￥4.9</span><div class="donate-triggers"><button type="button" class="donate-trigger alipay" data-donate-alipay>Alipay</button><button type="button" class="donate-trigger wechat" data-donate-wechat>WeChat</button></div></div></footer>
+  <footer class="site-footer">棋刻 Chess Moment · Three minutes a day to understand one move · <a class="footer-report" href="#" data-footer-report>Report a problem</a> · <button type="button" class="donate-entry" id="donate-entry">☕ Buy me a coffee</button></footer>
+  <div class="donation-overlay" id="donation-dialog" hidden role="dialog" aria-modal="true" aria-label="Buy me a coffee ☕" data-scan-alipay="Scan with Alipay" data-scan-wechat="Scan with WeChat" data-fallback-hint="Didn't open automatically? Scan the QR code instead." data-qr-error="QR code failed to render, please retry."><div class="donation-dialog"><button type="button" class="donation-close" id="donation-close" aria-label="Close">×</button><h3 class="donation-title">Buy me a coffee ☕</h3><p class="donation-subtitle">If this little tool helped you, you can buy the author a coffee.</p><div class="donation-tabs"><button type="button" class="donation-tab" id="donation-tab-alipay" aria-pressed="true">Alipay</button><button type="button" class="donation-tab" id="donation-tab-wechat" aria-pressed="false">WeChat Pay</button></div><canvas class="donation-qr" id="donation-qr" width="220" height="220"></canvas><p class="donation-hint" id="donation-hint"></p></div></div>
   <div class="coach-settings-panel" data-coach-settings-panel hidden>
     <div class="coach-settings-inner">
       <h3>AI Coach Settings</h3>
-      <p class="coach-settings-hint">Pick a provider and paste your own API key to use its models; leave empty for the site default (OpenRouter free models). The key stays in this browser only.</p>
-      <label>AI provider<select data-coach-provider><option value="openrouter">OpenRouter (free models)</option><option value="deepseek">DeepSeek</option><option value="glm">Zhipu GLM (glm-4-flash, free)</option></select></label>
+      <p class="coach-settings-hint">The built-in AI gateway works out of the box; you can also pick a provider and paste your own API key to override it. The key stays in this browser only.</p>
+      <label>AI provider<select data-coach-provider><option value="default">Site default (Chess Moment AI)</option><option value="openrouter">OpenRouter (free models)</option><option value="deepseek">DeepSeek</option><option value="glm">Zhipu GLM (glm-4-flash, free)</option></select></label>
       <label>API Key<input type="password" data-coach-api-key placeholder="Leave empty for the site default"></label>
       <div class="coach-settings-actions"><button class="btn btn-primary" type="button" data-coach-save>Save</button><span class="coach-saved" data-coach-saved aria-live="polite"></span></div>
     </div>
   </div>
   <script>window.CHESS_LESSON={"id":"rook-ladder","challenge":{"title":"Give check five times in a row","instruction":"Advance the rooks alternately. Every move must give check, and never place both rooks on a line where the king can easily attack them.","fen":"6k1/8/8/8/8/8/1R6/R6K w - - 0 1","goal":"White moves five times, using the rook ladder to drive the black king down rank by rank.","steps":[{"move":"b2b8","opponent":"g8h7","note":"First move correct: Rb8+ seals the eighth rank and forces the king to h7."},{"move":"a1a7","opponent":"h7g6","note":"Second move correct: Ra7+ takes over the checking, while the b8 rook guards the rank above."},{"move":"b8b6","opponent":"g6f5","note":"Third move correct: Rb6+ advances in a fresh staggered layer — the rooks fall like alternating gates."},{"move":"a7a5","opponent":"f5e4","note":"Fourth move correct: Ra5+ keeps pushing the king toward the fourth rank, keeping exactly one rank between the rooks."},{"move":"b6b4","note":"Fifth move correct: Rb4+ completes the five-step ladder. The king's space keeps shrinking; next White brings the king up to seal the side."}],"odds":[{"white":96,"draw":4,"black":0},{"white":97,"draw":3,"black":0},{"white":98,"draw":2,"black":0},{"white":98,"draw":2,"black":0},{"white":99,"draw":1,"black":0},{"white":99,"draw":1,"black":0}],"success":"Five-step ladder complete. You did not chase the king around; you let the two rooks take turns controlling ranks, slicing away its space layer by layer.","defaultAnswer":"The core of the ladder is rotation: the rook that checks pushes the king, while the other guards the rank behind. Swap roles each move, and the king can never come back.","errors":{"b2b7":"Rb7 does not give check, so Black gets time to bring the king closer or flee toward the center. Every step of the ladder should stay forcing.","a1a8":"Ra8 crowds both rooks onto the same rank and creates no new sealed layer. Keep them one rank apart."},"genericError":"Work out which rook must take over the checking: it needs to stand on the king's rank while the other rook guards the retreat.","quick":{"为什么不直接追王":"Chasing the king directly often leaves a rook exposed. The ladder is not about chasing — it is about cutting off whole ranks so the king is forced backward.","为什么两车错开":"When the rooks are staggered, one checks and the other blocks the way back. On the same rank they waste one rook's controlling power.","为什么还没结束":"The five-move goal is to learn the driving structure, not to cram a full ending into a single mate. Next you still bring the white king up to seal the side."},"suggestions":[{"label":"Why not chase the king directly?","key":"为什么不直接追王"},{"label":"Why must the rooks stay staggered?","key":"为什么两车错开"},{"label":"Why isn't it over after five moves?","key":"为什么还没结束"}]}};</script>
+  <script defer src="../assets/donation.js"></script>
   <script type="module" src="../assets/app.js"></script>
 </body>
 </html>

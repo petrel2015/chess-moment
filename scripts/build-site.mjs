@@ -39,11 +39,8 @@ const PIECE_PRELOAD_LINKS = (prefix) => PIECE_KEYS
   .map(key => `  <link rel="preload" as="image" href="${prefix}assets/pieces/${key}.png">`)
   .join("\n");
 
-// AI 教练配置：部署 Cloudflare Worker 后，把 Worker URL 设到环境变量
-// CHESS_COACH_WORKER_URL（或 GitHub repo secret），构建时自动注入。
-// 未设置时 workerUrl 为空字符串，前端走预制答案降级。
-const COACH_WORKER_URL = (process.env.CHESS_COACH_WORKER_URL || "").trim();
-const COACH_CONFIG_JSON = JSON.stringify({ workerUrl: COACH_WORKER_URL });
+// AI 教练默认走自建 PromptGate 网关（见 assets/coach-ai.mjs 的 PROMPTGATE_*
+// 常量），前端零配置直连，构建期无需注入任何 AI 配置。
 
 // 语言自动检测脚本（内联，非 module，放在 <head> 尽早执行）。
 // 逻辑与 assets/i18n.mjs 的 resolveLanguage / siblingPath 保持一致：
@@ -141,8 +138,8 @@ function renderLesson(lesson, { locale = "zh", homepage = false } = {}) {
   <link rel="apple-touch-icon" sizes="180x180" href="${assetPrefix}assets/icons/apple-touch-icon.png">
   <link rel="manifest" href="${assetPrefix}assets/site.webmanifest">
   <link rel="stylesheet" href="${assetPrefix}assets/styles.css">
+  <link rel="stylesheet" href="${assetPrefix}assets/donation.css">
   ${PIECE_PRELOAD_LINKS(assetPrefix)}
-  <script>window.CHESS_COACH_CONFIG = ${COACH_CONFIG_JSON};</script>
   ${langDetectScript(isEn ? "en" : "zh")}
 </head>
 <body>
@@ -176,17 +173,19 @@ function renderLesson(lesson, { locale = "zh", homepage = false } = {}) {
     </article>
     <section class="archive"><div class="archive-head"><h2>${u.archiveTitle}</h2><span class="meta">${u.archiveMeta}</span></div><div class="archive-grid">${archiveCards(lesson.slug)}</div></section>
   </main>
-  <footer class="site-footer"><div class="footer-meta">${u.brandZh} ${u.brandEn} · ${u.footerMeta} · <a class="footer-report" href="#" data-footer-report>${u.footerReport}</a></div><div class="donate-section"><span class="donate-tag">${u.donateTag}</span><div class="donate-triggers"><button type="button" class="donate-trigger alipay" data-donate-alipay>${u.donateAlipay}</button><button type="button" class="donate-trigger wechat" data-donate-wechat>${u.donateWechat}</button></div></div></footer>
+  <footer class="site-footer">${u.brandZh} ${u.brandEn} · ${u.footerMeta} · <a class="footer-report" href="#" data-footer-report>${u.footerReport}</a> · <button type="button" class="donate-entry" id="donate-entry">${u.donateEntry}</button></footer>
+  <div class="donation-overlay" id="donation-dialog" hidden role="dialog" aria-modal="true" aria-label="${u.donateTitle}" data-scan-alipay="${u.donateScanAlipay}" data-scan-wechat="${u.donateScanWechat}" data-fallback-hint="${u.donateFallbackHint}" data-qr-error="${u.donateQrError}"><div class="donation-dialog"><button type="button" class="donation-close" id="donation-close" aria-label="${u.donateClose}">×</button><h3 class="donation-title">${u.donateTitle}</h3><p class="donation-subtitle">${u.donateSubtitle}</p><div class="donation-tabs"><button type="button" class="donation-tab" id="donation-tab-alipay" aria-pressed="true">${u.donateAlipay}</button><button type="button" class="donation-tab" id="donation-tab-wechat" aria-pressed="false">${u.donateWechatPay}</button></div><canvas class="donation-qr" id="donation-qr" width="220" height="220"></canvas><p class="donation-hint" id="donation-hint"></p></div></div>
   <div class="coach-settings-panel" data-coach-settings-panel hidden>
     <div class="coach-settings-inner">
       <h3>${u.settingsTitle}</h3>
       <p class="coach-settings-hint">${u.settingsHint}</p>
-      <label>${u.settingsProvider}<select data-coach-provider><option value="openrouter">${u.providerOpenRouter}</option><option value="deepseek">${u.providerDeepseek}</option><option value="glm">${u.providerGlm}</option></select></label>
+      <label>${u.settingsProvider}<select data-coach-provider><option value="default">${u.providerDefault}</option><option value="openrouter">${u.providerOpenRouter}</option><option value="deepseek">${u.providerDeepseek}</option><option value="glm">${u.providerGlm}</option></select></label>
       <label>${u.settingsApiKey}<input type="password" data-coach-api-key placeholder="${u.settingsKeyPlaceholder}"></label>
       <div class="coach-settings-actions"><button class="btn btn-primary" type="button" data-coach-save>${u.settingsSave}</button><span class="coach-saved" data-coach-saved aria-live="polite"></span></div>
     </div>
   </div>
   <script>window.CHESS_LESSON=${JSON.stringify(lessonPayload).replaceAll("<", "\\u003c")};</script>
+  <script defer src="${assetPrefix}assets/donation.js"></script>
   <script type="module" src="${assetPrefix}assets/app.js"></script>
 </body>
 </html>`;

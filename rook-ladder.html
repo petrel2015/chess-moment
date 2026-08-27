@@ -14,6 +14,7 @@
   <link rel="apple-touch-icon" sizes="180x180" href="assets/icons/apple-touch-icon.png">
   <link rel="manifest" href="assets/site.webmanifest">
   <link rel="stylesheet" href="assets/styles.css">
+  <link rel="stylesheet" href="assets/donation.css">
     <link rel="preload" as="image" href="assets/pieces/wk.png">
   <link rel="preload" as="image" href="assets/pieces/wq.png">
   <link rel="preload" as="image" href="assets/pieces/wr.png">
@@ -26,7 +27,6 @@
   <link rel="preload" as="image" href="assets/pieces/bb.png">
   <link rel="preload" as="image" href="assets/pieces/bn.png">
   <link rel="preload" as="image" href="assets/pieces/bp.png">
-  <script>window.CHESS_COACH_CONFIG = {"workerUrl":""};</script>
   <script>
 (function(){
   var stored = null;
@@ -108,17 +108,19 @@
         
       </a></div></section>
   </main>
-  <footer class="site-footer"><div class="footer-meta">棋刻 Chess Moment · 每天三分钟，想明白一步棋 · <a class="footer-report" href="#" data-footer-report>反馈问题</a></div><div class="donate-section"><span class="donate-tag">请我喝杯咖啡 ￥4.9</span><div class="donate-triggers"><button type="button" class="donate-trigger alipay" data-donate-alipay>支付宝</button><button type="button" class="donate-trigger wechat" data-donate-wechat>微信</button></div></div></footer>
+  <footer class="site-footer">棋刻 Chess Moment · 每天三分钟，想明白一步棋 · <a class="footer-report" href="#" data-footer-report>反馈问题</a> · <button type="button" class="donate-entry" id="donate-entry">☕ 请作者喝杯咖啡</button></footer>
+  <div class="donation-overlay" id="donation-dialog" hidden role="dialog" aria-modal="true" aria-label="请作者喝杯咖啡 ☕" data-scan-alipay="打开支付宝扫一扫" data-scan-wechat="打开微信扫一扫" data-fallback-hint="没有自动打开？请使用支付宝 / 微信扫码" data-qr-error="二维码生成失败，请重试"><div class="donation-dialog"><button type="button" class="donation-close" id="donation-close" aria-label="关闭">×</button><h3 class="donation-title">请作者喝杯咖啡 ☕</h3><p class="donation-subtitle">如果这个小工具帮到了你，可以请作者喝杯咖啡。</p><div class="donation-tabs"><button type="button" class="donation-tab" id="donation-tab-alipay" aria-pressed="true">支付宝</button><button type="button" class="donation-tab" id="donation-tab-wechat" aria-pressed="false">微信支付</button></div><canvas class="donation-qr" id="donation-qr" width="220" height="220"></canvas><p class="donation-hint" id="donation-hint"></p></div></div>
   <div class="coach-settings-panel" data-coach-settings-panel hidden>
     <div class="coach-settings-inner">
       <h3>AI 教练设置</h3>
-      <p class="coach-settings-hint">选择平台并填入自己的 API Key，即可用该平台的模型回答；留空则使用站点默认（OpenRouter 免费模型）。Key 只保存在本浏览器。</p>
-      <label>AI 平台<select data-coach-provider><option value="openrouter">OpenRouter（免费模型）</option><option value="deepseek">DeepSeek</option><option value="glm">智谱 GLM（glm-4-flash 免费）</option></select></label>
+      <p class="coach-settings-hint">站点已内置 AI 网关，默认开箱即用；也可以选择平台并填入自己的 API Key 覆盖。Key 只保存在本浏览器。</p>
+      <label>AI 平台<select data-coach-provider><option value="default">站点默认（棋刻 AI）</option><option value="openrouter">OpenRouter（免费模型）</option><option value="deepseek">DeepSeek</option><option value="glm">智谱 GLM（glm-4-flash 免费）</option></select></label>
       <label>API Key<input type="password" data-coach-api-key placeholder="留空则用站点默认"></label>
       <div class="coach-settings-actions"><button class="btn btn-primary" type="button" data-coach-save>保存</button><span class="coach-saved" data-coach-saved aria-live="polite"></span></div>
     </div>
   </div>
   <script>window.CHESS_LESSON={"id":"rook-ladder","challenge":{"title":"连续五步保持将军","instruction":"让两辆车交替前进。每一步都要将军，并且不要让两车站到同一条容易被王攻击的线上。","fen":"6k1/8/8/8/8/8/1R6/R6K w - - 0 1","goal":"白方走五步，用双车阶梯把黑王逐层向下驱赶。","steps":[{"move":"b2b8","opponent":"g8h7","note":"第一步正确：Rb8+ 封住第八横线，黑王被迫走向 h7。"},{"move":"a1a7","opponent":"h7g6","note":"第二步正确：Ra7+ 接过将军任务，b8 的车则守着上一层。"},{"move":"b8b6","opponent":"g6f5","note":"第三步正确：Rb6+ 再次错层前进，两辆车像交替落下的闸门。"},{"move":"a7a5","opponent":"f5e4","note":"第四步正确：Ra5+ 把王继续赶到第四横线，车之间始终保持一层距离。"},{"move":"b6b4","note":"第五步正确：Rb4+ 完成五层阶梯。黑王空间继续缩小，白方下一阶段再用王封住侧面。"}],"odds":[{"white":96,"draw":4,"black":0},{"white":97,"draw":3,"black":0},{"white":98,"draw":2,"black":0},{"white":98,"draw":2,"black":0},{"white":99,"draw":1,"black":0},{"white":99,"draw":1,"black":0}],"success":"五步阶梯完成。你没有追着王乱跑，而是让两辆车轮流控制横线，把活动空间一层层切掉。","defaultAnswer":"双车阶梯的核心是轮换：当前将军的车负责推王，后一辆车负责守住上一条横线。下一步交换职责，因此王无法回头。","errors":{"b2b7":"Rb7 没有直接将军，黑王会获得主动靠近或逃向中心的时间。阶梯的每一步都应保持强制性。","a1a8":"Ra8 与另一辆车挤在同一横线，没有形成新的封锁层。两车应该错开一层。"},"genericError":"检查哪辆车应该接过将军任务：它要站到黑王所在横线，同时让另一辆车守住退路。","quick":{"为什么不直接追王":"直接靠近王容易让车失去保护。阶梯法不是追王，而是切掉整条横线，让王自己被迫后退。","为什么两车错开":"错开一层时，一车将军、另一车封住回头路。站在同一层会浪费一辆车的控制力。","为什么还没结束":"五步目标是学会逼王结构，不是强行把完整残局压缩成一道将杀题。接下来还需要白王协助封住侧面。"},"suggestions":[{"label":"为什么不直接追着王走？","key":"为什么不直接追王"},{"label":"两辆车为什么要错开？","key":"为什么两车错开"},{"label":"走完五步为什么还没结束？","key":"为什么还没结束"}]}};</script>
+  <script defer src="assets/donation.js"></script>
   <script type="module" src="assets/app.js"></script>
 </body>
 </html>

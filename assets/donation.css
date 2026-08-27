@@ -1,0 +1,141 @@
+/* ============================================================
+   Donation 样式 — 融入棋刻主题（米色纸面、森林绿、金色点缀）
+   弹窗样式对齐站内 .coach-settings-panel 惯例（白底、细线边、14px 圆角）
+   ============================================================ */
+
+/* Footer 入口：低干扰文字链接，与 .footer-report 同级，弱于站内主要按钮 */
+.donate-entry {
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  color: var(--forest);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.donate-entry:hover {
+  color: #245239;
+}
+
+/* 弹窗遮罩：对齐 .coach-settings-panel.open::before 的遮罩色 */
+.donation-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(7, 20, 36, 0.32);
+}
+
+.donation-dialog {
+  position: relative;
+  width: min(92vw, 360px);
+  padding: 26px 24px 22px;
+  text-align: center;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  box-shadow: 0 16px 40px rgba(7, 20, 36, 0.28);
+}
+
+.donation-close {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: none;
+  font-size: 20px;
+  line-height: 1;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.donation-close:hover { color: var(--ink); }
+
+.donation-title {
+  margin: 0 0 6px;
+  font-size: 17px;
+  color: var(--ink);
+}
+
+.donation-subtitle {
+  margin: 0 0 16px;
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+/* 支付方式切换：胶囊分段（对齐站内 .btn 惯例），键盘可达的原生按钮 */
+.donation-tabs {
+  display: inline-flex;
+  margin-bottom: 16px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.donation-tab {
+  min-height: 40px;
+  padding: 8px 18px;
+  border: none;
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+  background: transparent;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+}
+
+.donation-tab + .donation-tab {
+  border-left: 1px solid var(--line);
+}
+
+.donation-tab:hover { background: rgba(23, 61, 43, 0.08); }
+
+.donation-tab.active {
+  background: var(--forest);
+  color: #fff;
+}
+
+.donation-tab.active:hover { background: #245239; }
+
+/* 二维码：深色前景 + 白色背景 + 静区，扫码成功率优先于视觉统一 */
+.donation-qr {
+  display: block;
+  width: 220px;
+  height: auto;
+  margin: 0 auto;
+  background: #ffffff;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+.donation-hint {
+  margin: 14px 0 0;
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+/* 手机：弹窗贴边留白更小，触控目标充足，无横向滚动 */
+@media (max-width: 767px) {
+  .donation-overlay { padding: 16px; }
+
+  .donation-dialog {
+    width: min(360px, calc(100vw - 32px));
+    padding: 24px 18px 20px;
+  }
+
+  .donation-tab { padding: 11px 20px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .donation-tab { transition: none; }
+}
