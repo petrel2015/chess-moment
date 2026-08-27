@@ -3,3 +3,4 @@ _artifacts/
 .DS_Store
 .zcode/
 node_modules/
+.mimosa/
