@@ -2,7 +2,7 @@ name: Deploy Chess Moment
 
 on:
   push:
-    branches: [main]
+    branches: [main, i18n-zh-en]
     paths:
       - "content/**"
       - "scripts/**"
